@@ -1,0 +1,6 @@
+.vscode
+.github
+**/__pycache__
+**/.DS_Store
+setup-helpers/setup_status.txt
+docker-compose.yml
