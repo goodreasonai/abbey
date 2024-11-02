@@ -1,85 +1,99 @@
 #!/bin/bash
 
-# Define the Python script you want to run
-PYTHON_SCRIPT="setup-helpers/run.py"
+# Constants
+SETUP_STATUS_FILE="setup-helpers/setup_status.txt"
+SETUP_STATUS_COMPLETE="COMPLETE"
 
-# Function to check Python installation
-check_python() {
-    if command -v python3 &>/dev/null; then
-        echo "Python 3 is already installed."
-        return 0
+# Globals (TBD by user)
+USING_EMAIL=false
+
+run() {
+    echo "RUN"
+    if [ "$USING_EMAIL" = "true" ]; then
+        docker-compose up --profiles email
     else
-        echo "Python 3 is not installed."
-        return 1
+        docker-compose up
     fi
 }
 
-# Function to install Python on Linux
-install_python_linux() {
-    if command -v apt &>/dev/null; then
-        echo "Using apt to install Python 3..."
-        sudo apt update
-        sudo apt install -y python3
-    elif command -v yum &>/dev/null; then
-        echo "Using yum to install Python 3..."
-        sudo yum install -y python3
-    else
-        echo "No supported package manager found. Please install Python 3 manually."
-        exit 1
+check_if_set_up() {
+    if [[ -f $SETUP_STATUS_FILE ]]; then
+        if grep -q "$SETUP_STATUS_COMPLETE" "$SETUP_STATUS_FILE"; then
+            return 0  # True, setup is complete
+        fi
     fi
+    return 1  # False, setup is not complete
 }
 
-# Function to install Python on macOS
-install_python_macos() {
-    if command -v brew &>/dev/null; then
-        echo "Using Homebrew to install Python 3..."
-        brew install python3
-    else
-        echo "Homebrew not found. Please install Homebrew and try again."
-        exit 1
-    fi
+record_setup_complete(){
+    echo "$SETUP_STATUS_COMPLETE" > "$SETUP_STATUS_FILE"
 }
 
-# Function to install Python on Windows
-install_python_windows() {
-    if command -v choco &>/dev/null; then
-        echo "Using Chocolatey to install Python 3..."
-        choco install python --version=3 -y
-    else
-        echo "Chocolatey not found. Please install Python 3 manually from https://www.python.org/downloads/windows/"
-        exit 1
-    fi
+do_setup() {
+    configure_email
+    configure_db
+    configure_auth
+    configure_ai
+    configure_search_engine
+
+    record_setup_complete
+    return 0  # Return 0 to indicate success
 }
 
-# Main script logic
-if check_python; then
-    echo "Proceeding to run the Python script..."
+configure_email() {
+    # Do you want to let Abbey send emails? y/n
+    # OK, so what are your email credentials
+    echo "EMAIL"
+}
+
+configure_db() {
+    # What should be the root password for your MySQL server?
+    echo "DB"
+}
+
+configure_auth() {
+    # What auth providers would you like to use?
+    # What are your client ids / client secrets
+    echo "AUTH"
+}
+
+configure_ai() {
+    # What ai providers would you like to use?
+    # What are your keys?
+    echo "AI"
+}
+
+configure_search_engine() {
+    # Would you like to use bing?
+    # What is your bing API key?
+    echo "SEARCH ENGINE"
+}
+
+
+# Check if docker-compose is available
+if command -v docker-compose >/dev/null 2>&1; then  # If the docker compose command exists
+    do_run=false
+    if ! check_if_set_up; then
+        if do_setup; then
+            do_run=true
+        fi
+    else
+        do_run=true
+    fi
+
+    if $do_run; then
+        run
+    fi
 else
-    read -p "Do you want to install Python 3? (y/n): " choice
-    case "$choice" in
-        y|Y )
-            if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-                install_python_linux
-            elif [[ "$OSTYPE" == "darwin"* ]]; then
-                install_python_macos
-            elif [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin"* ]]; then
-                install_python_windows
-            else
-                echo "Unsupported OS. Please install Python 3 manually."
-                exit 1
-            fi
-            ;;
-        n|N )
-            echo "Python 3 will not be installed. Exiting script."
-            exit 1
-            ;;
-        * )
-            echo "Invalid input. Exiting script."
-            exit 1
-            ;;
-    esac
+    echo "docker-compose is not available."
+    echo "Please download and install Docker"
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "Visit: https://docs.docker.com/desktop/install/mac-install/"
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        echo "Visit: https://docs.docker.com/engine/install/"
+    elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+        echo "Visit: https://docs.docker.com/desktop/install/windows-install/"
+    else
+        echo "Please check the Docker website for installation instructions."
+    fi
 fi
-
-# Run the Python script
-echo "Running Abbey..."
-python3 "$PYTHON_SCRIPT"

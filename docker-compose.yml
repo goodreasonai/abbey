@@ -1,0 +1,73 @@
+version: '3'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  celery:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: celery -A app.worker.celery worker --loglevel=INFO
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - backend
+      - redis
+
+  redis:
+      image: redis:latest
+      ports:
+        - "6379:6379"
+
+  db_pooler:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: python3 -m app.db_pooler
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+      - mysql
+
+  emailer:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: python3 -m app.email_process
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+      - mysql
+    profiles:
+      - email
+
+volumes:
+  mysql-data:
