@@ -5,8 +5,8 @@ SETUP_STATUS_FILE="setup-helpers/setup_status.txt"
 SETUP_STATUS_COMPLETE="COMPLETE"
 TRUE_VALUE="yes"  # true/false global variables are set using this.
 FALSE_VALUE="no"
-BACKEND_ENV_FILE=".env"
-FRONTEND_ENV_FILE=".local.env"
+BACKEND_ENV_FILE="backend/app/configs/.env"
+FRONTEND_ENV_FILE="frontend/.env.local"
 
 # Globals (TBD by user)
 USING_EMAIL=""
