@@ -3,9 +3,51 @@
 # Constants
 SETUP_STATUS_FILE="setup-helpers/setup_status.txt"
 SETUP_STATUS_COMPLETE="COMPLETE"
+TRUE_VALUE="yes"  # true/false global variables are set using this.
+FALSE_VALUE="no"
+BACKEND_ENV_FILE=".env"
+FRONTEND_ENV_FILE=".local.env"
 
 # Globals (TBD by user)
-USING_EMAIL=false
+USING_EMAIL=""
+
+SEND_EMAILS=""
+SMTP_SERVER=""
+SMTP_PORT=""
+SMTP_USERNAME=""
+SMTP_PASSWORD=""
+
+MYSQL_ROOT_PASSWORD=""
+
+USE_OPENAI=""
+OPENAI_KEY=""
+
+USE_ANTHROPIC=""
+ANTHROPIC_KEY=""
+
+USE_MATHPIX=""
+MATHPIX_APP=""
+MATHPIX_KEY=""
+
+USE_ELEVEN_LABS=""
+ELEVEN_LABS_KEY=""
+
+USE_WEB=""
+BING_KEY=""
+
+USE_GOOGLE_AUTH=""
+GOOGLE_AUTH_CLIENT_ID=""
+GOOGLE_AUTH_CLIENT_SECRET=""
+
+USE_GITHUB_AUTH=""
+GITHUB_AUTH_CLIENT_ID=""
+GITHUB_AUTH_CLIENT_SECRET=""
+
+USE_KEYCLOAK_AUTH=""
+KEYCLOAK_CLIENT_SECRET=""
+KEYCLOAK_CLIENT_ID=""
+KEYCLOAK_REALM=""
+KEYCLOAK_HOST=""
 
 run() {
     echo "RUN"
@@ -26,49 +68,206 @@ check_if_set_up() {
 }
 
 record_setup_complete(){
-    echo "$SETUP_STATUS_COMPLETE" > "$SETUP_STATUS_FILE"
+    # echo "$SETUP_STATUS_COMPLETE" > "$SETUP_STATUS_FILE"
 }
 
 do_setup() {
     configure_email
     configure_db
-    configure_auth
     configure_ai
     configure_search_engine
+    configure_auth
+
+    export_backend_env
+    export_frontend_env
+    export_root_env
 
     record_setup_complete
-    return 0  # Return 0 to indicate success
+    # return 0  # Return 0 to indicate success
+    return 1
+}
+
+# Function to ask a yes/no question
+ask_yes_no() {
+    local prompt="$1"
+    local response
+    while true; do
+        read -rp "$prompt (y/n):`echo $'\n> '`" response
+        case "$response" in
+            [Yy]*) return 0 ;;
+            [Nn]*) return 1 ;;
+            *) echo "Please answer yes or no." ;;
+        esac
+    done
+}
+
+# Function to ask for a credential
+ask_credential() {
+    local prompt="$1"
+    local response
+    read -rp "$prompt:`echo $'\n> '`" response
+    echo "$response"
 }
 
 configure_email() {
-    # Do you want to let Abbey send emails? y/n
-    # OK, so what are your email credentials
-    echo "EMAIL"
+    if ask_yes_no "Do you want to let Abbey send emails? You'll need an SMTP server (email)."; then
+        SEND_EMAILS=$TRUE_VALUE
+        echo "OK, please provide your email credentials for SMTP"
+        
+        SMTP_SERVER=$(ask_credential "SMTP Server")
+        SMTP_PORT=$(ask_credential "SMTP Port")
+        SMTP_USERNAME=$(ask_credential "SMTP Username")
+        SMTP_PASSWORD=$(ask_credential "SMTP Password")
+    else
+        SEND_EMAILS=$FALSE_VALUE
+    fi
 }
 
-configure_db() {
-    # What should be the root password for your MySQL server?
-    echo "DB"
+configure_db() {    
+    # Ask for MySQL root password
+    MYSQL_ROOT_PASSWORD=$(ask_credential "What should be the root password for Abbey's MySQL server?")
 }
 
 configure_auth() {
     # What auth providers would you like to use?
     # What are your client ids / client secrets
-    echo "AUTH"
+    
+    echo "Abbey relies on 3rd party OAuth2 authentication providers, like Google. You need to have a client ID and client secret for each OAuth provider you wish to configure."
+    echo "Abbey supports Google, GitHub, and Keycloak. If you'd like more, please contribute on GitHub!"
+    
+    if ask_yes_no "Would you like to configure Google OAuth2?"; then
+        USE_GOOGLE_AUTH=$TRUE_VALUE
+        GOOGLE_AUTH_CLIENT_ID=$(ask_credential "Please provide a Google client ID")
+        GOOGLE_AUTH_CLIENT_SECRET=$(ask_credential "Please provide a Google client secret")
+    else
+        USE_GOOGLE_AUTH=$FALSE_VALUE
+    fi
+
+    if ask_yes_no "Would you like to configure GitHub OAuth2?"; then
+        USE_GITHUB_AUTH=$TRUE_VALUE
+        GITHUB_AUTH_CLIENT_ID=$(ask_credential "Please provide a GitHub client ID")
+        GITHUB_AUTH_CLIENT_SECRET=$(ask_credential "Please provide a GitHub client secret")
+    else
+        USE_GITHUB_AUTH=$FALSE_VALUE
+    fi
+
+    if ask_yes_no "Would you like to configure KeyCloak OAuth2?"; then
+        USE_KEYCLOAK_AUTH=$TRUE_VALUE
+        KEYCLOAK_CLIENT_ID=$(ask_credential "Please provide a Keycloak client ID")
+        KEYCLOAK_REALM=$(ask_credential "Please provide a Keycloak realm")
+        KEYCLOAK_CLIENT_SECRET=$(ask_credential "Please provide a Keycloak client secret")
+        KEYCLOAK_HOST=$(ask_credential "Please provide a Keycloak host (like https://my-keycloak.com)")
+    else
+        USE_KEYCLOAK_AUTH=$FALSE_VALUE
+    fi
 }
 
 configure_ai() {
     # What ai providers would you like to use?
     # What are your keys?
-    echo "AI"
+    echo "To use Abbey, you will need to configure some AI providers, like the OpenAI API. Otherwise, you can implement your own API in the integrations folder in the backend."
+    if ask_yes_no "Would you like to configure the OpenAI API?"; then
+        USE_OPENAI=$TRUE_VALUE
+        OPENAI_KEY=$(ask_credential "OK, please provide an OpenAI API key")
+    else
+        USE_OPENAI=$FALSE_VALUE
+    fi
+
+    if ask_yes_no "Would you like to configure the Anthropic API?"; then
+        USE_ANTHROPIC=$TRUE_VALUE
+        ANTHROPIC_KEY=$(ask_credential "OK, please provide an Anthropic API key")
+    else
+        USE_ANTHROPIC=$FALSE_VALUE
+    fi
+
+    if ask_yes_no "Would you like to configure the Mathpix API for OCR?"; then
+        USE_MATHPIX=$TRUE_VALUE
+        MATHPIX_APP=$(ask_credential "OK, please provide a Mathpix App Name")
+        MATHPIX_KEY=$(ask_credential "OK, please provide a Mathpix API key")
+    else
+        USE_MATHPIX=$FALSE_VALUE
+    fi
+
+    if ask_yes_no "Would you like to configure the Eleven Labs for text-to-speech?"; then
+        USE_ELEVEN_LABS=$TRUE_VALUE
+        ELEVEN_LABS_KEY=$(ask_credential "OK, please provide an Eleven Labs API key")
+    else
+        USE_ELEVEN_LABS=$FALSE_VALUE
+    fi
+
+    echo "AI configuration completed."
 }
 
 configure_search_engine() {
     # Would you like to use bing?
     # What is your bing API key?
-    echo "SEARCH ENGINE"
+    if ask_yes_no "Would you like to use the Bing API to allow Abbey to search the web?"; then
+        USE_WEB=$TRUE_VALUE
+        BING_KEY=$(ask_credential "OK, please provide a Bing API key")
+    else
+        USE_WEB=$FALSE_VALUE
+    fi
 }
 
+export_backend_env() {
+    # Create or overwrite the .env file
+    {
+        if [ "$SEND_EMAILS" = "$TRUE_VALUE" ]; then
+            echo "SMTP_SERVER=$SMTP_SERVER"
+            echo "SMTP_PORT=$SMTP_PORT"
+            echo "SMTP_EMAIL=$SMTP_USERNAME"
+            echo "SMTP_PASSWORD=$SMTP_PASSWORD"
+        fi
+
+        if [ "$USE_OPENAI" = "$TRUE_VALUE" ]; then
+            echo "OPENAI_API_KEY=$OPENAI_KEY"
+        fi
+
+        if [ "$USE_ANTHROPIC" = "$TRUE_VALUE" ]; then
+            echo "ANTHROPIC_API_KEY=$ANTHROPIC_KEY"
+        fi
+
+        if [ "$USE_MATHPIX" = "$TRUE_VALUE" ]; then
+            echo "MATHPIX_API_APP=$MATHPIX_APP"
+            echo "MATHPIX_API_KEY=$MATHPIX_KEY"
+        fi
+
+        if [ "$USE_ELEVEN_LABS" = "$TRUE_VALUE" ]; then
+            echo "ELEVEN_LABS_API_KEY=$ELEVEN_LABS_KEY"
+        fi
+
+        if [ "$USE_WEB" = "$TRUE_VALUE" ]; then
+            echo "BING_API_KEY=$BING_KEY"
+        fi
+    } > "$BACKEND_ENV_FILE"
+}
+
+export_frontend_env() {
+    {
+        if [ "$USE_GOOGLE_AUTH" = "$TRUE_VALUE" ]; then
+            echo "GOOGLE_CLIENT_ID=$GOOGLE_AUTH_CLIENT_ID"
+            echo "GOOGLE_SECRET=$GOOGLE_AUTH_CLIENT_SECRET"
+        fi
+
+        if [ "$USE_GITHUB_AUTH" = "$TRUE_VALUE" ]; then
+            echo "GITHUB_CLIENT_ID=$GITHUB_AUTH_CLIENT_ID"
+            echo "GITHUB_SECRET=$GITHUB_AUTH_CLIENT_SECRET"
+        fi
+
+        if [ "$USE_KEYCLOAK_AUTH" = "$TRUE_VALUE" ]; then
+            echo "KEYCLOAK_CLIENT_ID=$KEYCLOAK_CLIENT_ID"
+            echo "KEYCLOAK_REALM=$KEYCLOAK_REALM"
+            echo "KEYCLOAK_SECRET=$KEYCLOAK_CLIENT_SECRET"
+            echo "KEYCLOAK_PUBLIC_URL=$KEYCLOAK_HOST"
+        fi
+    } > "$FRONTEND_ENV_FILE"
+}
+
+export_root_env() {
+    {
+        echo "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD"
+    } > .env
+}
 
 # Check if docker-compose is available
 if command -v docker-compose >/dev/null 2>&1; then  # If the docker compose command exists
