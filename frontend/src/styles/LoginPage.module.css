@@ -1,0 +1,24 @@
+
+.center{
+    display: flex;
+    justify-content: center;
+}
+
+@keyframes fadeInHalf {
+    from { opacity: 0; }
+    to { opacity: .2; }
+}
+
+.bgImg {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+
+    object-fit: cover;
+    z-index: -1;
+    opacity: .3;
+
+    animation-name: fadeInHalf;
+    animation-duration: 2s; /* Duration of the animation */
+    animation-fill-mode: forwards; /* Keeps the element at the final state when the animation completes */
+}

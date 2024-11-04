@@ -1,0 +1,79 @@
+
+
+.heading {
+    font-size: 1.5rem;
+    color: var(--passive-text);
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.groupResult {
+    display: flex;
+    padding: 1rem;
+    gap: 1rem;
+    align-items: flex-start;
+    flex: 1;
+    height: 150px;
+    align-items: center;
+}
+
+.productHeader {
+    background-color: var(--dark-primary);
+    color: var(--light-text);
+    padding: 5px;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    border-top-left-radius: var(--medium-border-radius);
+    border-top-right-radius: var(--medium-border-radius);
+}
+
+.groupLinkContainer {
+    cursor: pointer;
+    width: calc(33% - 9px);
+    background-color: var(--light-primary);
+    transition: background-color .1s ease-in-out;
+    border: 1px solid var(--light-border);
+    border-radius: var(--medium-border-radius);
+}
+
+.groupLinkContainer:hover {
+    background-color: var(--light-highlight);
+}
+
+.groupDesc {
+    color: var(--passive-text);
+}
+
+.groupTitle {
+    font-size: 1.25rem;
+}
+
+.groupImage {
+    height: 75px;
+    width: 75px;
+    position: relative;
+    flex-shrink: 0;
+}
+
+@media (max-width: 800px) { /* Apply styles when the screen width is 800px or smaller */
+    .groupTitle {
+        font-size: 1.1rem;
+    }
+    .groupDesc {
+        font-size: .9rem;
+    }
+    .groupImage {
+        height: 50px;
+        width: 50px;
+    }
+    .groupLinkContainer {
+        width: 100%;
+        height: unset;
+    }
+}
+

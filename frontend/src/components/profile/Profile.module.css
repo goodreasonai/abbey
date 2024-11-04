@@ -1,0 +1,72 @@
+
+.infoRow {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.label {
+    color: var(--passive-text);
+}
+
+.infoRows {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    color: var(--dark-text);
+}
+
+.modelCardHeader {
+    font-size: 1.15rem;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.modelCardDescription {
+    line-height: 1rem;
+    font-size: .8rem;
+    font-family: var(--font-body);
+    color: var(--passive-text)
+}
+
+.unavailableCard {
+    opacity: .5;
+}
+
+.unavailableCard, .modelCard, .modelCardSelected {
+    padding: 10px;
+    display: flex;
+    width: calc(50% - 5px);  /* dependent on the gap */
+    flex-direction: column;
+    gap: .75rem;
+    background-color: var(--light-primary);
+    border: 1px solid var(--light-border);
+    border-radius: var(--medium-border-radius);
+}
+
+.modelCard, .modelCardSelected {
+    cursor: pointer;
+}
+
+.modelCardSelected {
+    border-bottom: 10px solid var(--dark-primary);
+}
+
+.header {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--dark-text);
+}
+
+.ttsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+@media (max-width: 800px) { /* Apply styles when the screen width is 800px or smaller */
+    .unavailableCard, .modelCard, .modelCardSelected {
+        width: 100%;
+    }
+}

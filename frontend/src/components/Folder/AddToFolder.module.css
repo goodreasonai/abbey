@@ -1,0 +1,31 @@
+
+.container {
+    min-width: 300px;
+    min-height: 200px;
+    background-color: var(--light-primary);
+    padding: 1rem;
+
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    cursor: default;
+    border: 1px solid var(--light-border);
+
+    border-radius: var(--medium-border-radius);
+}
+
+.itemContainer {
+    display: flex;
+    gap: 10px;
+    background-color: var(--dark-primary);
+    color: var(--light-text);
+    padding: 10px;
+    font-size: .9rem;
+    transition: all .1s ease-in-out;
+    cursor: pointer;
+    align-items: center;
+}
+
+.itemContainer:hover {
+    background-color: var(--dark-highlight);
+}

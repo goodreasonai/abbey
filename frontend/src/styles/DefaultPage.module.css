@@ -1,0 +1,74 @@
+
+.wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.mainDiv {
+    margin: var(--std-margin);
+    margin-top: var(--std-margin-top);
+    flex-grow: 1;
+    position: relative;
+    min-height: calc(100vh - var(--nav-bar-height));
+}
+
+.signInFooter {
+    position: fixed;
+    bottom: 0px;
+    width: 100vw;
+    background-color: var(--light-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;    
+    flex-direction: column;
+    gap: 1rem;
+    padding: 2rem;
+    box-shadow: 0px -2px 5px var(--light-shadow);
+}
+
+.footer {
+    margin-top: 10rem;
+    padding: 4rem;
+    background-color: var(--light-primary);
+    height: auto;
+
+    display: flex;
+    gap: 10%;
+    font-family: var(--font-body);
+    color: var(--passive-text);
+}
+
+/* for the background jerome image */
+@keyframes fadeInHalf {
+    from { opacity: 0; }
+    to { opacity: .15; }
+}
+
+.signInFooterImg {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+
+    object-fit: cover;
+    position: absolute;
+    z-index: -1;
+    opacity: .3;
+
+    animation-name: fadeInHalf;
+    animation-duration: 2s; /* Duration of the animation */
+    animation-fill-mode: forwards; /* Keeps the element at the final state when the animation completes */
+}
+
+@media (max-width: 800px) { /* Apply styles when the screen width is 800px or smaller */
+    .footer {
+        flex-direction: column;
+        gap: 2rem;
+    }
+}
+
+.footerSection {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 2;
+}

@@ -1,0 +1,49 @@
+
+.webCardContainer { 
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.webCard {
+    width: 175px;
+    display: flex;
+    gap: 10px;
+    background-color: var(--light-primary);
+    flex-direction: column;
+    font-size: .9rem;
+    color: var(--passive-text);
+    background-color: var(--light-background);
+    padding: 5px;
+    border-radius: var(--small-border-radius);
+    border: 1px solid var(--light-border);
+    transition: all .1s ease-in-out;
+    cursor: pointer;
+    height: 100%;
+}
+
+.webCard:hover {
+    background-color: var(--light-highlight);
+}
+
+.createFrom {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+    opacity: .5;
+    cursor: pointer;
+    transition: all .1s ease-in-out;
+}
+
+.createFrom:hover {
+    opacity: 1;
+}
+
+@media (max-width: 900px) { /* Apply styles when the screen width is 900px or smaller */
+    .webCardContainer {
+        width: 100%;
+    }
+    .webCard {
+        width: 100%;
+    }
+}

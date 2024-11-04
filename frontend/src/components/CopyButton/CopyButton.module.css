@@ -1,0 +1,10 @@
+
+.img {
+    opacity: .5;
+    transition: opacity .05s ease-in-out;
+    cursor: pointer;
+}
+
+.img:hover {
+    opacity: 1;
+}

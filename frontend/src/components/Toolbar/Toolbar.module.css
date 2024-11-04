@@ -1,0 +1,26 @@
+
+.padded {
+    padding: 10px;
+}
+
+.option {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    transition: all .1s ease-in-out;
+    background-color: var(--light-primary);
+}
+
+.option:hover {
+    background-color: var(--light-highlight);
+}
+
+.container {
+    display: flex;
+    gap: 15px;
+    border: 1px solid var(--light-border);
+    align-items: center;
+    background-color: var(--light-primary);
+    flex-wrap: wrap;
+    border-radius: var(--medium-border-radius);
+}

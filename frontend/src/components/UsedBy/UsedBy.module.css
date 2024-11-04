@@ -1,0 +1,9 @@
+
+.sourceName {
+    background-color: var(--dark-primary);
+    color: var(--light-text);
+    padding: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: .8em;
+}

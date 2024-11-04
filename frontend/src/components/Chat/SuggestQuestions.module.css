@@ -1,0 +1,21 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.question {
+    opacity: .5;
+    display: flex;
+    gap: 10px;
+    transition: all .1s ease-in-out;
+    font-family: var(--font-body);
+}
+
+.question:hover {
+    opacity: 1;
+}
+
+.followUp {
+   color: var(--passive-text);
+}

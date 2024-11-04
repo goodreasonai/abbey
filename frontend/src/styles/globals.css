@@ -1,0 +1,326 @@
+
+* {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+  
+/* GLOBAL FONTS ARE ADDED IN _app.js */
+  
+:root {
+    /* Background Colors */
+
+    --light-background: rgb(250, 252, 250);  /* Lighter than light primary (used for insets) */
+    --light-background-rgb: 250, 252, 250;
+    --darkmode-light-background: #202020;
+
+    --light-background-highlight: rgb(245, 247, 245); /* Hover/select over a light primary */
+    --darkmode-light-background-highlight: #515151;
+
+    --dark-primary: #516e5c;   /* Dark menus, buttons etc. */
+    --darkmode-dark-primary: #516e5c;
+
+    --dark-highlight: #61866f;  /* When you hover/select over a dark primary */
+    --darkmode-dark-highlight: #61866f;
+
+    --light-primary: #f0f0f0;  /* Mostly for boxes on top of light background */
+    --light-primary-rgb: 240, 240, 240;
+    --darkmode-light-primary: #434343;
+    --darkmode-light-primary-rgb: 67, 67, 67;
+
+    --light-highlight: #e7e7e7; /* Hover/select over a light primary */
+    --darkmode-light-highlight: #515151;
+
+    --light-accent: #dddddd; /* For <code> in markdown viewer; slightly off light primary for emphasis */
+    --darkmode-light-accent: #6c6c6c;
+
+    --dark-secondary: #393b39;  /* Tooltip background and doesn't change with darkmode */
+    --dark-secondary-rgb: 57, 59, 57;
+    --alt-dark-secondary: #393b39;  /* Tooltip background but DOES change with darkmode (used for CurvedArrow, some shadow effect) */
+    --alt-dark-secondary-rgb: 57, 59, 57;
+    --darkmode-alt-dark-secondary: #b3b3b3;
+    --darkmode-alt-dark-secondary-rgb: 179, 179, 179;
+
+    /* Text Colors */
+
+    --dark-text: black;
+    --darkmode-dark-text: #ebebeb;
+
+    --light-text: rgb(240, 240, 240);
+    --darkmode-light-text: #ebebeb;
+
+    --passive-text: #707070;
+    --darkmode-passive-text: #acacac;
+
+    --placeholder-text: #acacac;  /* Text editor placeholder color */
+    --darkmode-placeholder-text: #848484;
+
+    --dark-pop-text: #516e5c;  /* For citations */
+    --darkmode-dark-pop-text: #84bb99;
+
+    /* Weird Background Colors */
+
+    --logo-red: #BC413C;
+    --logo-blue: #1358A2;
+    --warning: orange;
+
+    /* Borders and Shadows */
+
+    --light-shadow: #e0e0e0;
+    --darkmode-light-shadow: rgb(55, 55, 55);
+
+    --dark-shadow: #b8b8b8;
+
+    --dark-border: #666666;  /* Doesn't change in dark mode */
+
+    --light-border: #dcdcdc;
+    --darkmode-light-border: rgb(81, 81, 81);
+
+    --lightest-border: #e7e7e7;  /* They used to be different ok */
+    --darkmode-lightest-border: rgb(74, 74, 74);
+
+    /* Margins */
+
+    --correctiveFontMarginHeader: -3px;  /* Some fonts have some extra spacing at the top; this corrects. Use sparingly. */
+    --std-margin: 2rem;
+    --std-margin-top: 1rem;
+
+    --nav-bar-height: 35px;  /* Not the greatest - AND SHOULD VERY RARELY BE USED... */
+
+    /* Radii */
+    
+    --small-border-radius: 5px;
+    --medium-border-radius: 5px;
+    --large-border-radius: 15px;
+
+    /* Bookkeeping */
+
+    --inverted: 100%;
+    --not-inverted: 0%;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+  
+body {
+    font-family: var(--font-header);
+    color: var(--dark-text);
+}
+  
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Targeting Clerk components */  
+.cl-formButtonPrimary {
+    font-size: 14px;
+    text-transform: none;
+    background-color: #516e5c;
+}
+    
+.cl-formButtonPrimary:hover,
+.cl-formButtonPrimary:focus,
+.cl-formButtonPrimary:active {
+    background-color: #61866f;
+}
+  
+.cl-footerActionLink, .cl-footerActionLink:hover {
+      color: #516e5c;
+}
+
+.cl-avatarBox {
+    width: 25px;
+    height: 25px;
+}
+  
+[data-theme='dark'] {
+    filter: none;
+
+    background-color: var(--darkmode-light-background);
+
+    --dark-primary: var(--darkmode-dark-primary);
+    --dark-highlight: var(--darkmode-dark-highlight);
+    --alt-dark-secondary: var(--darkmode-alt-dark-secondary);
+    --alt-dark-secondary-rgb: var(--darkmode-alt-dark-secondary-rgb);
+
+    --light-primary: var(--darkmode-light-primary);
+    --light-primary-rgb: var(--darkmode-light-primary-rgb);
+    --light-highlight: var(--darkmode-light-highlight); 
+
+    --light-background: var(--darkmode-light-background); 
+
+    --light-background-highlight: var(--darkmode-light-background-highlight);
+
+    --light-accent: var(--darkmode-light-accent);
+    
+    --dark-text: var(--darkmode-dark-text);
+    --light-text: var(--darkmode-light-text);
+    --placeholder-text: var(--darkmode-placeholder-text);
+    --dark-pop-text: var(--darkmode-dark-pop-text);
+    --passive-text: var(--darkmode-passive-text);    
+
+    --light-shadow: var(--darkmode-light-shadow);
+
+    --light-border: var(--darkmode-light-border);
+    --lightest-border: var(--darkmode-lightest-border);
+
+    --inverted: 100%;
+    --not-inverted: 100%;
+}
+
+/* Targeting PDF Viewer */
+
+.rpv-default-layout__container {
+    border-width: 0px !important;
+}
+
+.rpv-default-layout__toolbar {
+    border-bottom: 1px solid var(--light-border) !important;
+    display: flex !important;
+    align-items: center !important;
+    font-family: var(--font-body) !important;
+    background-color: var(--light-primary) !important;
+    flex-wrap: wrap;
+    border-top-left-radius: var(--medium-border-radius);
+    border-top-right-radius: var(--medium-border-radius);
+}
+
+.rpv-default-layout__body {
+    border-radius: var(--medium-border-radius);
+}
+
+.rpv-core__doc-loading {
+    border-radius: var(--medium-border-radius);
+}
+  
+
+/* Would like to use and expand on all accessibility items here */
+._clickable {
+    cursor: pointer;
+}
+
+._clamped1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-all;
+}
+
+._clamped2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+._clamped3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+._touchableOpacity {
+    transition: .1s ease-in-out all;
+    opacity: .5;
+    cursor: pointer;
+}
+
+._touchableOpacity:hover {
+    opacity: 1;
+}
+
+.tiptap > * + * {
+    margin-top: 0.5rem;
+}
+
+.tiptap {
+    outline: none;
+}
+
+/* Can't add a custom class for a table if it's resizable in tiptap, so have to use globals. */
+.tiptap table {
+    border-collapse: collapse;
+    margin: 0;
+    overflow: hidden;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.tiptap table td,
+.tiptap table th {
+    border: 1px solid var(--dark-border);
+    box-sizing: border-box;
+    min-width: 1em;
+    padding: 3px 5px;
+    position: relative;
+    vertical-align: top;
+}
+
+.tiptap table td > *,
+.tiptap table th > * {
+    margin-bottom: 0;
+}
+
+.tiptap table th {
+    background-color: var(--light-primary);
+    font-weight: 600;
+    text-align: left;
+}
+
+.tiptap table .selectedCell:after {
+    background: var(--dark-highlight);
+    opacity: .5;
+    content: "";
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    pointer-events: none;
+    position: absolute;
+    z-index: 2;
+}
+
+.tiptap table .column-resize-handle {
+    background-color: var(--dark-highlight);
+    bottom: -2px;
+    position: absolute;
+    right: -2px;
+    pointer-events: none;
+    top: 0;
+    width: 4px;
+}
+
+.tiptap table p {
+    margin: 0;
+}
+
+  
+.tableWrapper {
+    padding: 1rem 0;
+    overflow-x: auto;
+}
+  
+.resize-cursor {
+    cursor: ew-resize;
+    cursor: col-resize;
+}
+
+/* Need this for tiptap table resizing */
+.resize-cursor {
+    cursor: ew-resize;
+    cursor: col-resize;
+}
+
+@media (max-width: 800px) { /* Apply styles when the screen width is 800px or smaller */
+    ._hideOnMobile {
+        display: none !important;
+    }
+}

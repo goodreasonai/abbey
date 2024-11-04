@@ -1,0 +1,18 @@
+
+.container {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    overflow: hidden;
+    background-color: var(--light-primary);
+    opacity: .5;
+}
+
+.rainDrop {
+    position: absolute;
+    font-size: 1.5rem;
+    color: black;  /* Hardcoded to avoid switch in dark mode (less jarring with other pictures) */
+    transform: translateY(-100%);  /* So that the rain never falls off */
+}

@@ -1,0 +1,48 @@
+
+
+.citation {
+    color: var(--dark-text);
+    cursor: pointer;
+}
+
+.citation:hover {
+    text-decoration: underline;
+}
+
+.menuOptionContainer {
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    background-color: var(--light-border);
+    padding-right: var(--std-margin);
+    position: sticky;
+    top: 0px;
+    z-index: 11;
+}
+
+.menuOption {
+    width: 33%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--dark-primary);
+    color: var(--light-text);
+    font-size: .9rem;
+    padding: 5px;
+}
+
+.menuOptionSelected {
+    background-color: var(--light-primary);
+    color: var(--dark-text);
+}
+
+@keyframes fadeInFull{
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.panelFade {
+    animation-name: fadeInFull;
+    animation-duration: .5s; /* Duration of the animation */
+    animation-fill-mode: forwards; /* Keeps the element at the final state when the animation completes */
+}

@@ -1,0 +1,33 @@
+
+.container {
+    flex: 1;
+}
+
+@keyframes shimmer {
+    0% {
+      background-position: -100% 0;
+    }
+    100% {
+      background-position: -100% 0;
+    }
+    50% {
+        background-position: 100% 0;
+    }
+}
+  
+.paragraph {
+    flex: 1;
+    height: 2rem;
+    background: linear-gradient(90deg, var(--light-primary), var(--light-highlight), var(--light-primary));
+    background-size: 500px 100%; 
+    animation: shimmer 5s infinite linear;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    border-radius: var(--medium-border-radius);
+}
+
+@media (max-width: 800px) { /* Apply styles when the screen width is 800px or smaller */
+    .container {
+        max-width: unset;
+    }
+}

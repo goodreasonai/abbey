@@ -1,0 +1,11 @@
+
+
+.collapsibleContainerHeader {
+    background-color: var(--light-primary);
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    position: relative;
+    border: 1px solid var(--light-border);
+    border-radius: var(--medium-border-radius);
+}

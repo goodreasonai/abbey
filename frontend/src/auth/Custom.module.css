@@ -1,0 +1,15 @@
+
+.button {
+    background-color: var(--light-background);
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--medium-border-radius);
+    border: 1px solid var(--light-border);
+    transition: all .1s ease-in-out;
+}
+
+.button:hover {
+    background-color: var(--light-background-highlight);
+}

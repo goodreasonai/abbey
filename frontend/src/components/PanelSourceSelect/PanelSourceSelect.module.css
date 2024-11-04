@@ -1,0 +1,19 @@
+
+.item {
+    background-color: var(--dark-primary);
+    color: var(--light-text);
+    padding: 10px;
+    font-size: .1;
+}
+
+.uploadDoc {
+    transition: all .1s ease-in-out;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    background-color: var(--dark-primary);
+    padding: 5px 10px;
+    border-radius: var(--small-border-radius);
+    color: var(--light-text);
+    font-size: .9rem;
+}

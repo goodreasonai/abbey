@@ -1,0 +1,59 @@
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.overlay {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+    z-index: 10002; /* Ensure the modal is on top of everything else */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+
+    animation-name: fadeIn;
+    animation-duration: .5s; /* Duration of the animation */
+    animation-fill-mode: forwards; /* Keeps the element at the final state when the animation completes */
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+    position: relative;
+    background-color: var(--light-background);
+    border: 1px solid var(--light-border);
+    border-radius: var(--medium-border-radius);
+    transition: width 1s linear;
+    color: var(--dark-text);
+}
+
+.closeModal {
+    cursor: pointer;
+}
+
+.header {
+    display: flex;
+    color: var(--passive-text);
+    font-size: .9rem;
+    align-items: center;
+    background-color: var(--light-primary);
+    padding: 10px;
+    border-top-left-radius: var(--medium-border-radius);
+    border-top-right-radius: var(--medium-border-radius);
+}
+
+.title {
+    flex: 1;
+}
+
+.body {
+    margin: 10px;
+    overflow-y: scroll;
+}
+

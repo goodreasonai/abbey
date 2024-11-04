@@ -1,0 +1,81 @@
+
+.buttonContainer, .extraOptions {
+    background-color: var(--light-primary);
+    color: var(--dark-text);
+    padding: 5px;
+    padding-left: 15px;
+    padding-right: 15px;
+    transition: all .1s ease-in-out;
+    cursor: pointer;
+    font-size: .85rem;
+    background-color: var(--light-background);
+    border-radius: var(--medium-border-radius);
+    border: 1px solid var(--light-border);
+    white-space: nowrap;
+}
+
+.buttonContainer:hover, .extraOptions:hover {
+    background-color: var(--light-highlight);
+}
+
+.loadingButtonContainer:hover {
+    background-color: var(--light-background);
+    cursor: default;
+}
+
+.leftButton {
+    border-bottom-left-radius: 10px;
+}
+
+.outerContainer {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    position: relative;
+}
+
+.innerContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /*
+    background-color: var(--dark-primary);
+    border-bottom-left-radius: 1rem;
+    border-bottom-right-radius: 1rem;
+    padding-left: 15px;
+    padding-right: 15px;
+    */
+}
+
+.dropdownOptionsContainer {
+    position: absolute;
+    top: calc(100% + 5px);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(-100%);
+    left: 100%;
+    background-color: var(--light-primary);
+    border: 1px solid var(--light-border);
+    z-index: 15;
+}
+
+.dropdownOption {
+    padding: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    width: 135px;
+    background-color: var(--light-primary);
+    cursor: pointer;
+    z-index: 15;
+}
+
+.dropdownOption:hover {
+    background-color: var(--light-highlight);
+}
+
+.extraOptions {
+    border-bottom-right-radius: 10px;
+    border-right-color: var(--light-border);
+    border-right-style: solid;
+    border-right-width: 1px;
+}

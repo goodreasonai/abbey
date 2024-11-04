@@ -1,0 +1,53 @@
+.elipses {
+    cursor: pointer;
+    color: var(--passive-text);
+    text-align: center;
+}
+
+.searchContainer {
+    display: flex;
+    flex-direction: column;
+    padding-right: 20px;
+    padding-left: 20px;
+}
+
+.searchBar {
+    max-width: 400px;
+    display: flex;
+}
+
+.searchResults {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.searchResultText {
+    background-color: var(--light-primary) !important;
+    padding: 10px;
+    font-family: var(--font-body);
+    line-height: 1.5rem;
+    border: 1px solid var(--light-border);
+}
+
+.searchResultHeader {
+    background-color: var(--dark-primary);
+    padding: 5px 10px;
+    font-size: .9rem;
+    color: var(--light-text);
+    display: flex;
+    gap: 10px;
+    border-top-left-radius: var(--medium-border-radius);
+    border-top-right-radius: var(--medium-border-radius);
+}
+
+.seeContextText {
+    display: flex;
+    cursor: pointer;
+    opacity: .5;
+    transition: all .1s ease-in-out;
+}
+
+.seeContextText:hover {
+    opacity: 1;
+}

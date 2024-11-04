@@ -1,0 +1,167 @@
+
+.menuButton {
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: all .1s ease-in-out;
+    display: flex;
+    align-items: center;
+}
+
+.menuButton:hover {
+    background-color: var(--light-primary);
+}
+
+.menuButtonActive {
+    background-color: var(--light-highlight);
+}
+
+.menuButtonActive:hover {
+    background-color: var(--light-highlight) !important;
+}
+
+.menuBar {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--light-border);
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0px;
+    background-color: var(--light-background);
+    align-items: stretch;
+    z-index: 10;
+}
+
+/* This makes the inc/dec on <Number> always show (at least on Chrome?) */
+.menuBar input[type=number]::-webkit-inner-spin-button, 
+.menuBar input[type=number]::-webkit-outer-spin-button {
+   opacity: 1;
+}
+
+
+.editorContainer {
+    border: 1px solid var(--light-border);
+    position: relative;
+    background-color: var(--light-background);
+    word-break: break-word;
+}
+
+.editorProvider {
+    font-family: var(--font-body);
+    font-size: 12pt;
+    line-height: 1.5rem;  /* Connected to the LineHeight extension - change default there if this gets changed. */
+}
+
+/* Note: there's an extra piece of styling for tiptap in globals.css */
+/* ALSO: CHANGES SHOULD ALSO BE DONE IN html.js, WHERE THIS STUFF IS COPIED */
+
+.editorProvider ul,
+.editorProvider ol {
+    padding: 0 2rem;
+}
+
+.editorProvider h1, .editorProvider h1 > *  {
+    line-height: 1.1;
+    font-size: 20pt !important;
+    font-weight: 700;
+}
+
+.editorProvider h2, .editorProvider h2 > * {
+    line-height: 1.1;
+    font-size: 18pt;
+    font-weight: 600;
+}
+
+.editorProvider h3, .editorProvider h3 > *,
+.editorProvider h4, .editorProvider h4 > *,
+.editorProvider h5, .editorProvider h5 > *,
+.editorProvider h6, .editorProvider h6 > * {
+    line-height: 1.1;
+    font-size: 16pt;
+    font-weight: 500;
+}
+
+.editorProvider code {
+    background-color: rgba(#616161, 0.1);
+    color: #616161;
+}
+
+.editorProvider pre {
+    background: #0D0D0D;
+    color: #FFF;
+    font-family: 'JetBrainsMono', monospace;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+}
+
+.editorProvider img {
+    max-width: 100%;
+    height: auto;
+}
+
+.editorProvider blockquote {
+    padding-left: 1rem;
+    color: var(--passive-text);
+    border-left: 2px solid var(--light-primary);
+}
+
+.editorProvider hr {
+    border-color: var(--light-border);
+    border-style: solid;
+}
+
+.editorProvider a {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.tableToolbarOption {
+    min-width: 100px;
+    background-color: var(--light-primary);
+    color: var(--passive-text);
+    padding: 5px;
+    font-size: .8rem;
+    padding-left: 10px;
+    cursor: pointer;
+    font-family: var(--font-body);
+}
+
+.tableToolbarOption:hover {
+    color: var(--dark-text);
+}
+
+.minHeight_none {
+    min-height: 0px;
+}
+
+.minHeight_small {
+    min-height: 100px;
+}
+
+.minHeight_medium {
+    min-height: 200px;
+}
+
+.minHeight_fullScreen {
+    min-height: 100vh;
+}
+
+.padding_none {
+    padding: 0px;
+}
+
+.padding_small {
+    padding: 5px;
+}
+
+.padding_medium {
+    padding: 10px;
+}
+
+
+.placeholder:first-child::before {
+    color: var(--placeholder-text);
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+}

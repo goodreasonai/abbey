@@ -1,0 +1,55 @@
+
+
+.linkContainer, .linkContainerLight {
+    display: flex;
+    flex-wrap: wrap;
+    overflow: hidden;
+}
+
+.linkContainer {
+    background-color: var(--dark-primary);
+    color: var(--light-text);
+    border-radius: var(--small-border-radius);
+}
+
+.linkContainerLight {
+    background-color: var(--light-background);
+    color: var(--dark-text);
+}
+
+.linkAuthor {
+    opacity: .5;
+    font-size: .75rem;
+}
+
+.linkTitle, .linkAuthor {
+    font-family: var(--font-body);
+    font-size: .85rem;
+    overflow: hidden;
+    max-width: 200px;
+    text-overflow: ellipsis;
+}
+
+.frLink, .frLinkLight {
+    transition: background-color .1s ease-in-out;
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    flex: 1;
+    border-radius: var(--small-border-radius);
+}
+
+.frLink:hover {
+    background-color: var(--dark-highlight);
+    cursor: pointer;
+}
+
+.frLinkLight:hover {
+    background-color: var(--light-highlight);
+    cursor: pointer;
+}
+
+.linkDeleteImageContainer {
+    display: flex;
+    padding: 10px;
+}

@@ -1,0 +1,22 @@
+
+.option {
+    padding: 3px 6px;
+    margin: 2px 4px;
+    border: 1px solid transparent;
+    transition: all .1s ease-in-out;
+    cursor: pointer;
+}
+
+.option:hover {
+    background-color: var(--light-highlight);
+    border-radius: var(--small-border-radius);
+    border: 1px solid var(--light-border);
+}
+
+.unavailable {
+    color: var(--passive-text);
+    cursor: default;
+    opacity: .5;
+    padding: 3px 6px;
+    margin: 2px 4px;
+}

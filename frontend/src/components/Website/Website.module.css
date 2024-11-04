@@ -1,0 +1,84 @@
+.websiteCardContainer {
+    height: 100%;
+    width: 100%;
+    padding: 20px;
+    padding-right: 0px;
+    overflow: scroll;
+}
+
+.websiteInfoBox {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.websiteInfoHeader {
+    display: flex;
+    align-items: stretch;
+    flex-wrap: wrap;
+    border: 1px solid var(--light-border);
+    background-color: var(--light-background);
+    border-radius: var(--small-border-radius);
+}
+
+.websiteBoxItem {
+    padding: .5em;
+    color: var(--passive-text);
+    font-family: var(--font-body);
+}
+
+.websiteBoxLabel {
+    padding: .5em;
+    color: var(--passive-text);
+}
+
+.websiteBoxButton {
+    padding: .5em;
+    background-color: var(--light-background);
+}
+
+.websiteImage {
+    min-height: 100px;
+    max-width: 100%;
+    border: 1px solid var(--light-border);
+    border-radius: var(--medium-border-radius);
+}
+
+.showScrapedButton {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    cursor: pointer;
+    opacity: .5;
+    transition: all .1s ease-in-out;
+    text-decoration: underline;
+}
+
+.showScrapedButton:hover {
+    opacity: 1;
+}
+
+.sidebar {
+    position: sticky;
+    top: 0px;
+    background-color: var(--light-primary);
+    padding: 20px;
+    border-left: 1px solid var(--light-border);
+    border-bottom: 1px solid var(--light-border);
+}
+
+@media (max-width: 800px) { /* Apply styles when the screen width is 800px or smaller */
+    .websiteCardContainer {
+        height: unset;
+        padding-right: 20px;
+    }
+    .websiteImage {
+        max-height: 250px;
+    }
+    .sidebar {
+        border: 1px solid var(--light-border);
+        border-top-left-radius: var(--medium-border-radius);
+        border-bottom-left-radius: var(--medium-border-radius);
+    }
+}

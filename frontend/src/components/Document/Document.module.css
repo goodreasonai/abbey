@@ -1,0 +1,177 @@
+.main {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.assetContent {
+    display: flex;
+    position: relative;
+}
+
+.chatStyle {
+    display: block
+}
+
+.floatingChatButton {
+    display: None
+}
+
+.floatingChatButton:hover {
+    background-color: var(--dark-highlight);
+}
+
+.menuItem {
+    vertical-align: middle;
+    flex-grow: 1;
+}
+
+.objectTag {
+    flex: 1;
+}
+
+.plainTextDisplay {
+    flex: 1;
+    padding: 20px;
+    background-color: var(--light-primary);
+    font-family: var(--font-body);
+    line-height: 1.25rem;
+}
+
+.markdownDisplay {
+   flex: 1;
+   font-family: var(--font-body);
+   max-height: 100vh;
+   height: 100%;
+   padding: 20px;
+   overflow: scroll;
+}
+
+.titleUsedByContainer {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1rem;
+}
+
+.searchContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-right: 10px;
+}
+
+.searchBar {
+    max-width: 400px;
+    display: flex;
+}
+
+.searchResults {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.searchResultText {
+    background-color: var(--light-primary);
+    padding: 10px;
+    font-family: var(--font-body);
+    line-height: 1.5rem;
+}
+
+.searchResultHeader {
+    background-color: var(--dark-primary);
+    padding: 5px;
+    font-size: .9rem;
+    color: var(--light-text);
+    display: flex;
+    gap: 10px;
+}
+
+.topText {
+    display: flex
+}
+
+.elipses {
+    cursor: pointer;
+    color: var(--passive-text);
+    text-align: center;
+}
+
+.showChatButton {
+    display: none !important;
+}
+
+.quizMeSignedOut {
+    opacity: .5;
+    pointer-events: none;
+}
+
+.htmlIframe {
+    height: 100%;
+    width: 100%;
+    border: 0px;
+}
+
+@media (max-width: 800px) { /* Apply styles when the screen width is 800px or smaller */
+    .assetContent {
+        flex-direction: column-reverse;
+    }
+    .mobileChatComponent {
+        display: block;
+        position: fixed; /* Fixed position relative to the viewport */
+        top: 0px;
+        left: 0px;
+        right: 0px;
+        bottom: 0px;
+        z-index: 999;
+        background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+        backdrop-filter: blur(10px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: scroll;
+        padding: 10px;
+    }
+
+    .floatingChatButton {
+        display: flex;
+        position: fixed;
+        bottom: 20%;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        background-color: var(--dark-primary);
+        border: none;
+        border-radius: 50%; /* Circular shape */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Shadow effect */
+        cursor: pointer;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        transition: background-color 0.3s;
+    }
+
+    .topText {
+        display: none;
+    }
+
+    .markdownDisplay {
+        max-width: unset;
+    }
+    .titleUsedByContainer {
+        flex-direction: column;
+    }
+    .titleUsedByContainer h1 {
+        font-size: 1.5rem;
+    }
+    .usedBy {
+        flex-direction: column;
+        display: flex;
+        gap: 10px;
+        justify-content: left;
+        align-items: unset !important;
+    }
+    .resizer {
+        display: none;
+    }
+}

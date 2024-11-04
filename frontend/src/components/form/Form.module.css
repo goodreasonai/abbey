@@ -1,0 +1,456 @@
+.button, .disabledButton {
+    all: unset;
+    background-color: var(--dark-primary);
+    border: none;
+    color: var(--light-text);
+    padding: .25em;
+    padding-left: 1.5em;
+    padding-right: 1.5em;
+    font-size: 16px;
+    font-family: var(--font-header);
+    border-radius: var(--small-border-radius);
+}
+
+.button {
+    transition: background-color 0.1s ease-in-out;
+    cursor: pointer;
+}
+
+.disabledButton {
+    opacity: 50%;
+}
+
+.button:hover {
+    background-color: var(--dark-highlight);
+}
+
+.inputTextContainer {
+    position: relative;
+    display: flex;
+    width: 100%;
+}
+
+.inputText {
+    border: 1px solid var(--light-border);
+    border-radius: var(--small-border-radius);
+    background-color: var(--light-primary);
+    color: var(--dark-text);
+    font-size: 1rem;
+    flex: 1;
+    padding: .5rem;
+    font-family: inherit;
+}
+
+.inputText::placeholder {
+    color: var(--passive-text);
+}
+
+.inputText:focus {
+    outline: none;
+}
+
+.charCount {
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: .5rem;
+    padding-left: 0px;
+    background-color: var(--light-primary);
+    border: 1px solid var(--light-border);
+    border-left-width: 0px;
+    border-top-right-radius: var(--small-border-radius);
+    border-bottom-right-radius: var(--small-border-radius);
+}
+
+.textArea {
+    border: 0px;
+    padding: .5rem;
+    background-color: var(--light-primary);
+    color: var(--dark-text);
+    font-size: 1rem;
+    width: 100%;
+    font-family: inherit;
+    height: 6rem;
+    border-radius: var(--medium-border-radius);
+    border: 1px solid var(--light-border);
+}
+
+.textArea:focus {
+    outline: none;
+}
+
+.listOption {
+    background-color: var(--light-background);
+    list-style-type: none;
+    cursor: pointer;
+    padding: 1rem;
+}
+
+.permissionsEntry {
+    padding: 1rem;
+    background-color: var(--light-primary);
+    border: 1px solid var(--light-border);
+    border-radius: var(--medium-border-radius);
+}
+
+.permissionsTextBox {
+    background-color: var(--light-background);
+    margin-top: 10px;
+}
+
+.permissionsEntry h3 {
+    color: var(--dark-primary);
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.buttonSelectOption {
+    padding: 10px 15px;
+    background-color: var(--light-primary);
+    cursor: pointer;
+
+    transition: background-color .1s ease-in-out;
+    border-radius: var(--medium-border-radius);
+    border: 1px solid var(--light-border)
+}
+
+.buttonSelectOption:hover {
+    background-color: var(--light-highlight);
+}
+
+.responsiveTextarea {
+    border: none;
+    outline: none;
+    overflow: hidden;
+    resize: none;
+    min-height: 50px;
+    width: 100%;
+    background-color: inherit;
+    font-family: inherit;
+    font-size: 1rem;  /* It's a Chrome thing actually that this is necessary */
+    line-height: 1.5rem;
+}
+
+.number {
+    all: unset;
+    width: 3.25rem;  /* Enough for 3 digits typically */
+    font-size: 1rem;
+    outline: 0px;
+    padding: 5px;
+    background-color: var(--light-background);
+}
+
+
+.heading {
+    color: var(--passive-text);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+
+.syntheticButton {
+    display: inline-block;
+    background-color: var(--dark-primary);
+    padding: .5em;
+    padding-left: 1em;
+    padding-right: 1em;
+    font-size: 1rem;
+    transition: background-color 0.1s ease-in-out;
+    color: var(--light-text);
+    border-radius: var(--small-border-radius);
+    cursor: default;
+}
+
+.syntheticButtonHighlight:hover {
+    background-color: var(--dark-highlight);
+    cursor: pointer;
+}
+
+.studentSelectorInput {
+    background-color: var(--light-primary);
+}
+
+.multiInputText {
+    display: flex;
+    flex-direction: column;
+    padding: 0px;
+    gap: .5rem;
+}
+
+.multiTextRemoveBox {
+    background-color: var(--light-primary);
+    display: flex;
+    align-items: center;
+    padding: 5px;
+
+    transition: background-color .1s ease-in-out;
+    cursor: pointer;
+}
+
+.multiTextRemoveBox:hover{
+    background-color: var(--light-highlight);
+}
+
+.titleEntry {
+    font-size: 1.5rem;
+    padding: 10px;
+}
+
+
+.templateBox {
+    width: 190px;
+    flex: 0 0 auto;
+    padding: 5px 10px;
+    padding-bottom: 10px; /* The top has a natural padding from its icon and align-items:center */
+    border-radius: var(--small-border-radius);
+    cursor: pointer;
+    background-color: var(--light-background);
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: background-color 0.1s;
+    border: 1px solid var(--light-border);
+}
+
+.templateBox:hover {
+    background-color: var(--light-highlight);
+}
+
+.templateGroupingsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1;
+}
+
+@media only screen and (max-width: 1100px) and (min-width: 850px) {
+    .templateGroupingsContainer {
+        flex-direction: row;
+    }
+    .templateBox {
+        width: 40%;
+    }
+}
+
+@media only screen and (max-width: 850px) {
+    .templateBox {
+        width: 100%;
+    }
+}
+
+.scrollButton {
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--light-text);
+    transition: background-color 0.1s;
+    position: absolute;
+    background-color: var(--dark-primary);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+
+    height: 100%;
+
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.scrollButton:hover {
+    background-color: var(--dark-highlight);
+}
+
+.hiddenButton {
+    opacity: 0; 
+    pointer-events: none;
+}
+
+.templateDescription {
+    font-size: .8rem;
+    margin-top: 5px;
+    white-space: normal;
+    font-family: var(--font-body);
+}
+
+.smallTemplateBox {
+    background-color: var(--light-background);
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color .1s ease-in-out;
+    border-radius: var(--small-border-radius);
+    border: 1px solid var(--light-border);
+}
+
+.smallTemplateBox:hover {
+    background-color: var(--light-highlight);
+}
+
+.selectedTemplate {
+    background-color: var(--dark-primary);
+    color: white;
+}
+
+.selectedTemplate:hover {
+    background-color: var(--dark-primary);
+}
+
+.templateIcon {
+    margin-left: auto;
+    vertical-align: middle; /* Aligns the icon with the text */
+    padding: 5px;
+}
+
+/* Bad practice but unfortunately necessary? */
+[data-theme='dark'] .templateIcon {
+    filter: invert(100%);
+}
+
+.dragArea {
+    border: 1px solid var(--light-border);
+    border-radius: var(--medium-border-radius);
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    background-color: var(--light-primary);
+    transition: background-color 0.2s;
+    min-height: 125px;
+}
+
+.dragAreaDragging {
+    background-color: var(--light-highlight);
+}
+
+.fileUploadSmall {
+    border: 0px;
+    padding: .5rem;
+    background-color: var(--light-primary);
+    color: var(--dark-text);
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+.rangeSliderContainer {
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+  
+.rangeSlider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 7px;
+    border-radius: var(--small-border-radius);
+    background: var(--light-background);
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: opacity .2s;
+    transition: opacity .2s;
+}
+
+.rangeSlider:hover {
+    opacity: 1;
+}
+
+.rangeSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--dark-primary);
+    cursor: pointer;
+}
+
+.rangeSlider::-moz-range-thumb {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--dark-primary);
+    cursor: pointer;
+}
+.fileTooLargeBanner {
+    color: var(--logo-red);
+}
+
+.autoFillContainer {
+    position: absolute;
+    top: 100%;
+    width: 100%;
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid var(--light-highlight);
+    border-top: none;
+    background-color: var(--light-background);
+    z-index: 1;
+    justify-content: space-between;
+    display: flex;
+    flex-direction: column;
+}
+
+.autoFillOption {
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.autoFillOption:hover {
+    background-color: var(--light-highlight);
+}
+
+.autoFillOptionTitle {
+
+}
+
+.autoFillOptionDesc {
+    opacity: 25%;
+    flex: 1;  /* I haven't the faintest idea why THIS should be flex 1 instead of optionTitle, but alas, it works... */
+}
+
+.highlightedAutoFillOption {
+    background-color: var(--light-highlight);
+}
+
+.toggleButtonDeactivated {
+    background-color: var(--light-primary);
+    color: var(--dark-text);
+}
+
+.toggleButtonDeactivated:hover {
+    background-color: var(--light-highlight);
+    color: var(--dark-text);
+}
+
+.toggleButtonActivated:hover {
+    background-color: var(--dark-primary);
+}
+
+.toggleButtonLightDeactivated {
+    background-color: var(--light-primary);
+    color: var(--dark-text);
+    opacity: .5;
+}
+
+.toggleButtonLightDeactivated:hover {
+    background-color: var(--light-highlight);
+    color: var(--dark-text);
+}
+
+.toggleButtonLightActivated {
+    background-color: var(--light-highlight);
+    color: var(--dark-text)
+}
+
+.toggleButtonLightActivated:hover {
+    background-color: var(--light-highlight);
+    color: var(--dark-text)
+}
+
+.dateTimePicker {
+    font-family: var(--font-body);
+}

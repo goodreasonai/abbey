@@ -1,0 +1,244 @@
+
+.container {
+    display: flex;
+    gap: 1rem;
+}
+
+.stepContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.stepContainerHeader {
+    background-color: var(--dark-primary);
+    color: var(--light-text);
+    padding: 10px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+    border-radius: var(--medium-border-radius);
+}
+
+.dirButton {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.stepsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1;
+}
+
+.getSourcesContainer {
+    min-width: 400px;
+}
+
+.brainstormButton {
+    background-color: var(--dark-primary);
+    color: var(--light-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    transition: all .1s ease-in-out;
+    padding: 10px;
+    border-bottom-left-radius: var(--medium-border-radius);
+    border-bottom-right-radius: var(--medium-border-radius);
+}
+
+.brainstormButton:hover {
+    background-color: var(--dark-highlight);
+}
+
+.otherOptionContainer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brainstormContainer {
+    display: flex;
+    gap: 1rem;
+}
+
+.brainstormSidePanel {
+    position: sticky;
+    top: 10px;
+    background-color: var(--light-primary);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    font-family: var(--font-body);
+    border: 1px solid var(--light-border);
+    border-radius: var(--medium-border-radius);
+}
+
+@media (max-width: 900px) {
+    .brainstormSidePanel {
+        position: unset;
+        top: unset;
+    }
+    .brainstormContainer {
+        flex-direction: column;
+    }
+}
+
+.structuredContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    font-family: var(--font-body);
+}
+
+.structuredSectionContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.structuredSubsectionsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-left: 1rem;
+}
+
+.structuredSubsectionTitleNumberContainer {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.structuredSectionTitleContainer {
+    font-size: 1.25rem;
+}
+
+.structuredTitleNumberContainer {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    font-family: var(--font-body);
+}
+
+.structuredNumbering {
+    color: var(--passive-text);
+}
+
+.sectionLinks {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.subsectionDescription {
+    font-size: .9rem;
+    line-height: 1.25rem;
+    color: var(--passive-text);
+}
+
+.makeIntroButton, .collapsibleContainerAltHeader {
+    display: flex;
+    text-decoration: underline;
+    opacity: .5;
+    gap: 5px;
+    font-size: .9rem;
+    cursor: pointer;
+    transition: .1s opacity ease-in-out;
+}
+
+.makeIntroButton:hover, .collapsibleContainerAltHeader:hover {
+    opacity: 1;
+}
+
+
+.linkStepStructuredContainer {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.linkStepAddGroupsContainer {
+    position: sticky;
+    top: 0px;
+    max-height: 100vh;
+    overflow: scroll;
+    max-width: 35%;
+    z-index: 10001;
+    padding: 1rem;
+    background-color: var(--light-background);
+}
+
+.headerContainerSecondClass{
+    border: 3px dashed var(--dark-primary);
+}
+
+.startButton {
+    background-color: var(--light-primary);
+    color: var(--dark-text);
+    padding-top: 5px;
+    padding-bottom: 5px;
+    font-size: .9rem;
+}
+.startButton:hover {
+    background-color: var(--light-highlight);
+}
+
+.finalStepContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+}
+
+.finalStepContainerLeft {
+    width: 25%;
+}
+
+.finalStepContainerMiddle {
+    font-size: 1.15rem;
+    flex: 1;
+    justify-content: center;
+    display: flex;
+    text-align: center;
+}
+
+.finalStepContainerRight {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    float: right;
+    width: 25%;
+    justify-content: right;
+}
+
+@media (max-width: 900px) {
+    .container {
+        flex-direction: column-reverse;
+    }
+    .finalStepContainer {
+        flex-direction: column;
+        gap: .5rem;
+    }
+    .finalStepContainerLeft {
+        width: unset;
+    }
+    .finalStepContainerRight {
+        width: unset;
+    }
+}
+
+@media (max-width: 800px) {
+    .linkStepAddGroupsContainer {
+        display: none;
+    }
+}

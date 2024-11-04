@@ -1,0 +1,56 @@
+
+.mainContainer {
+    display: flex;
+    gap: 5px;
+}
+
+.rightSideMenu {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.showDocsRightSide {
+    margin-left: 1rem;
+    margin-right: 1rem;
+    width: 30vw;
+    display: flex;
+    gap: 1rem;
+    flex-direction: column;
+}
+
+.chatContainer {
+    margin-left: 1rem;
+    margin-right: 1rem;
+    width: 30vw;
+}
+
+.menuClickable {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    opacity: .5;
+    transition: all .1s ease-in-out;
+}
+
+.menuClickable:hover {
+    opacity: 1;
+}
+
+@media (max-width: 800px) { /* Apply styles when the screen width is 800px or smaller */
+    .mainContainer {
+        flex-direction: column-reverse;
+    }
+    .rightSideMenu {
+        flex-direction: row;
+    }
+    .showDocsRightSide {
+        margin: 0px;
+        width: 100%;
+    }
+    .chatContainer {
+        margin: 0px;
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+}

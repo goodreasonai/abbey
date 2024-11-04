@@ -1,0 +1,161 @@
+
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.headerContainer {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--std-margin);
+    gap: 1.5rem;
+}
+
+.moduleContainerOdd, .moduleContainerEven {
+    display: flex;
+    padding: var(--std-margin);
+    width: 100%;
+    justify-content: center;
+}
+
+.moduleContainerOdd {
+    background-color: var(--light-primary);
+}
+
+.moduleContainerEven {
+    /*background-color: var(--dark-primary);*/
+    background-image: linear-gradient(150deg, var(--logo-blue), 5%, var(--dark-primary), 90%, var(--logo-red));
+    color: var(--light-text) !important;
+}
+
+.checkGridContainer {
+    display: flex;
+    gap: 2em;
+    width: 90%;
+    justify-content: space-around;
+}
+
+.groupTitle {
+    font-size: 2.5rem;
+    text-align: center;
+}
+
+.groupDesc {
+    max-width: 50vw;
+}
+
+.groupTitleContainer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+
+.video {
+    height: calc(50vw * 9 / 16);
+    width: 50vw;
+}
+
+.titleDesc{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.twoPanelImageContainer {
+    width: 50vw;
+    height: max(60vh, 250px);
+    position: relative;
+}
+
+.gridImageContainer {
+    width: 100%;
+    height: max(60vh, 200px);
+    position: relative;
+}
+
+.imageContainerNeedsBackground {
+    background-color: rgba(var(--light-background-rgb), 0.3);
+    border-radius: var(--large-border-radius);
+}
+
+.groupImage {
+    height: 65px;
+    width: 65px;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.twoPanelContainerLeft, .twoPanelContainerRight {
+    display: flex;
+    gap: 4rem;
+    align-items: center;
+}
+
+.twoPanelContainerRight {
+    flex-direction: row-reverse;
+}
+
+.twoPanelChecks {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.imageListContainer {
+    display: flex;
+    width: 100%;
+    gap: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.imageListImageContainer {
+    position: relative;
+    height: 300px;
+    width: 30%;
+}
+
+@media (max-width: 800px) {
+
+    .twoPanelContainerLeft, .twoPanelContainerRight, .checkGridContainer {
+        flex-direction: column-reverse;
+        width: 100%;
+        gap: 2rem;
+    }
+
+    .twoPanelImageContainer {
+        width: 100%;
+        height: 300px;
+    }
+
+    .gridImageContainer {
+        width: 100%;
+        height: 400px;
+    }
+
+    .imageListContainer {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .imageListImageContainer {
+        width: 100%;
+        height: 200px;
+    }
+
+    .groupDesc {
+        max-width: unset;
+        width: 100%;
+    }
+
+    .video {
+        width: 100%;
+        height: 200px;
+    }
+}

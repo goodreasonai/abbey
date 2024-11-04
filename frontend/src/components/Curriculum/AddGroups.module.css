@@ -1,0 +1,40 @@
+
+.container {
+    display: flex;
+    gap: 1rem;
+    flex-direction: column;
+    background-color: var(--light-background);
+}
+
+.groupDesc {
+    color: var(--passive-text);
+}
+
+.groupResult {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.groupResultContainer {
+    display: flex;
+    gap: 10px;
+    background-color: var(--light-primary);
+    padding: 1rem;
+    border: 1px solid var(--light-border);
+    border-radius: var(--medium-border-radius);
+}
+
+.removeContainer {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    opacity: .5;
+    transition: all .1s ease-in-out;
+    font-family: var(--font-body);
+    font-size: .9rem;
+}
+
+.removeContainer:hover {
+    opacity: 1;
+}

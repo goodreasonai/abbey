@@ -1,0 +1,8 @@
+
+.cardsMarkdownContainer > p {
+    line-height: 2rem !important;
+}
+
+.cardsMarkdownContainerLightText > p {
+    color: var(--light-text) !important;
+}

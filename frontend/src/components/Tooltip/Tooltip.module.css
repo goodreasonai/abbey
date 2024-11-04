@@ -1,0 +1,18 @@
+@keyframes fadeIn {
+    0% {opacity:0;}
+    100% {opacity:1;}
+}
+
+.popup {
+    background-color: var(--dark-secondary);
+    color: var(--light-text);
+    padding: 5px 10px;
+    text-align: center;
+    font-size: .8rem;
+    border-radius: var(--small-border-radius);
+    z-index: 1000;
+    font-family: var(--font-body);
+    animation: fadeIn .15s ease-in-out forwards;
+    border: 1px solid var(--dark-border);
+    opacity: 0;
+}

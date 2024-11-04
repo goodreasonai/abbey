@@ -1,0 +1,12 @@
+
+/* Perhaps the only CSS file without a corresponding JS file? */
+
+@keyframes loading {
+    0% { background-color: var(--light-primary) }
+    50% { background-color: var(--light-highlight) }
+    100% { background-color: var(--light-primary); }
+}
+
+.imgSkeleton {
+    animation: loading 2s infinite;
+}

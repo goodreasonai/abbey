@@ -1,0 +1,11 @@
+.flex1OnBigScreen {
+    flex: 1;
+    display: flex;
+    justify-self: flex-end;
+}
+
+@media (max-width: 800px) { /* Apply styles when the screen width is 800px or smaller */
+    .flex1OnBigScreen {
+        flex: 0;
+    }
+}

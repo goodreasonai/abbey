@@ -1,0 +1,23 @@
+.errorText {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--logo-red);
+    cursor: default;
+    white-space: wrap;
+    max-width: 150px;
+    max-height: 2rem;
+    font-size: 0.9rem;
+}
+
+.formLabel {
+    font-size: .8rem;
+    font-family: var(--font-body);
+    flex: 1;
+    background-color: var(--light-primary);
+    padding: 5px 10px;
+}
+
+.formLabelSelected {
+    background-color: var(--dark-primary);
+    color: var(--light-text);
+}

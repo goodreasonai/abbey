@@ -1,0 +1,70 @@
+
+
+.desc {
+    color: var(--passive-text);
+    text-align: left;
+}
+
+.seeDescription {
+    opacity: .5;
+    cursor: pointer;
+    transition: all .1s ease-in-out;
+    text-decoration: underline;
+    margin-left: 10px;
+}
+
+.seeDescription:hover {
+    opacity: 1;
+}
+
+.suggestionAlertContainer {
+    position: fixed;
+    bottom: 20px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.suggestionAlert {
+    background-color: var(--light-primary);
+    padding: 10px 20px;
+    border: 1px solid var(--light-border);
+    border-radius: var(--medium-border-radius);
+    box-shadow: 0px 2px 2px var(--dark-shadow);
+    max-width: 90vw;
+}
+
+.suggestRecommended {
+    background-color: var(--dark-primary);
+    color: var(--light-text);
+    padding: 5px 10px;
+    border-radius: var(--medium-border-radius);
+    top: 5px;
+    left: 50%;
+    transform: translateY(-100%) translateX(-50%);
+    position: absolute;
+}
+
+.shareButton {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background-color: var(--light-background);
+    padding: 2px 5px;
+    border-radius: var(--small-border-radius);
+    border: 1px solid var(--light-border);
+    cursor: pointer;
+    transition: all .1s ease-in-out;
+}
+
+.shareButton:hover {
+    background-color: var(--light-background-highlight);
+}
+
+@media (max-width: 900px) { /* Apply styles when the screen width is 800px or smaller */
+    .seeDescription {
+        margin-left: 0px;
+    }
+}
+

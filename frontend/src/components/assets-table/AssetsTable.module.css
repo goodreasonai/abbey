@@ -1,0 +1,321 @@
+
+.main {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 10px;
+}
+
+
+.foldersHeader {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.folders {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    margin-bottom: calc(1rem - 10px);
+    border-bottom: 2px dashed var(--light-border);
+}
+
+.folderItemsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.resultWrapper {
+    flex-grow: 1;
+    position: relative;
+    width: 100%;
+}
+
+.checkbox{
+    position: absolute;
+    cursor: pointer;
+}
+
+.taskbar{
+    display: flex;
+    padding: 2px;
+    gap: 10px;
+    background-color: inherit;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.taskbarButton{
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.taskbarText{
+    display: flex;
+    gap: 5px;
+    flex: 1;
+}
+
+
+.result {
+    gap: 10px;
+    align-items: center;
+    display: flex;
+    font-family: var(--font-body);
+    text-align: left;
+    position: relative;
+    padding: 15px;
+}
+@media (max-width: 800px) { /* Apply styles when the screen width is 800px or smaller */
+    .result {
+        flex-direction: column;
+        align-items: unset;
+    }
+}
+
+.resultTitleAuthorContainer {
+    flex: 2;
+}
+
+.resultDesc {
+    flex: 2;
+    color: var(--passive-text);
+}
+
+.resultAuthor {
+    color: var(--passive-text);
+    font-size: .9rem;
+    white-space: pre;
+}
+
+.optionalButton {
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.searchBar {
+    display: flex;
+    align-items: stretch;
+}
+
+.searchBar input[type=button] {
+    margin-left: 5px;
+}
+
+.searchBar input[type=text]{
+    flex: 1;
+    max-width: 20em;
+}
+
+.topBar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.showOnly {
+    display: flex;
+    gap: 10px;
+}
+
+.selectionRect {
+    background-color: var(--dark-primary);
+    color: var(--light-text);
+    padding: 5px;
+    font-size: .8rem;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    border-radius: var(--small-border-radius);
+}
+
+.eraseButton {
+    background-color: var(--dark-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 5px;
+    width: 40px;
+
+    cursor: pointer;
+
+    transition: background-color .1s ease-in-out;
+}
+
+.eraseButton:hover {
+    background-color: var(--dark-highlight);
+}
+
+.modal {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-content: center;
+}
+
+.specialAssetsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.specialAsset {
+    display: flex;
+    background-color: var(--light-primary);
+    padding: 1rem;
+    gap: 1rem;
+    align-items: center;
+
+    transition: background-color .1s ease-in-out;
+}
+
+.specialAsset > div {
+    display: flex;
+    align-items: center;
+}
+
+.specialAsset:hover {
+    background-color: var(--light-highlight);
+}
+
+.autoFillOption {
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.autoFillOption:hover {
+    background-color: var(--light-highlight);
+}
+
+.highlightedOption {
+    background-color: var(--light-highlight);
+}
+
+.inputContainer {
+    position: relative;
+    flex-grow: 1;
+    max-width: 20em;
+    display: flex;
+    flex-direction: column;
+}
+
+.autoFillContainer {
+    position: absolute;
+    top: 100%;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--light-highlight);
+    border-top: none;
+    background-color: var(--light-background);
+    z-index: 1;
+    justify-content: space-between;
+    display: flex;
+    flex-direction: column;
+}
+
+.optionTitle {
+    flex-shrink: 0;
+}
+
+.optionDesc {
+    opacity: 25%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@keyframes font-grow {
+    0% {
+        font-size: 1.5em; /* Initial state */
+    }
+    50% {
+        font-size: 1.55em; /* Increase font size by 20% */
+    }
+    100% {
+        font-size: 1.5em; /* Return to initial state */
+    }
+}
+
+.obnoxiousCreate {
+    background-color: var(--light-primary);
+    color: var(--dark-text);
+    padding: 5rem;
+    transition: background-color .1s ease-in-out;
+    font-size: 1.5rem;
+    display: flex;
+    justify-content: center;
+    border: 1px solid var(--light-border);
+    border-radius: var(--medium-border-radius);
+
+    animation: font-grow 1s forwards ease-in-out;
+}
+
+.obnoxiousCreate:hover {
+    background-color: var(--light-highlight);
+}
+
+
+.moveToContainer {
+    position: absolute;
+    top: 0px;
+    transform: translateY(0%) translateX(-100%);
+    z-index: 100000;
+}
+
+.resultLink {
+    flex: 6;
+}
+
+.taskbarContainer {
+    padding: 10px;
+    flex: 1;
+}
+
+.resultTwoPartContainer {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+    align-items: center;
+    background-color: var(--light-primary);
+    border: 1px solid var(--light-border);
+    border-radius: var(--medium-border-radius);
+
+}
+
+.resultTwoPartContainer:hover {
+    background-color: var(--light-highlight);
+}
+
+@media (max-width: 800px) { /* Apply styles when the screen width is 800px or smaller */
+    .obnoxiousCreate {
+        font-size: 1.25rem;
+        padding: 2rem;
+        align-items: unset;
+    }
+    .moveToContainer {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translateY(-50%) translateX(-50%);
+        max-height: 80vh;
+        max-width: 80vw;
+        overflow: scroll;
+    }
+    .resultTwoPartContainer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .taskbar {
+        padding: 15px;
+    }
+}

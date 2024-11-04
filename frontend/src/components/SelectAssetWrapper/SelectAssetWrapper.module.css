@@ -1,0 +1,17 @@
+
+.confirmButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    padding: 10px;
+    background-color: var(--light-primary);
+    transition: .1s ease-in-out all;
+    border: 1px solid var(--light-border);
+    gap: 10px;
+    border-radius: var(--medium-border-radius);
+}
+
+.confirmButton:hover {
+    background-color: var(--light-highlight);
+}

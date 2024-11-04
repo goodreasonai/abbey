@@ -1,0 +1,29 @@
+
+.container {
+    display: flex;
+    height: 100%;
+    gap: 1rem;
+}
+
+.chatSearchContainer {
+    min-width: 300px;
+    width: 20%;
+}
+
+.chatContainer {
+    flex: 1;
+    min-height: 0px;
+    width: 80%;
+}
+
+@media (max-width: 900px) {
+    .container {
+        flex-direction: column-reverse;
+    }
+    .chatSearchContainer {
+        width: 100%;
+    }
+    .chatContainer {
+        width: 100%;
+    }
+}

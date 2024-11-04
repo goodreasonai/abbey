@@ -1,0 +1,100 @@
+
+.article p {
+    line-height: 1.5rem;
+}
+
+.article p, .article h1, .article h2, .article h3, .article ul, .article ol {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    color: var(--dark-text);
+}
+
+.article h1 {
+    font-family: var(--font-header);
+    font-weight: 400;
+}
+
+/* The styling here is mostly taken care of by the syntax highlighter now */
+.article pre, .article code {
+    max-width: 100%;
+    overflow-x: auto;
+    font-size: .8rem !important;
+    margin: 0px !important;
+}
+
+.codeCopy {
+    background-color: var(--dark-primary);
+    padding: 5px;
+    align-items: flex-end;
+    display: flex;
+    color: var(--light-text);
+    font-family: var(--font-header);
+    align-items: center;
+    gap: 10px;
+}
+
+.article code {
+    background-color: var(--light-accent);
+    padding: 2px 5px;
+    border-radius: var(--small-border-radius);
+}
+
+.article ol, .article ul, .editorArticle ol, .editorArticle ul {
+    padding-left: 1.5em;
+    color: var(--dark-text);
+    line-height: 1.5rem;
+}
+
+.article li {
+    margin-top: 10px;
+}
+
+.article ul p, .article li p, .article ol p {
+    display: inline;
+}
+
+.article table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 1rem;
+}
+
+.article th, .article td {
+    padding: 10px 15px;
+    border: 1px solid var(--light-border);
+    text-align: left;
+}
+
+.article th {
+    background-color: var(--light-background);
+    font-weight: bold;
+}
+
+.article tr:nth-child(even) {
+    background-color: var(--light-background-highlight);
+}
+
+.article tr:nth-child(odd) {
+    background-color: var(--light-primary);
+}
+
+.article caption {
+    caption-side: bottom;
+    padding: 10px;
+    font-size: 1rem;
+}
+  
+
+.article {
+    font-family: var(--font-body);
+}
+
+.article img {
+    max-width: 100%;
+    height: auto;
+}
+
+.article a {
+    text-decoration: underline;
+}

@@ -1,0 +1,68 @@
+
+.item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    gap: 10px;
+}
+
+.item:hover {
+    background-color: var(--light-highlight);
+}
+
+.number {
+    flex: 1;
+    color: var(--passive-text);
+}
+
+.desc {
+    flex: 20;
+    color: var(--passive-text);
+    font-size: .9rem;
+}
+
+.title {
+    flex: 20;
+}
+
+.quizContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0px 10px;
+}
+
+.container {
+}
+
+.totalContainer {
+    display: flex;
+    align-items: center;
+    font-size: 1.1rem;
+    font-family: var(--font-body);
+    border: 1px solid var(--light-border);
+    border-top-width: 0px;
+    background-color: var(--light-primary);
+}
+
+.totalContainerTop {
+    border-top: 1px solid var(--light-border);
+    border-top-left-radius: var(--medium-border-radius);
+    border-top-right-radius: var(--medium-border-radius);
+}
+
+.totalContainerBottom {
+    border-bottom-left-radius: var(--medium-border-radius);
+    border-bottom-right-radius: var(--medium-border-radius);
+}
+
+/* Border radii have to match... well technically still off by a pixel or two, but at least not obviously wrong. */
+.itemContainerTop {
+    border-top-left-radius: var(--medium-border-radius);
+    border-top-right-radius: var(--medium-border-radius);
+}
+
+.itemContainerBottom {
+    border-bottom-left-radius: var(--medium-border-radius);
+    border-bottom-right-radius: var(--medium-border-radius);
+}

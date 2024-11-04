@@ -1,0 +1,208 @@
+
+
+.sendButton {
+    background-color: var(--dark-primary);
+    padding: 5px;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    transition: all .1s ease-in-out;
+    width: 100%;
+    height: 100%;
+    border-top-right-radius: var(--medium-border-radius);
+    border-bottom-right-radius: var(--medium-border-radius);
+}
+
+.sendButton:hover {
+    background-color: var(--dark-highlight);
+}
+
+.templateButton, .addExistingButton {
+    background-color: var(--dark-primary);
+    color: var(--light-text);
+    padding: 5px;
+    font-size: .8rem;
+    border-radius: var(--small-border-radius);
+    transition: all .1s ease-in-out;
+    display: flex;
+    gap: 7px;
+    align-items: center;
+}
+
+.templateButton:hover {
+    background-color: var(--dark-highlight);
+}
+
+.addExistingButton {
+    background-color: var(--light-background);
+    color: var(--dark-text);
+    border: 1px solid var(--light-border);
+    cursor: pointer;
+}
+
+.addExistingButton:hover {
+    background-color: var(--light-highlight);
+}
+
+.blockHeader {
+    font-size: .8rem;
+    color: var(--passive-text);
+    padding-bottom: 5px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.innerBlockContainer {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: var(--std-margin);
+    padding-right: var(--std-margin);
+
+    display: flex;
+    gap: 5px;
+}
+
+.blockContainerWithReplyTo {
+    border-left: 5px solid var(--dark-primary);
+}
+
+.blockContainer {
+    
+}
+
+.replyText {
+    background-color: var(--dark-primary);
+    padding-left: var(--std-margin);
+    padding-right: var(--std-margin);
+    padding-top: 3px;
+    padding-bottom: 3px;
+    font-size: .75rem;
+    color: var(--light-text);
+    cursor: pointer;
+}
+
+.assetBlockContainer {
+    font-family: var(--font-body);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid var(--light-border);
+    padding: 10px;
+    background-color: var(--light-background);
+    cursor: pointer;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border-radius: var(--medium-border-radius);
+}
+
+.blockContentContainer {
+    flex: 1;
+}
+
+.blockOptions, .dragHandle {
+    display: flex;
+    align-items: center;
+    opacity: .5;
+    min-height: 20px;
+    padding: 5px;
+    padding-top: 2px;  /* bit arbitrary, just looks :) */
+}
+
+.blockOptions:hover, .dragHandle:hover {
+    opacity: 1;
+}
+
+.dragHandle {
+    cursor: grab;
+}
+
+.closeEditButton {
+    opacity: .5;
+    transition: all .1s ease-in-out;
+}
+
+.closeEditButton:hover {
+    opacity: 1;
+}
+
+/* Custom scroll bars */
+
+.customScroll {
+    overflow-y: scroll;
+}
+
+.customScroll::-webkit-scrollbar {
+    width: 12px;
+}
+
+/* This is like the background of the scroll bar */
+.customScroll::-webkit-scrollbar-track{
+    background: var(--light-highlight);
+}
+
+.customScroll::-webkit-scrollbar-thumb:vertical {
+    border: 1px solid var(--light-border);
+    cursor: pointer;
+    background-color: var(--dark-primary)
+}
+
+.customTemplatesScroll::-webkit-scrollbar {
+    height: 5px;
+    width: 0px;
+}
+.customTemplatesScroll::-webkit-scrollbar-track{
+    background: var(--light-highlight);
+}
+.customTemplatesScroll::-webkit-scrollbar-thumb:horizontal {
+    border: 1px solid var(--light-border);
+    cursor: pointer;
+    background-color: var(--dark-primary)
+}
+
+@keyframes pulse {
+    0% {
+      background-color: initial;
+    }
+    50% {
+      background-color: var(--light-highlight); /* Change to your desired highlight color */
+    }
+    100% {
+      background-color: initial;
+    }
+}
+
+.pulseNote {
+    animation: pulse 1s ease-in-out;
+}
+
+.blurTop,
+.blurBottom {
+    position: absolute;
+    top: 0px;
+    left: 0;
+    right: 12px; /* Same as scrollbar... */
+    height: 30px;
+    pointer-events: none;
+    transition: all .1s ease-in-out;
+    background: linear-gradient(to bottom, rgba(var(--light-primary-rgb), 0.9), rgba(var(--light-primary-rgb), 0));
+    z-index: 1;
+}
+
+.blurBottom {
+    top: unset;
+    bottom: 0px;
+    background: linear-gradient(to top, rgba(var(--light-primary-rgb), 0.9), rgba(var(--light-primary-rgb), 0));
+}
+
+.blurHidden {
+    display: none;
+}
+
+.editorMinimize {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    display: flex;
+    padding: 2px;
+}

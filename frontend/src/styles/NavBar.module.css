@@ -1,0 +1,93 @@
+
+.navBar{
+    padding-left: 2rem;
+    padding-right: 2rem;
+    background-color: var(--light-background);
+    color: var(--dark-text);
+    display: flex;
+    align-items: stretch;
+    height: var(--nav-bar-height);
+
+    background-color: var(--light-primary);
+    border-bottom: 1px solid var(--light-border);
+    position: relative;
+    background-color: var(--light-primary); /* Your desired background color */
+}
+
+.leftText {
+    display: flex;
+    align-items: center;
+}
+
+.navBarRight {
+    display: flex;
+    align-items: stretch;
+    flex-wrap: wrap;    
+    flex: 1;
+}
+
+.navBarRightRight {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.leftText{
+    margin-right: 14px;
+}
+
+.mobileMenu {
+    display: none;
+    margin-left: auto;
+    align-items: center;
+}
+
+.littleLink {
+    padding-left: 15px;
+    padding-right: 15px;
+    font-size: .9rem;
+    transition: all .1s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    /* Mostly just here in case you want to do something in the future... */
+}
+
+.navBarRight a {
+    display: flex;
+    align-items: stretch;
+    transition: all .1s ease-in-out;
+}
+
+.navBarRight a:hover {
+    background-color: var(--light-highlight);
+}
+
+.navBarRightRight a {
+    all: unset;
+}
+
+.navBarRightRight a:hover {
+    all: unset;
+}
+
+.navBarRightRight a {
+    cursor: pointer;
+}
+
+.navBarRightRight a:hover {
+    cursor: pointer;
+}
+
+@media (max-width: 1000px) { /* Apply styles when the screen width is 1000px or smaller */
+
+    .navBarRight {
+        display: none;
+    }
+
+    .mobileMenu {
+        display: flex;
+        gap: 20px;
+    }
+}
+

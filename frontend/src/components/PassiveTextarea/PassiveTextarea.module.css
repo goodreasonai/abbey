@@ -1,0 +1,12 @@
+
+.passiveTextarea {
+    overflow-y: scroll;
+    border: none;
+    outline: none;
+    width: 100%;
+    background-color: inherit;
+    font-family: inherit;
+    font-size: 1rem;  /* It's a Chrome thing actually that this is necessary */
+    line-height: 1.5em;
+    resize: vertical;
+}

@@ -1,0 +1,251 @@
+
+.promoButtonContainer {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background-color: var(--light-primary);
+    padding: 5px 10px;
+    border-radius: var(--medium-border-radius);
+    font-size: 1.15rem;
+    border: 1px solid var(--light-border);
+    transition: all .1s ease-in-out;
+}
+
+.promoButtonContainer:hover {
+    background-color: var(--light-highlight);
+}
+
+.bookUpContainer {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.buttonText {
+    font-size: 1.25rem;
+}
+
+.topPartImg {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+
+    object-fit: cover;
+    position: absolute;
+    z-index: -1;
+    opacity: .3;
+
+    animation-name: fadeInHalf;
+    animation-duration: 2s; /* Duration of the animation */
+    animation-fill-mode: forwards; /* Keeps the element at the final state when the animation completes */
+}
+
+.topPartTagline {
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.infoButtons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding-left: 10%;
+    padding-right: 10%;
+}
+
+.infoButton {
+    position: relative;
+    color: var(--dark-text);
+    padding: 10px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.15rem;
+}
+
+.infQuizHeader {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    font-size: 2.5rem;
+    padding-top: 3rem;
+    align-items: center;
+    gap: 20px;
+}
+
+.infQuizImageContainer {
+    width: 65vw;
+    position: relative;
+    height: 65%;
+}
+
+.infoButton::before {
+    background-color: var(--light-primary);
+    opacity: .75;
+    position: absolute;
+    content: "";
+    top: 0px;
+    left: 0px;
+    bottom: 0px;
+    right: 0px;
+    z-index: -1;
+    border-radius: var(--small-border-radius);
+    border: 1px solid var(--light-border);
+
+}
+
+.shadowedText {
+    text-shadow: 0px 0px 1px var(--light-background), 0px 0px 1px var(--light-background), 0px 0px 1px var(--light-background), 0px 0px 1px var(--light-background);
+}
+
+.enterpriseContact {
+    padding-left: 10%;
+    padding-right: 10%;
+    text-align: center;
+}
+
+
+.docHeader {
+    font-size: 3rem;
+    display: flex;
+    justify-content: center;
+    /*
+    text-shadow: 0px 0px 40px var(--light-background), 0px 0px 40px var(--light-background), 0px 0px 40px var(--light-background), 0px 0px 40px var(--light-background);
+    */
+}
+
+.docSignInLink {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.signedOutContainer {
+    position: relative; /* This will make the second div positioned absolutely to the first div */
+}
+
+.twoPanelContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+}
+
+.twoPanelSelectTemplateContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10%;
+}
+
+.twoPanelImage {
+    border-radius: var(--large-border-radius);
+    width: 100%;
+    height: 100%;
+    border: 1px solid var(--light-border);
+}
+
+.twoPanelImageContainer {
+    width: 60%;
+    position: relative;
+}
+
+.selectedTemplateContainer {
+    width: 40%;
+}
+
+.lowerContainer {
+    padding: calc(2 * var(--std-margin));
+    display: flex;
+    flex-direction: column;
+    gap: 4rem;
+    border-top: 1px solid var(--light-border);
+    background-image: linear-gradient(45deg, var(--dark-primary), 10%, var(--light-primary), 90%, var(--logo-blue));
+    position: relative;
+}
+
+.lowerContainerTitle {
+    font-size: 2rem;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    text-shadow: 0px 0px 1px var(--light-background), 0px 0px 1px var(--light-background), 0px 0px 1px var(--light-background), 0px 0px 1px var(--light-background);
+}
+
+
+.topPartContainerWithImage {
+    position: relative;
+    width: 100vw;
+    height: calc(100vh - var(--nav-bar-height));
+}
+
+.topPartContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+    align-items: center;
+    justify-content: center;
+
+    height: 100%;
+}
+
+.titleIcon {
+    height: 2rem;
+    width: 2rem;
+}
+
+@media (max-width: 900px) {
+    .eraseFirst {
+        display: none;
+    }
+}
+
+@media (max-width: 800px) { /* Apply styles when the screen width is 800px or smaller */
+    .infoButton {
+        font-size: 1rem;
+    }
+    .topPartContainer {
+        gap: 2rem;
+    }
+    .lowerContainer {
+        padding: var(--std-margin);
+    }
+    .lowerContainerTitle {
+        font-size: 1.5rem;
+    }
+    .titleIcon {
+        height: 1.5rem;
+        width: 1.5rem;
+    }
+    .twoPanelContainer {
+        flex-direction: column;
+    }
+    .twoPanelSelectTemplateContainer {
+        flex-direction: column-reverse;
+        gap: 3rem;
+    }
+    .twoPanelImageContainer {
+        width: 100%
+    }
+    .selectedTemplateContainer {
+        width: 100%;
+    }
+    .docHeader {
+        font-size: 2.5rem;
+    }
+    .bookUpContainer {
+        flex-direction: column;
+    }
+    .infQuizHeader {
+        font-size: 2rem;
+        padding-left: 40px;
+        padding-right: 40px;
+    }
+    .infQuizImageContainer {
+        width: 85vw;
+    }
+}

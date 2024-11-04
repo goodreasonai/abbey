@@ -1,0 +1,11 @@
+
+
+.headerContainer {
+    color: var(--light-text);
+    border-radius: var(--medium-border-radius);
+    padding: 10px;
+    height: 125px;
+    border: 1px solid var(--light-border);
+    overflow: hidden;
+    position: relative;
+}
