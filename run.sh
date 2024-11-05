@@ -270,6 +270,12 @@ export_backend_env() {
         echo "DB_NAME=learn"
         echo "DB_TYPE=local"
 
+        echo "CUSTOM_AUTH_DB_ENDPOINT=mysql"  # Hard coded into the docker compose
+        echo "CUSTOM_AUTH_DB_USERNAME=root"  # Perhaps not good practice?
+        echo "CUSTOM_AUTH_DB_PASSWORD=\"$MYSQL_ROOT_PASSWORD\""
+        echo "CUSTOM_AUTH_DB_PORT=3306"
+        echo "CUSTOM_AUTH_DB_NAME=custom_auth"
+
         echo "SECRET_KEY=$(generate_password)"
         echo "CUSTOM_AUTH_SECRET=\"$JWT_SECRET\""
     } > "$BACKEND_ENV_FILE"
@@ -278,16 +284,19 @@ export_backend_env() {
 export_frontend_env() {
     {
         if [ "$USE_GOOGLE_AUTH" = "$TRUE_VALUE" ]; then
+            echo "NEXT_PUBLIC_ENABLE_GOOGLE_AUTH=1"
             echo "GOOGLE_CLIENT_ID=\"$GOOGLE_AUTH_CLIENT_ID\""
             echo "GOOGLE_SECRET=\"$GOOGLE_AUTH_CLIENT_SECRET\""
         fi
 
         if [ "$USE_GITHUB_AUTH" = "$TRUE_VALUE" ]; then
+            echo "NEXT_PUBLIC_ENABLE_GITHUB_AUTH=1"
             echo "GITHUB_CLIENT_ID=\"$GITHUB_AUTH_CLIENT_ID\""
             echo "GITHUB_SECRET=\"$GITHUB_AUTH_CLIENT_SECRET\""
         fi
 
         if [ "$USE_KEYCLOAK_AUTH" = "$TRUE_VALUE" ]; then
+            echo "NEXT_PUBLIC_ENABLE_KEYCLOAK_AUTH=1"
             echo "KEYCLOAK_CLIENT_ID=\"$KEYCLOAK_CLIENT_ID\""
             echo "KEYCLOAK_REALM=\"$KEYCLOAK_REALM\""
             echo "KEYCLOAK_SECRET=\"$KEYCLOAK_CLIENT_SECRET\""
@@ -314,6 +323,7 @@ export_frontend_env() {
         echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=not-a-key"
         echo "CLERK_SECRET_KEY=not-a-key"
         
+        echo "CUSTOM_AUTH_DATABASE_ENABLED=1"
         echo "NEXT_PUBLIC_HIDE_COLLECTIONS=1"
 
     } > "$FRONTEND_ENV_FILE"

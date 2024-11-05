@@ -8,7 +8,6 @@ import MyImage from "@/components/MyImage/MyImage";
 import GLogo from '../../public/random/GLogo.png'
 import { Roboto } from 'next/font/google';
 
-
 const roboto = Roboto({
     weight: ['300', '400', '500', '700'],
     subsets: ['latin'],
@@ -19,9 +18,21 @@ export const tokenName = '_customToken'
 export const refreshTokenName = '_customRefreshToken'
 const refreshTimeout = 60 * 1000  // in milliseconds
 
+// has "github" if process.env.NEXT_
+const enabledProviders = []
+if (process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === '1'){
+    enabledProviders.push('google')
+}
+if (process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH === '1'){
+    enabledProviders.push('github')
+}
+if (process.env.NEXT_PUBLIC_ENABLE_KEYCLOAK_AUTH === '1'){
+    enabledProviders.push('keycloak')
+}
+
 export function CustomLogin({ redirectUrl }) {
 
-    const providers = [
+    let providers = [
         {
             'name': 'github',
             'value': (
@@ -48,6 +59,8 @@ export function CustomLogin({ redirectUrl }) {
         },
     ]
 
+    providers = providers.filter((x) => enabledProviders.includes(x.name))
+
     function makeProvider(item, i){
         return (
             <div>
@@ -64,18 +77,21 @@ export function CustomLogin({ redirectUrl }) {
 
     return (
         <div style={{'height': 'calc(100vh - var(--nav-bar-height) - 2 * var(--std-margin))', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'}}>
-            <div style={{
-                'backgroundColor': 'var(--light-primary)', 
-                'border': '1px solid var(--light-border)',
-                'width': '400px',
-                'borderRadius': 'var(--large-border-radius)',
-                'display': 'flex', 
-                'alignItems': 'stretch',
-                'justifyContent': 'center',
-                'flexDirection': 'column',
-                'gap': '1rem',
-                'padding': '10%'
-            }}>
+            <div
+                style={{
+                    'backgroundColor': 'var(--light-primary)', 
+                    'border': '1px solid var(--light-border)',
+                    'width': '400px',
+                    'borderRadius': 'var(--large-border-radius)',
+                    'display': 'flex', 
+                    'alignItems': 'stretch',
+                    'justifyContent': 'center',
+                    'flexDirection': 'column',
+                    'gap': '1rem',
+                    'padding': '10%'
+                }}
+                suppressHydrationWarning={true}
+            >
                 {providers.map(makeProvider)}
             </div>
         </div>

@@ -32,7 +32,7 @@ export default function handler(req, res) {
         return refresh(req, res);
     }
   
-    const providerInstance = providers[provider];
+    const providerInstance = authProviders[provider];
   
     if (!providerInstance) {
         return res.status(404).json({ error: 'Provider not found' });
@@ -260,9 +260,9 @@ export class GoogleAuth extends BaseAuth {
     }
 }
 
-const providers = {}
+const authProviders = {}
 if (process.env.GITHUB_CLIENT_ID){
-    providers['github'] = new GitHubAuth({
+    authProviders['github'] = new GitHubAuth({
         'code': 'github',
         'clientId': process.env.GITHUB_CLIENT_ID,
         'secret': process.env.GITHUB_SECRET,
@@ -271,7 +271,7 @@ if (process.env.GITHUB_CLIENT_ID){
 }
 
 if (process.env.KEYCLOAK_CLIENT_ID){
-    providers['keycloak'] = new KeycloakAuth({
+    authProviders['keycloak'] = new KeycloakAuth({
         'code': 'keycloak',
         'clientId': process.env.KEYCLOAK_CLIENT_ID,
         'secret': process.env.KEYCLOAK_SECRET,
@@ -283,7 +283,7 @@ if (process.env.KEYCLOAK_CLIENT_ID){
 }
 
 if (process.env.GOOGLE_CLIENT_ID){
-    providers['google'] = new GoogleAuth({
+    authProviders['google'] = new GoogleAuth({
         'code': 'google',
         'clientId': process.env.GOOGLE_CLIENT_ID,
         'secret': process.env.GOOGLE_SECRET,
