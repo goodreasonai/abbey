@@ -306,9 +306,15 @@ export_frontend_env() {
         echo "JWT_SECRET=$JWT_SECRET"
         echo "REFRESH_TOKEN_SECRET=$REFRESH_SECRET"
 
+        if [ "$USE_MATHPIX" = "$FALSE_VALUE" ]; then
+            echo "NEXT_PUBLIC_DISABLE_OCR=1"
+        fi
+
         # While clerk is available in the config, there needs to be non blank (even if non functional) keys.
         echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=not-a-key"
         echo "CLERK_SECRET_KEY=not-a-key"
+        
+        echo "NEXT_PUBLIC_HIDE_COLLECTIONS=1"
 
     } > "$FRONTEND_ENV_FILE"
 }

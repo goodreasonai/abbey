@@ -40,6 +40,7 @@ export const CREATE_BACKGROUND = RhodesExpanded  // the image that shows up in t
 // Will promote the extension in the website template. Set to empty string to disable the promo.
 export const CHROME_EXT_PROMO_LINK = "https://chromewebstore.google.com/detail/abbey/lajhghkelnmbdapgcgmdbfolbicigeac"
 
+export const ALLOW_SUBSCRIPTION = process.env.NEXT_PUBLIC_ENABLE_SUBSCRIPTION === '1'
 export const UPGRADE_SUBSCRIPTION_LINK = "/settings"  // if a user has surpassed his max allowed uploads, he is referred to this link to upgrade
 
 export const MAX_USER_SOURCES = 7  // SHOULD MATCH BACKEND
@@ -49,9 +50,9 @@ export const HOME_PAGE_EXAMPLE_LINK = 'https://abbey.us.ai/assets/2569'
 
 export const SHOW_SIGNED_OUT_HOME_PAGE = true  // if false, the root path (home page) will display the login page if the user is signed out, rather than the landing page.
 
-export const HIDE_COLLECTIONS = false  // if true, "Collections" will not show up in the nav bar, and it will be to the user as though Collections doesn't exist.
+export const HIDE_COLLECTIONS = process.env.NEXT_PUBLIC_HIDE_COLLECTIONS === '1'  // if true, "Collections" will not show up in the nav bar, and it will be to the user as though Collections doesn't exist.
 
-export const DISABLE_OCR = false  // Should match backend. If true, the user is never prompted about OCR and is never given the option to retry with OCR
+export const DISABLE_OCR = process.env.NEXT_PUBLIC_DISABLE_OCR === '1'  // Should match backend. If true, the user is never prompted about OCR and is never given the option to retry with OCR
 
 // NOTE: Externally hosted image URLs can be configured in next.config.js!
 // NOTE: Templates (and which appear in certain places) can be configured in templates/template.js
@@ -65,7 +66,7 @@ Mid-Importance Config Variables
 export const DEFAULT_PERMISSIONS = {'emailDomains': [], 'public': 0, 'editDomains': []}  // Default permissions when uploading an asset
 export const ALLOW_PUBLIC_UPLOAD = true  // Whether a user is allowed to make an asset publicly available - Should match backend
 
-// These are linked in login/sign up
+// These are linked in login/sign up when Clerk is used for auth.
 export const PRIVACY_POLICY = "https://us.ai/AbbeyPrivacyPolicy.pdf"
 export const TERMS_OF_USE = "https://us.ai/TermsOfUse.pdf"
 

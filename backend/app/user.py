@@ -13,9 +13,8 @@ from .template_response import MyResponse
 from .configs.user_config import (
     OVERRIDE_ALLOWED_TEMPLATES, DEFAULT_OCR_OPTION,
     SUBSCRIPTION_CODE_TO_MODEL_OPTIONS, DEFAULT_CHAT_MODEL,
-    SUBSCRIPTION_CODE_TO_OCR_OPTIONS, SUBSCRIPTION_CODE_TO_TEMPLATES,
-    SUBSCRIPTION_CODE_TO_TTS_OPTIONS, DEFAULT_TTS_MODEL,
-    SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS, DISABLE_OCR, LM_ORDER
+    SUBSCRIPTION_CODE_TO_TEMPLATES, SUBSCRIPTION_CODE_TO_TTS_OPTIONS,
+    SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS, DISABLE_OCR, LM_ORDER, DEFAULT_TTS_MODEL, 
 )
 from .pay import get_user_main_sub_code, Protocol, get_protocol_by_code, get_product, get_products
 import pytz
@@ -42,9 +41,7 @@ def get_user_templates(user: User, db=None):
 
 @needs_db
 def get_user_ocr_option(user: User, db=None):
-    # TODO: check the user's preference in metadata!
-    # user_type = get_user_main_sub_code(user, db=db)
-    # lst = SUBSCRIPTION_CODE_TO_OCR_OPTIONS[user_type]
+    # TODO: let the user select one!
     if DISABLE_OCR:
         return 'disabled'
     return DEFAULT_OCR_OPTION

@@ -1,4 +1,12 @@
 import math
+from .secrets import (
+    OPENAI_API_KEY, ANTHROPIC_API_KEY, ELEVEN_LABS_API_KEY, MATHPIX_API_APP, MATHPIX_API_KEY, BING_API_KEY, 
+    AWS_SECRET_KEY, AWS_ACCESS_KEY, SENDGRID_API_KEY, SMTP_EMAIL, SMTP_PASSWORD, SMTP_PORT, SMTP_SERVER,
+    CLERK_JWT_PEM, CLERK_SECRET_KEY, CUSTOM_AUTH_SECRET, CUSTOM_AUTH_DB_ENDPOINT, CUSTOM_AUTH_DB_USERNAME, CUSTOM_AUTH_DB_PASSWORD, CUSTOM_AUTH_DB_PORT, CUSTOM_AUTH_DB_NAME,
+    BING_API_KEY
+)
+import os
+import json
 
 """
 
@@ -12,6 +20,52 @@ NOTE: Variables are organized by how likely a user would consider changing the v
 
 BACKEND_VERSION = '0.12.6'  # Viewable when a user goes to the root "/" endpoint of the backend
 
+AVAILABLE_PROVIDERS = {
+    'openai': True if OPENAI_API_KEY else False,
+    'anthropic': True if ANTHROPIC_API_KEY else False,
+    'eleven-labs': True if ELEVEN_LABS_API_KEY else False,
+    'bing': True if BING_API_KEY else False
+}
+
+# Enabled models by provider profile
+AVAILABLE_LLMS = {
+    'openai': ['gpt-4o', 'gpt-4o-mini', 'gpt-4', 'gpt-4-turbo'],
+    'anthropic': ['claude-3-5-sonnet', 'claude-3-opus']
+}
+
+AVAILABLE_TTS = {
+    'openai': ['openai_fable', 'openai_onyx'],
+    'eleven-labs': ['eleven_adam']
+}
+
+AVAILABLE_EMBED = {
+    'openai': ['openai-text-embedding-ada-002']
+}
+
+AVAILABLE_TEMPLATES = ['document', 'folder', 'detached_chat', 'website', 'classroom', 'curriculum', 'quiz', 'text_editor', 'video', 'notebook', 'inf_quiz', 'section']  # could use the list in templates.py, but want to avoid imports here.
+
+# real default chat model will be the one that's available
+DEFAULT_CHAT_MODEL_RANKINGS = ['gpt-4o-mini', 'claude-3-5-sonnet']  # The chat model used when a user has none selected, and is the default used in other functions on a case-by-case basis.
+HIGH_PERFORMANCE_CHAT_MODEL_RANKINGS = ['gpt-4o', 'claude-3-5-sonnet']  # The model used when a function requires high performance (like generating a curriculum)
+BALANCED_CHAT_MODEL_RANKINGS = ['gpt-4o', 'claude-3-5-sonnet']  # The model used when a function requires medium smart and medium fast performance
+FAST_CHAT_MODEL_RANKINGS = ['gpt-4o-mini', 'claude-3-5-sonnet']  # The model used when speed is the most important factor
+LONG_CONTEXT_CHAT_MODEL_RANKINGS = ['gpt-4o', 'claude-3-5-sonnet']  # The model used when a function needs long-context (i.e., >50,000 tokens)
+FAST_LONG_CONTEXT_MODEL_RANKINGS = ['gpt-4o-mini', 'claude-3-5-sonnet']  # The model used when speed is important and it also needs long-context
+ALT_LONG_CONTEXT_MODEL_RANKINGS = LONG_CONTEXT_CHAT_MODEL_RANKINGS[::-1]  # exists to provide some variability in situations where long context makes generations repetitive
+
+LM_ORDER = ['gpt-4o', 'claude-3-5-sonnet', 'claude-3-opus', 'gpt-4', 'gpt-4-turbo', 'gpt-4o-mini']  # Order that a user would see in settings or a dropdown
+
+def get_available(provider_map):
+    return sum([y for x, y in provider_map.items() if AVAILABLE_PROVIDERS[x]], [])  # neat trick, no?
+
+def get_highest_ranked_available(rankings, provider_map):
+    all_available = get_available(provider_map)
+    for model in rankings:
+        if model in all_available:
+            return model
+        
+    raise Exception("No available model")
+
 
 #
 #  Most Important Configuration Options
@@ -20,67 +74,58 @@ BACKEND_VERSION = '0.12.6'  # Viewable when a user goes to the root "/" endpoint
 APP_NAME = "Abbey"  # Used in certain prompts
 
 # Models and their codes are specified in integrations/lm.py
-DEFAULT_CHAT_MODEL = 'gpt-4o-mini'  # The chat model used when a user has none selected, and is the default used in other functions on a case-by-case basis.
-HIGH_PERFORMANCE_CHAT_MODEL = 'gpt-4o'  # The model used when a function requires high performance (like generating a curriculum)
-BALANCED_CHAT_MODEL = "gpt-4o"  # The model used when a function requires medium smart and medium fast performance
-FAST_CHAT_MODEL = 'gpt-4o-mini'  # The model used when speed is the most important factor
-LONG_CONTEXT_CHAT_MODEL = 'gpt-4o'  # The model used when a function needs long-context (i.e., >50,000 tokens)
-FAST_LONG_CONTEXT_MODEL = 'gpt-4o-mini'  # The model used when speed is important and it also needs long-context
-ALT_LONG_CONTEXT_MODEL = 'claude-3-5-sonnet'  # exists to provide some variability in situations where long context makes generations repetitive
+DEFAULT_CHAT_MODEL = get_highest_ranked_available(DEFAULT_CHAT_MODEL_RANKINGS, AVAILABLE_LLMS)
+HIGH_PERFORMANCE_CHAT_MODEL = get_highest_ranked_available(HIGH_PERFORMANCE_CHAT_MODEL_RANKINGS, AVAILABLE_LLMS)
+BALANCED_CHAT_MODEL = get_highest_ranked_available(BALANCED_CHAT_MODEL_RANKINGS, AVAILABLE_LLMS)
+FAST_CHAT_MODEL = get_highest_ranked_available(FAST_CHAT_MODEL_RANKINGS, AVAILABLE_LLMS)
+LONG_CONTEXT_CHAT_MODEL = get_highest_ranked_available(LONG_CONTEXT_CHAT_MODEL_RANKINGS, AVAILABLE_LLMS)
+FAST_LONG_CONTEXT_MODEL = get_highest_ranked_available(FAST_LONG_CONTEXT_MODEL_RANKINGS, AVAILABLE_LLMS)
+ALT_LONG_CONTEXT_MODEL = get_highest_ranked_available(ALT_LONG_CONTEXT_MODEL_RANKINGS, AVAILABLE_LLMS)
 
 DEFAULT_SUBSCRIPTION_CODE = 'free'  # For users that don't have any subscription entries in their user metadata
 # Options for user-selected chat models by subscription
-SUBSCRIPTION_CODE_TO_MODEL_OPTIONS = {
-    'abbey-cathedral': ['gpt-4o', 'claude-3-5-sonnet', 'claude-3-opus', 'gpt-4', 'gpt-4-turbo', 'gpt-4o-mini'],
-    'free': ['claude-3-5-sonnet', 'gpt-4o-mini'],
-}
-LM_ORDER = ['gpt-4o', 'claude-3-5-sonnet', 'claude-3-opus', 'gpt-4', 'gpt-4-turbo', 'gpt-4o-mini']  # Order that a user would see in settings or a dropdown
+
+_SUB_TO_MODELS = os.environ.get('SUBSCRIPTION_CODE_TO_MODEL_OPTIONS')
+SUBSCRIPTION_CODE_TO_MODEL_OPTIONS = json.loads(_SUB_TO_MODELS) if _SUB_TO_MODELS else {DEFAULT_SUBSCRIPTION_CODE: get_available(AVAILABLE_LLMS)}
 
 # The templates that are available to a user with a specific subscription tier
-SUBSCRIPTION_CODE_TO_TEMPLATES = {
-    'abbey-cathedral': ['document', 'folder', 'detached_chat', 'website', 'classroom', 'curriculum', 'quiz', 'text_editor', 'video', 'notebook', 'inf_quiz', 'section'],
-    'free': ['document', 'folder', 'detached_chat', 'website', 'curriculum', 'quiz', 'classroom', 'text_editor', 'video', 'notebook', 'inf_quiz']
-}
+_SUB_TO_TEMPLATES = os.environ.get('SUBSCRIPTION_CODE_TO_TEMPLATES')
+SUBSCRIPTION_CODE_TO_TEMPLATES = json.loads(_SUB_TO_TEMPLATES) if _SUB_TO_TEMPLATES else {DEFAULT_SUBSCRIPTION_CODE: AVAILABLE_TEMPLATES}
 
 # Options for optical-character-recognition by subscription tier
 # Note that the frontend does not currently exist to allow a user to actually select one, so everyone is on the default
-# However, in the future this could be user selected.
-DISABLE_OCR = False  # If true, OCR is disabled, which means that DisabledOCR ('disabled') is used for all users (and it accepts nothing, does nothing).
+# However, in the future this could be user selected – once there are more options available.
+DISABLE_OCR = not (MATHPIX_API_APP and MATHPIX_API_KEY)  # If true, OCR is disabled, which means that DisabledOCR ('disabled') is used for all users (and it accepts nothing, does nothing).
 DEFAULT_OCR_OPTION = 'mathpix'  # codes match integrations/ocr.py
-SUBSCRIPTION_CODE_TO_OCR_OPTIONS = {
-    'abbey-cathedral': ['local', 'mathpix'],
-    'free': ['local', 'mathpix']
-}
 
 DEFAULT_EMBEDDING_OPTION = "openai-text-embedding-ada-002"  # codes match integrations/embed.py
 
-DEFAULT_STORAGE_OPTION = "s3"  # codes match integrations/file_storage.py
+DEFAULT_STORAGE_OPTION = "s3" if AWS_ACCESS_KEY and AWS_SECRET_KEY else "local"  # codes match integrations/file_storage.py
 
+# No alternatives to bing ATM
 DEFAULT_SEARCH_ENGINE = "bing"  # codes match integrations/web.py
 DEFAULT_IMAGE_SEARCH_ENGINE = "bing"  # searching for images
 
-DEFAULT_EMAIL_SERVICE = 'sendgrid'  # codes match integrations/email.py
+DEFAULT_EMAIL_SERVICE = 'sendgrid' if SENDGRID_API_KEY else 'smtp'  # codes match integrations/email.py
 EMAIL_FROM_NAME = "Abbey"  # The author of auto-generated emails
-EMAIL_FROM_ADDRESS = "abbey@us.ai"  # The address from which auto-generated emails are sent
-SENDGRID_UNSUB_GROUP = 24624
-DISABLE_EMAILS = False  # all calls to send_email return True, but no email gets sent.
+EMAIL_FROM_ADDRESS = os.environ.get('SENDGRID_EMAIL') if DEFAULT_EMAIL_SERVICE == 'sendgrid' else SMTP_EMAIL  # The address from which auto-generated emails are sent
+SENDGRID_UNSUB_GROUP = int(os.environ.get('SENDGRID_UNSUB_GROUP'))
+DISABLE_EMAILS = not (SENDGRID_API_KEY or (SMTP_EMAIL and SMTP_PASSWORD and SMTP_PORT and SMTP_SERVER))
 
 # Total limit on assets created by subscription tier
-SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS = {
-    'abbey-cathedral':  math.inf,
-    'free': 500,
-}
+_SUB_TO_LIMIT = os.environ.get('SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS')
+SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS = json.loads(_SUB_TO_LIMIT) if _SUB_TO_LIMIT else {DEFAULT_SUBSCRIPTION_CODE: math.inf}
+SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS = {k: math.inf if v > 1000 else v for k, v in SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS.items()}  # converting high numbers to math.inf
 
 # Available text-to-speech models by subscription
-SUBSCRIPTION_CODE_TO_TTS_OPTIONS = {
-    'abbey-cathedral': ['openai_fable', 'eleven_adam', 'openai_onyx'],
-    'free': ['openai_onyx']
-}
+_SUB_TO_TTS = os.environ.get('SUBSCRIPTION_CODE_TO_TTS_OPTIONS')
+SUBSCRIPTION_CODE_TO_TTS_OPTIONS = json.loads(_SUB_TO_TTS) if _SUB_TO_TTS else {DEFAULT_SUBSCRIPTION_CODE: get_available(AVAILABLE_TTS)}
 
-DEFAULT_TTS_MODEL = 'openai_onyx'  # text-to-speech model used when a user has none selected
+DEFAULT_TTS_RANKINGS = ['openai_onyx', 'eleven_adam']
+DEFAULT_TTS_MODEL = get_highest_ranked_available(DEFAULT_TTS_RANKINGS, AVAILABLE_TTS)  # text-to-speech model used when a user has none selected
 
-AUTH_SYSTEM = "custom" #  # clerk | custom
-CUSTOM_AUTH_USE_DATABASE = False
+AUTH_SYSTEM = "clerk" if CLERK_SECRET_KEY and CLERK_JWT_PEM else "custom"
+CUSTOM_AUTH_USE_DATABASE = True if (CUSTOM_AUTH_SECRET and CUSTOM_AUTH_DB_ENDPOINT and CUSTOM_AUTH_DB_USERNAME and CUSTOM_AUTH_DB_PASSWORD and CUSTOM_AUTH_DB_PORT and CUSTOM_AUTH_DB_NAME) else False
 
 #
 #  Mid-Importance Configuration Options

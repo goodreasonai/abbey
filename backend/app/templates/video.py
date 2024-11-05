@@ -19,7 +19,10 @@ from ..utils import format_seconds
 
 
 def get_proxies():
-    return {'http': PROXY_URL_HTTP, 'https': PROXY_URL_HTTPS}
+    if PROXY_URL_HTTP and PROXY_URL_HTTPS:
+        return {'http': PROXY_URL_HTTP, 'https': PROXY_URL_HTTPS}
+    else:
+        return None
 
 
 def get_youtube_video_id(url):

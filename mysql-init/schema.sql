@@ -309,3 +309,8 @@ ALTER TABLE assets ADD FULLTEXT(author);
 ALTER TABLE assets ADD FULLTEXT idx_ft_title_desc_author (title, preview_desc, author);
 
 ALTER TABLE asset_groups ADD FULLTEXT(title, preview_desc);
+
+/* Add a default art history image */
+
+INSERT INTO art_history (`markdown`, `image`)
+VALUES ('This painting by Vincent Van Gogh depicts a cafe in Arles, France, where he lived for 15 months in a period some consider to be the height of his artistic development.', 'https://art-history-images.s3.amazonaws.com/CafeTerrace.webp');

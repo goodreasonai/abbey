@@ -13,6 +13,7 @@ import ImageIcon from '../../../public/icons/ImageIcon.png'
 import Tooltip from "../Tooltip/Tooltip"
 import CircleCheckIcon from '../../../public/icons/CircleCheckIcon.png'
 import { getImageByModelName } from "@/utils/models"
+import { ALLOW_SUBSCRIPTION } from "@/config/config"
 
 
 export default function Profile(){
@@ -193,7 +194,7 @@ export default function Profile(){
     }
 
     useEffect(() => {
-        if (isSignedIn){
+        if (isSignedIn && ALLOW_SUBSCRIPTION){
             verifySubscription()
         }
     }, [isSignedIn])
@@ -212,14 +213,19 @@ export default function Profile(){
                 ) : "Settings"}
             </div>
             <div className={styles.infoRows}>
-                <div className={styles.infoRow}>
-                    <div style={{'fontSize': '1.5rem', 'marginTop': '1rem'}}>
-                        Subscription Options
-                    </div>
-                </div>
-                <div className={styles.infoRow}>
-                    <SubscriptionSelect selected={productCode} />
-                </div>
+                {ALLOW_SUBSCRIPTION ? (
+                    <>
+                        <div className={styles.infoRow}>
+                            <div style={{'fontSize': '1.5rem', 'marginTop': '1rem'}}>
+                                Subscription Options
+                            </div>
+                        </div>
+                        <div className={styles.infoRow}>
+                            <SubscriptionSelect selected={productCode} />
+                        </div>
+                    </>
+                ) : ""}
+                
                 <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '.5rem'}}>
                     <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
                         <div style={{'display': 'flex', 'gap': '5px', 'fontFamily': 'var(--font-body)', 'fontSize': '.9rem'}}>
@@ -239,7 +245,7 @@ export default function Profile(){
                 </div>
                 <TTSModels productCode={productCode} />
                 <ThemeChanger/>
-                <EnterCode showPreviouslyUsedCodes={true} />
+                {ALLOW_SUBSCRIPTION ? <EnterCode showPreviouslyUsedCodes={true} /> : ""}
             </div>
             
         </div>
