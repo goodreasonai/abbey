@@ -1,4 +1,4 @@
-CREATE DATABASE learn;
+CREATE DATABASE IF NOT EXISTS learn;
 
 USE learn;
 
@@ -278,7 +278,7 @@ CREATE INDEX idx_asset_id_x_user_id ON asset_metadata (asset_id, user_id(9));
 
 CREATE INDEX idx_asset_id ON asset_permissions (asset_id);
 CREATE INDEX idx_group_id ON asset_permissions (group_id);
-CREATE INDEX idx_email_domain ON asset_permissions (email_domain);
+CREATE INDEX idx_email_domain ON asset_permissions (email_domain(9));
 
 CREATE INDEX idx_asset_id ON asset_retrieval_storage (asset_id);
 CREATE INDEX idx_time_uploaded ON asset_retrieval_storage (`time_uploaded`);

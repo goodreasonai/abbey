@@ -52,6 +52,9 @@ KEYCLOAK_CLIENT_ID=""
 KEYCLOAK_REALM=""
 KEYCLOAK_HOST=""
 
+JWT_SECRET=""
+REFRESH_SECRET=""
+
 run() {
     echo "RUN"
     if [ "$USING_EMAIL" = "true" ]; then
@@ -177,6 +180,9 @@ configure_auth() {
     else
         USE_KEYCLOAK_AUTH=$FALSE_VALUE
     fi
+
+    JWT_SECRET=$(generate_password)
+    REFRESH_SECRET=$(generate_password)
 }
 
 configure_ai() {
@@ -264,8 +270,8 @@ export_backend_env() {
         echo "DB_NAME=learn"
         echo "DB_TYPE=local"
 
-        local secret_key=$(generate_password)  # Isn't really used by us but reasonable to have for flask in case it's used by extensions, plugins, etc.
-        echo "SECRET_KEY=$secret_key"
+        echo "SECRET_KEY=$(generate_password)"
+        echo "CUSTOM_AUTH_SECRET=\"$JWT_SECRET\""
     } > "$BACKEND_ENV_FILE"
 }
 
@@ -293,6 +299,9 @@ export_frontend_env() {
 
         echo "NEXT_PUBLIC_AUTH_SYSTEM=custom"  # all self-hosters use custom auth
         echo "NEXT_SERVER_SIDE_BACKEND_URL=http://backend:5000"  # hardcoded into the docker compose
+
+        echo "JWT_SECRET=$JWT_SECRET"
+        echo "REFRESH_TOKEN_SECRET=$REFRESH_SECRET"
 
     } > "$FRONTEND_ENV_FILE"
 }

@@ -79,7 +79,7 @@ SUBSCRIPTION_CODE_TO_TTS_OPTIONS = {
 
 DEFAULT_TTS_MODEL = 'openai_onyx'  # text-to-speech model used when a user has none selected
 
-AUTH_SYSTEM = "clerk" #  # clerk | custom
+AUTH_SYSTEM = "custom" #  # clerk | custom
 CUSTOM_AUTH_USE_DATABASE = False
 
 #

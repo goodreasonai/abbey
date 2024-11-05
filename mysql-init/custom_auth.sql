@@ -1,4 +1,4 @@
-CREATE DATABASE custom_auth;
+CREATE DATABASE IF NOT EXISTS custom_auth;
 
 USE custom_auth;
 

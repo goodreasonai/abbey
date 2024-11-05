@@ -260,14 +260,18 @@ export class GoogleAuth extends BaseAuth {
     }
 }
 
-const providers = {
-    'github': new GitHubAuth({
+const providers = {}
+if (process.env.GITHUB_CLIENT_ID){
+    providers['github'] = new GitHubAuth({
         'code': 'github',
         'clientId': process.env.GITHUB_CLIENT_ID,
         'secret': process.env.GITHUB_SECRET,
         'scopes': ['user']
-    }),
-    'keycloak': new KeycloakAuth({
+    })
+}
+
+if (process.env.KEYCLOAK_CLIENT_ID){
+    providers['keycloak'] = new KeycloakAuth({
         'code': 'keycloak',
         'clientId': process.env.KEYCLOAK_CLIENT_ID,
         'secret': process.env.KEYCLOAK_SECRET,
@@ -275,15 +279,18 @@ const providers = {
         'publicUrl': process.env.KEYCLOAK_PUBLIC_URL,
         'privateUrl': process.env.KEYCLOAK_PRIVATE_URL,
         'scopes': ['openid', 'profile', 'email'] 
-    }),
-    'google': new GoogleAuth({
+    })
+}
+
+if (process.env.GOOGLE_CLIENT_ID){
+    providers['google'] = new GoogleAuth({
         'code': 'google',
         'clientId': process.env.GOOGLE_CLIENT_ID,
         'secret': process.env.GOOGLE_SECRET,
         'scopes': ['profile', 'email']
     })
-};
-  
+}
+
 function handleLogout(req, res) {
     res.setHeader('Set-Cookie', [
         `${tokenName}=; Path=/`,
