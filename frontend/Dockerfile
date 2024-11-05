@@ -1,7 +1,7 @@
 # Context for running this is in the parent directory
 
 FROM node:20
-COPY app /frontend-build
+COPY frontend /frontend-build
 WORKDIR /frontend-build
 RUN npm install
 RUN npm run build

@@ -9,6 +9,9 @@ BACKEND_ENV_FILE="backend/app/configs/.env"
 FRONTEND_ENV_FILE="frontend/.env.local"
 
 # Globals (TBD by user)
+FRONTEND_URL=""
+BACKEND_URL=""
+
 USING_EMAIL=""
 
 SEND_EMAILS=""
@@ -68,10 +71,11 @@ check_if_set_up() {
 }
 
 record_setup_complete(){
-    # echo "$SETUP_STATUS_COMPLETE" > "$SETUP_STATUS_FILE"
+    echo "$SETUP_STATUS_COMPLETE" > "$SETUP_STATUS_FILE"
 }
 
 do_setup() {
+    configure_url
     configure_email
     configure_db
     configure_ai
@@ -82,7 +86,7 @@ do_setup() {
     export_frontend_env
     export_root_env
 
-    record_setup_complete
+    # record_setup_complete
     # return 0  # Return 0 to indicate success
     return 1
 }
@@ -109,6 +113,19 @@ ask_credential() {
     echo "$response"
 }
 
+generate_password() {
+    local length=15
+    local charset="A-Za-z0-9"
+    local password=$(LC_ALL=C tr -dc "$charset" < /dev/urandom | head -c $length)
+    echo $password
+}
+
+configure_url() {
+    echo "When Abbey runs altogether on your machine inside docker containers, those containers expose port 3000 for the frontend, and port 5000 for the backend, by default."
+    FRONTEND_URL=$(ask_credential "What public-facing URL will your machine use for the frontend? Ex: https://my-frontend.com or http://localhost:3000 if just used locally.")
+    BACKEND_URL=$(ask_credential "What public-facing URL will your machine use for the backend? Ex: https://my-backend.com or http://localhost:5000 if just used locally.")
+}
+
 configure_email() {
     if ask_yes_no "Do you want to let Abbey send emails? You'll need an SMTP server (email)."; then
         SEND_EMAILS=$TRUE_VALUE
@@ -116,7 +133,7 @@ configure_email() {
         
         SMTP_SERVER=$(ask_credential "SMTP Server")
         SMTP_PORT=$(ask_credential "SMTP Port")
-        SMTP_USERNAME=$(ask_credential "SMTP Username")
+        SMTP_USERNAME=$(ask_credential "SMTP Username (email)")
         SMTP_PASSWORD=$(ask_credential "SMTP Password")
     else
         SEND_EMAILS=$FALSE_VALUE
@@ -124,8 +141,8 @@ configure_email() {
 }
 
 configure_db() {    
-    # Ask for MySQL root password
-    MYSQL_ROOT_PASSWORD=$(ask_credential "What should be the root password for Abbey's MySQL server?")
+    # Make MySQL root password
+    MYSQL_ROOT_PASSWORD=$(generate_password)
 }
 
 configure_auth() {
@@ -213,59 +230,76 @@ export_backend_env() {
     # Create or overwrite the .env file
     {
         if [ "$SEND_EMAILS" = "$TRUE_VALUE" ]; then
-            echo "SMTP_SERVER=$SMTP_SERVER"
-            echo "SMTP_PORT=$SMTP_PORT"
-            echo "SMTP_EMAIL=$SMTP_USERNAME"
-            echo "SMTP_PASSWORD=$SMTP_PASSWORD"
+            echo "SMTP_SERVER=\"$SMTP_SERVER\""
+            echo "SMTP_PORT=\"$SMTP_PORT\""
+            echo "SMTP_EMAIL=\"$SMTP_USERNAME\""
+            echo "SMTP_PASSWORD=\"$SMTP_PASSWORD\""
         fi
 
         if [ "$USE_OPENAI" = "$TRUE_VALUE" ]; then
-            echo "OPENAI_API_KEY=$OPENAI_KEY"
+            echo "OPENAI_API_KEY=\"$OPENAI_KEY\""
         fi
 
         if [ "$USE_ANTHROPIC" = "$TRUE_VALUE" ]; then
-            echo "ANTHROPIC_API_KEY=$ANTHROPIC_KEY"
+            echo "ANTHROPIC_API_KEY=\"$ANTHROPIC_KEY\""
         fi
 
         if [ "$USE_MATHPIX" = "$TRUE_VALUE" ]; then
-            echo "MATHPIX_API_APP=$MATHPIX_APP"
-            echo "MATHPIX_API_KEY=$MATHPIX_KEY"
+            echo "MATHPIX_API_APP=\"$MATHPIX_APP\""
+            echo "MATHPIX_API_KEY=\"$MATHPIX_KEY\""
         fi
 
         if [ "$USE_ELEVEN_LABS" = "$TRUE_VALUE" ]; then
-            echo "ELEVEN_LABS_API_KEY=$ELEVEN_LABS_KEY"
+            echo "ELEVEN_LABS_API_KEY=\"$ELEVEN_LABS_KEY\""
         fi
 
         if [ "$USE_WEB" = "$TRUE_VALUE" ]; then
-            echo "BING_API_KEY=$BING_KEY"
+            echo "BING_API_KEY=\"$BING_KEY\""
         fi
+
+        echo "DB_ENDPOINT=mysql"  # Hard coded into the docker compose
+        echo "DB_USERNAME=root"  # Perhaps not good practice?
+        echo "DB_PASSWORD=\"$MYSQL_ROOT_PASSWORD\""
+        echo "DB_PORT=3306"
+        echo "DB_NAME=learn"
+        echo "DB_TYPE=local"
+
+        local secret_key=$(generate_password)  # Isn't really used by us but reasonable to have for flask in case it's used by extensions, plugins, etc.
+        echo "SECRET_KEY=$secret_key"
     } > "$BACKEND_ENV_FILE"
 }
 
 export_frontend_env() {
     {
         if [ "$USE_GOOGLE_AUTH" = "$TRUE_VALUE" ]; then
-            echo "GOOGLE_CLIENT_ID=$GOOGLE_AUTH_CLIENT_ID"
-            echo "GOOGLE_SECRET=$GOOGLE_AUTH_CLIENT_SECRET"
+            echo "GOOGLE_CLIENT_ID=\"$GOOGLE_AUTH_CLIENT_ID\""
+            echo "GOOGLE_SECRET=\"$GOOGLE_AUTH_CLIENT_SECRET\""
         fi
 
         if [ "$USE_GITHUB_AUTH" = "$TRUE_VALUE" ]; then
-            echo "GITHUB_CLIENT_ID=$GITHUB_AUTH_CLIENT_ID"
-            echo "GITHUB_SECRET=$GITHUB_AUTH_CLIENT_SECRET"
+            echo "GITHUB_CLIENT_ID=\"$GITHUB_AUTH_CLIENT_ID\""
+            echo "GITHUB_SECRET=\"$GITHUB_AUTH_CLIENT_SECRET\""
         fi
 
         if [ "$USE_KEYCLOAK_AUTH" = "$TRUE_VALUE" ]; then
-            echo "KEYCLOAK_CLIENT_ID=$KEYCLOAK_CLIENT_ID"
-            echo "KEYCLOAK_REALM=$KEYCLOAK_REALM"
-            echo "KEYCLOAK_SECRET=$KEYCLOAK_CLIENT_SECRET"
-            echo "KEYCLOAK_PUBLIC_URL=$KEYCLOAK_HOST"
+            echo "KEYCLOAK_CLIENT_ID=\"$KEYCLOAK_CLIENT_ID\""
+            echo "KEYCLOAK_REALM=\"$KEYCLOAK_REALM\""
+            echo "KEYCLOAK_SECRET=\"$KEYCLOAK_CLIENT_SECRET\""
+            echo "KEYCLOAK_PUBLIC_URL=\"$KEYCLOAK_HOST\""
         fi
+
+        echo "NEXT_PUBLIC_BACKEND_URL=\"$BACKEND_URL\""
+        echo "NEXT_PUBLIC_ROOT_URL=\"$FRONTEND_URL\""
+
+        echo "NEXT_PUBLIC_AUTH_SYSTEM=custom"  # all self-hosters use custom auth
+        echo "NEXT_SERVER_SIDE_BACKEND_URL=http://backend:5000"  # hardcoded into the docker compose
+
     } > "$FRONTEND_ENV_FILE"
 }
 
 export_root_env() {
     {
-        echo "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD"
+        echo "MYSQL_ROOT_PASSWORD=\"$MYSQL_ROOT_PASSWORD\""
     } > .env
 }
 
