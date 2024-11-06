@@ -2,6 +2,7 @@ import { useUser, SignedOut, SignedIn, useAuth, UserButton, ClerkProvider, SignI
 import { TERMS_OF_USE, PRIVACY_POLICY } from '@/config/config';
 import { useMemo } from 'react';
 import { CustomAuthProvider, CustomLogin, customLogout, useCustomAuth, getToken } from './custom';
+import { splitName } from '@/utils/user';
 
 
 export const AuthInterface = {
@@ -79,9 +80,10 @@ export const CustomAuth = {
             if (!user){
                 return undefined
             }
+            const [firstName, lastName] = splitName(user.name)
             return {
-                firstName: user.given_name,
-                lastName: user.family_name,
+                firstName:  firstName,
+                lastName: lastName,
                 emailAddress: user.email
             };
         }, [user]);

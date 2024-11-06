@@ -30,6 +30,7 @@ export function getUserName(user){
     return shortenText(extractEmailName(user.emailAddress), 2, 100, true)
 }
 
+// returns an array like [firstName, lastName]
 export function splitName(name){
     if (!name){
         return ["", ""]

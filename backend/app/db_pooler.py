@@ -12,6 +12,7 @@ from .utils import make_json_serializable
 import atexit
 from functools import wraps
 from queue import Queue, Empty, Full
+import time
 
 """
 
@@ -41,13 +42,21 @@ def get_new_conn():
     return pymysql.connect(**db_params)
 
 # We're gonna try to get out of using a lock on this list...
-CONNECTIONS = []
-CONNECTION_LOCKS = []
-# first N_POOL-1 are free; next is for consistent connections; last N_EXCL are for exclusive use
-for _ in range(N_POOL + N_EXCL):
-    conn = get_new_conn()
-    CONNECTIONS.append(conn)
-    CONNECTION_LOCKS.append(Lock())
+CONNECTIONS = [None] * (N_POOL + N_EXCL)
+CONNECTION_LOCKS = [Lock() for _ in range(N_POOL + N_EXCL)]
+
+# Connection factory with retry mechanism
+def initialize_connections(max_retries=10, retry_delay=1):
+    for attempt in range(max_retries):
+        try:
+            for i in range(N_POOL + N_EXCL):
+                if CONNECTIONS[i] is None or not CONNECTIONS[i].open:
+                    CONNECTIONS[i] = get_new_conn()
+            break
+        except (pymysql.OperationalError, pymysql.InterfaceError) as e:
+            if attempt == max_retries - 1:
+                raise
+            time.sleep(retry_delay)
 
 # Exclusive connections
 AVAILABLE_EXCL_CONNS = Queue(maxsize=N_EXCL)  # queues are thread safe
@@ -311,4 +320,5 @@ def listen_for_commands():
             except Exception as e:
                 print(f"Exception occurred in DB pooler main loop: {e}", file=sys.stderr)
 
+initialize_connections()
 listen_for_commands()
