@@ -282,7 +282,7 @@ export class BlankAuth extends BaseAuth {
 
     async getUserData(accessToken) {
         return {
-            'userInfo': {'name': 'User', 'email': 'default'},
+            'userInfo': {'name': 'Friend', 'email': 'default'},
             'email': 'default'
         }
     }
