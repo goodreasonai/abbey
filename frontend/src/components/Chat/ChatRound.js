@@ -28,7 +28,7 @@ export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
                                     invertColor, setRandomness, suggestLoadingState, suggestQuestion,
                                     showFindMore, toggleUseWeb, index, onSourceButtonClick=undefined, setUserChatModel,
                                     setImages, selectedModel, extraButtons, goToPrevState, userModelLoadingState, userModelOptions,
-                                    newVersion, insertAbove, allowOCR, scrollToBottom, ...props }){
+                                    newVersion, allowOCR, scrollToBottom, ...props }){
 
     const { getToken } = Auth.useAuth()
     const [findMoreLoadState, setFindMoreLoadState] = useState(0)

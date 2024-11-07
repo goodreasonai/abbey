@@ -468,7 +468,6 @@ export default function Chat({id,
                 extraButtons={extraButtons}
                 goToPrevState={(x) => goToPrevState(i, x)}
                 newVersion={(x) => x ? newVersion(i, x) : newVersion(i)}
-                insertAbove={() => insertAbove(i)}
                 scrollToBottom={scrollToBottom}
                 invertColor={invertColor}
                 selectedModel={selectedModel}

@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styles from './Tooltip.module.css';  // Assuming you use CSS Modules
 import ReactDOM from 'react-dom'
+import observeRect from '@reach/observe-rect'
+
 
 export default function Tooltip({ children, content, verticalAlign, containerStyle, style, tooltipStyle, align='', followCursor, flash, ...props }) {
     const [showTooltip, setShowTooltip] = useState(false);
@@ -51,13 +53,14 @@ export default function Tooltip({ children, content, verticalAlign, containerSty
     }
 
     useEffect(() => {
-        window.addEventListener('resize', updateTooltipPosition);
-        window.addEventListener('scroll', updateTooltipPosition);
-        return () => {
-            window.removeEventListener('resize', updateTooltipPosition);
-            window.removeEventListener('scroll', updateTooltipPosition);
-        };
-    }, []);
+        if (tooltipRef.current){
+            let rectObserver = observeRect(tooltipRef.current, updateTooltipPosition);
+            rectObserver.observe();
+            return () => {
+                rectObserver.unobserve();
+            }
+        }
+    }, [tooltipRef?.current]);
 
     // for followCursor
     function handleMouseMove(event) {
@@ -97,14 +100,14 @@ export default function Tooltip({ children, content, verticalAlign, containerSty
         }
     }
     useEffect(() => {
-        adjustBounds()
-        window.addEventListener('resize', adjustBounds);
-        window.addEventListener('scroll', adjustBounds);
-        return () => {
-            window.removeEventListener('resize', adjustBounds);
-            window.removeEventListener('scroll', adjustBounds);
-        };
-
+        if (tooltipRef?.current){
+            adjustBounds()
+            let rectObserver = observeRect(tooltipRef.current, adjustBounds);
+            rectObserver.observe();
+            return () => {
+                rectObserver.unobserve();
+            }
+        }
     }, [tooltipRef?.current, childrenInfo])
 
     const buffer = 5
@@ -155,7 +158,7 @@ export default function Tooltip({ children, content, verticalAlign, containerSty
             {showTooltip ? ReactDOM.createPortal(
                 <div
                     style={{
-                        position: 'absolute',
+                        position: followCursor ? 'fixed' : 'absolute',
                         top: `${tooltipTop}px`,
                         left: `${tooltipLeft}px`,
                         transform: `translateX(${tooltipTransX}) translateY(${tooltipTransY})`,
