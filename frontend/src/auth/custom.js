@@ -7,6 +7,7 @@ import styles from './Custom.module.css'
 import MyImage from "@/components/MyImage/MyImage";
 import GLogo from '../../public/random/GLogo.png'
 import { Roboto } from 'next/font/google';
+import Info from "@/components/Info/Info";
 
 const roboto = Roboto({
     weight: ['300', '400', '500', '700'],
@@ -28,6 +29,9 @@ if (process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH === '1'){
 }
 if (process.env.NEXT_PUBLIC_ENABLE_KEYCLOAK_AUTH === '1'){
     enabledProviders.push('keycloak')
+}
+if (!enabledProviders.length){
+    enabledProviders.push('blank')
 }
 
 export function CustomLogin({ redirectUrl }) {
@@ -57,6 +61,15 @@ export function CustomLogin({ redirectUrl }) {
                 <MyImage canSwitch={false} unoptimized={true} src={KeycloakLogo} alt={"Keycloak"} height={25} />
             )
         },
+        {
+            'name': 'blank',
+            'value': (
+                <>
+                    <div>Sign in as a Default User</div>
+                    <Info text="Add OAuth2 credentials to allow multi-user setups." />
+                </>
+            )
+        }
     ]
 
     providers = providers.filter((x) => enabledProviders.includes(x.name))
@@ -223,7 +236,6 @@ export async function getToken(){
         return { token, payload }
     }
 }
-    
 
 function getTokenLocally(){
     const token = document.cookie.split('; ').find(row => row.startsWith(`${tokenName}=`));

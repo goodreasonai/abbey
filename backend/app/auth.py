@@ -7,6 +7,7 @@ import requests
 from .exceptions import UserIsNoneError
 from .configs.str_constants import PERMISSIONS_REQUEST
 from .integrations.auth import Auth, AUTH_PROVIDERS
+from .utils import is_valid_email
 
 
 # Represents a user from a token and holds only info that is encoded in the token
@@ -110,7 +111,8 @@ def get_permissioning_string(user: User, get_public=True, user_uploads_only=Fals
         raise UserIsNoneError("Request for non-public data but no user")
 
     escaped_email = user.email
-    email_domain = db.escape_string(escaped_email.split("@")[1])
+    
+    email_domain = db.escape_string(escaped_email.split("@")[1]) if is_valid_email(escaped_email) else "localhost"  # localhost is somewhat of an arbitrary choice.
 
     user_id = db.escape_string(user.user_id)
     if user_uploads_only:

@@ -54,6 +54,8 @@ export const HIDE_COLLECTIONS = process.env.NEXT_PUBLIC_HIDE_COLLECTIONS === '1'
 
 export const DISABLE_OCR = process.env.NEXT_PUBLIC_DISABLE_OCR === '1'  // Should match backend. If true, the user is never prompted about OCR and is never given the option to retry with OCR
 
+export const DISABLE_WEB = process.env.NEXT_PUBLIC_DISABLE_WEB === '1'
+
 // NOTE: Externally hosted image URLs can be configured in next.config.js!
 // NOTE: Templates (and which appear in certain places) can be configured in templates/template.js
 

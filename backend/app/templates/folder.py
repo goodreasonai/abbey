@@ -2,7 +2,7 @@ from ..storage_interface import delete_resources
 from ..configs.user_config import MAX_PDF_PAGES
 from ..exceptions import PdfTooLongError
 from ..db import needs_db
-from ..utils import get_extension_from_path, remove_ext
+from ..utils import get_extension_from_path, remove_ext, is_valid_email
 from ..asset_actions import upload_asset, set_sources
 
 from ..auth import get_permissioning_string, User, token_required, token_optional
@@ -52,7 +52,7 @@ def manifest(user: User):
 
     escaped_email = user.email
     user_id = user.user_id
-    email_domain = db.escape_string(escaped_email.split("@")[1])
+    email_domain = db.escape_string(escaped_email.split("@")[1]) if is_valid_email else "localhost"
 
     sql = f"""
     WITH ass AS (

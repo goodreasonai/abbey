@@ -89,19 +89,9 @@ export class BaseAuth {
         const uri = `${url}?${urlParams.toString()}`;
         res.redirect(uri);
     }
-  
-    async callback(req, res) {
 
-        // First check for the return url in the state variable
-        const { state, code } = req.query;
-        let returnUrl = "/"
-        if (state) {
-            const decodedState = this._decodeState(state);
-            returnUrl = decodedState.returnUrl || '/';
-        }
-
-        // Make the access token request 
-        const tokenResponse = await fetch(this.getTokenUrl(), {
+    async getAccessToken(code){
+        const response = await fetch(this.getTokenUrl(), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -115,11 +105,25 @@ export class BaseAuth {
                 redirect_uri: this.callbackUri,
             }),
         });
+        const { access_token } = await response.json();
+        return access_token
+    }
+  
+    async callback(req, res) {
 
-        const { access_token } = await tokenResponse.json();
+        // First check for the return url in the state variable
+        const { state, code } = req.query;
+        let returnUrl = "/"
+        if (state) {
+            const decodedState = this._decodeState(state);
+            returnUrl = decodedState.returnUrl || '/';
+        }
+
+        // Make the access token request 
+        const accessToken = await this.getAccessToken(code)
 
         // Get user info using provider-specific API
-        const { userInfo, email } = await this.getUserData(access_token)
+        const { userInfo, email } = await this.getUserData(accessToken)
         
         let userId = undefined
         if (useDatabaseForUsers) {
@@ -260,8 +264,32 @@ export class GoogleAuth extends BaseAuth {
     }
 }
 
+export class BlankAuth extends BaseAuth {
+    login(req, res) {
+        const { returnUrl } = req.query
+        const url = `/api/auth/callback/${this.config.code}`
+         // Redirect the user to make the authorization request
+         const urlParams = new URLSearchParams({
+            state: returnUrl ? this._encodeState({ returnUrl }) : this._encodeState({returnUrl: "/"})
+        });
+        const uri = `${url}?${urlParams.toString()}`;
+        res.redirect(uri);
+    }
+
+    async getAccessToken(code) {
+        return ""
+    }
+
+    async getUserData(accessToken) {
+        return {
+            'userInfo': {'name': 'User', 'email': 'default'},
+            'email': 'default'
+        }
+    }
+}
+
 const authProviders = {}
-if (process.env.GITHUB_CLIENT_ID){
+if (process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH === '1'){
     authProviders['github'] = new GitHubAuth({
         'code': 'github',
         'clientId': process.env.GITHUB_CLIENT_ID,
@@ -270,7 +298,7 @@ if (process.env.GITHUB_CLIENT_ID){
     })
 }
 
-if (process.env.KEYCLOAK_CLIENT_ID){
+if (process.env.NEXT_PUBLIC_KEYCLOAK_AUTH === '1'){
     authProviders['keycloak'] = new KeycloakAuth({
         'code': 'keycloak',
         'clientId': process.env.KEYCLOAK_CLIENT_ID,
@@ -282,12 +310,22 @@ if (process.env.KEYCLOAK_CLIENT_ID){
     })
 }
 
-if (process.env.GOOGLE_CLIENT_ID){
+if (process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === '1'){
     authProviders['google'] = new GoogleAuth({
         'code': 'google',
         'clientId': process.env.GOOGLE_CLIENT_ID,
         'secret': process.env.GOOGLE_SECRET,
         'scopes': ['profile', 'email']
+    })
+}
+
+if (!Object.keys(authProviders).length){
+    authProviders['blank'] = new BlankAuth({
+        // So we don't throw any errors in initialization
+        'code': 'blank',
+        'clientId': 'blank',
+        'secret': 'blank',
+        'scopes': []
     })
 }
 

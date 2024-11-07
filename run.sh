@@ -319,6 +319,10 @@ export_frontend_env() {
             echo "NEXT_PUBLIC_DISABLE_OCR=1"
         fi
 
+        if [ "$USE_WEB" = "$FALSE_VALUE" ]; then
+            echo "NEXT_PUBLIC_DISABLE_WEB=1"
+        fi
+
         # While clerk is available in the config, there needs to be non blank (even if non functional) keys.
         echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=not-a-key"
         echo "CLERK_SECRET_KEY=not-a-key"

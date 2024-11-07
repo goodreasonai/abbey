@@ -24,6 +24,7 @@ import LoadingSkeleton from '../Loading/LoadingSkeleton';
 import observeRect from '@reach/observe-rect'
 import useKeyboardShortcut from '@/utils/keyboard';
 import ImageIcon from '../../../public/icons/ImageIcon.png'
+import { DISABLE_WEB } from '@/config/config';
 
 export const defaultRoundState = {
     'ai': '',
@@ -136,6 +137,9 @@ export default function Chat({id,
     }, [roundsContainerRef.current]);
 
     const onKeyboardUseWeb = useCallback(() => {
+        if (DISABLE_WEB){
+            return
+        }
         setBottomTextItem({...bottomTextItem, 'useWeb': !bottomTextItem?.useWeb})
     }, [setBottomTextItem, bottomTextItem])
     useKeyboardShortcut([['Control', 'i'], ['Meta', 'i']], onKeyboardUseWeb)

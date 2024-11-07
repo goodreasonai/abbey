@@ -13,6 +13,7 @@ import RemoveIcon from '../../../public/icons/RemoveIcon.png'
 import MenuIcon from '../../../public/icons/MenuIcon.png'
 import LightDropdown from "../LightDropdown/LightDropdown"
 import { getModKey } from "@/utils/keyboard"
+import { DISABLE_WEB } from "@/config/config"
 
 
 export default function MessageToolbar({ detached, selectedModel, item, canEdit, isLoading, isAnswering, toggleUseWeb, suggestQuestion, suggestLoadingState, removeChat, setImages, setRandomness, toggleDetached, userModelLoadingState, userModelOptions, setUserChatModel, dropdownGoesUp, showUseWebTooltip }) {
@@ -149,7 +150,7 @@ export default function MessageToolbar({ detached, selectedModel, item, canEdit,
         <div>
             {detached ? (
                 <div style={{'display': 'flex', 'flex': '1', 'alignItems': 'center', 'flexWrap': 'wrap', 'gap': '10px', 'color': 'var(--passive-text)'}}>
-                    {webSearchArea}
+                    {!DISABLE_WEB ? webSearchArea : ""}
                     {modelsDropdown}
                     <div style={{'flex': '1'}}></div>
                     {attachImageArea}
@@ -174,7 +175,7 @@ export default function MessageToolbar({ detached, selectedModel, item, canEdit,
                         closeOnSelect={false}
                         options={[
                             {'value': randomnessArea},
-                            {'value': webSearchArea, 'onClick': toggleUseWeb},
+                            ...(!DISABLE_WEB ? [{'value': webSearchArea, 'onClick': toggleUseWeb}] : []),
                             {'value': detachedArea, 'onClick': toggleDetached},
                         ]}
                         direction={dropdownGoesUp ? 'up' : 'down'}
