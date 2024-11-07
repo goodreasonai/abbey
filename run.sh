@@ -303,6 +303,12 @@ export_frontend_env() {
             echo "KEYCLOAK_PUBLIC_URL=\"$KEYCLOAK_HOST\""
         fi
 
+        echo "CUSTOM_AUTH_DB_HOST=mysql"  # Hard coded into the docker compose
+        echo "CUSTOM_AUTH_DB_USER=root"  # Perhaps not good practice?
+        echo "CUSTOM_AUTH_DB_PASSWORD=\"$MYSQL_ROOT_PASSWORD\""
+        echo "CUSTOM_AUTH_DB_PORT=3306"
+        echo "CUSTOM_AUTH_DB_NAME=custom_auth"
+
         echo "NEXT_PUBLIC_BACKEND_URL=\"$BACKEND_URL\""
         echo "NEXT_PUBLIC_ROOT_URL=\"$FRONTEND_URL\""
 
