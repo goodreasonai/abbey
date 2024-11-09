@@ -5,15 +5,21 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+      args:
+        - BUILD_ENV=${BUILD_ENV:-prod}
     ports:
       - "5000:5000"
     volumes:
       - ./backend:/app
+    environment:
+      PYTHONUNBUFFERED: ${PYTHONUNBUFFERED:-false}
 
   frontend:
     build:
       context: .
       dockerfile: frontend/Dockerfile
+      args:
+        - MY_BUILD_ENV=${BUILD_ENV:-prod}  # BUILD_ENV as a name seems to cause problems
     ports:
       - "3000:3000"
     volumes:
@@ -35,7 +41,14 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    command: celery -A app.worker.celery worker --loglevel=INFO
+      args:
+      - BUILD_ENV=${BUILD_ENV:-prod}
+    command: >
+      sh -c "if [ "$BUILD_ENV" = "prod" ]; then
+             celery -A app.worker.celery worker;
+           else
+             celery -A app.worker.celery worker --loglevel=INFO;
+           fi"
     volumes:
       - ./backend:/app
     depends_on:

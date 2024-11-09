@@ -3,5 +3,4 @@
 **/__pycache__
 **/.DS_Store
 **/venv
-setup-helpers/setup_status.txt
 .env

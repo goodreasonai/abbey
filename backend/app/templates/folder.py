@@ -52,7 +52,7 @@ def manifest(user: User):
 
     escaped_email = user.email
     user_id = user.user_id
-    email_domain = db.escape_string(escaped_email.split("@")[1]) if is_valid_email else "localhost"
+    email_domain = db.escape_string(escaped_email.split("@")[1]) if is_valid_email(escaped_email) else "localhost"
 
     sql = f"""
     WITH ass AS (

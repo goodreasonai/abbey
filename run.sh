@@ -1,9 +1,7 @@
 #!/bin/bash
 
 # Constants
-SETUP_STATUS_FILE="setup-helpers/setup_status.txt"
-SETUP_STATUS_COMPLETE="COMPLETE"
-TRUE_VALUE="yes"  # true/false global variables are set using this.
+TRUE_VALUE="yes"  # true/false global variables are set using this. idk how to write bash, sorry.
 FALSE_VALUE="no"
 BACKEND_ENV_FILE="backend/app/configs/.env"
 FRONTEND_ENV_FILE="frontend/.env.local"
@@ -11,8 +9,6 @@ FRONTEND_ENV_FILE="frontend/.env.local"
 # Globals (TBD by user)
 FRONTEND_URL=""
 BACKEND_URL=""
-
-USING_EMAIL=""
 
 SEND_EMAILS=""
 SMTP_SERVER=""
@@ -56,25 +52,51 @@ JWT_SECRET=""
 REFRESH_SECRET=""
 
 run() {
-    echo "RUN"
-    if [ "$USING_EMAIL" = "true" ]; then
-        docker-compose up --profiles email
-    else
-        docker-compose up
+    # Initialize variables
+    BUILD_ENV="prod"
+    build_flag=""
+    PYTHONUNBUFFERED="false"
+
+    # Iterate over all arguments
+    for arg in "$@"; do
+        case $arg in
+            --dev)
+                BUILD_ENV="dev"
+                ;;
+            --build)
+                build_flag="--build"
+                ;;
+        esac
+    done
+
+    if ["$BUILD_ENV" = "dev" ]; then
+        PYTHONUNBUFFERED="true"
     fi
+
+    # Construct the docker-compose command
+    cmd="BUILD_ENV=$BUILD_ENV PYTHONUNBUFFERED=$PYTHONUNBUFFERED docker-compose"
+    
+    if is_email_enabled; then
+        cmd+=" --profile email"
+    fi
+    
+    cmd+=" up $build_flag"
+
+    # Execute the command
+    echo "Executing: $cmd"
+    eval $cmd
 }
 
+# Checks if set up by seeing if there's a backend ENV file written.
 check_if_set_up() {
-    if [[ -f $SETUP_STATUS_FILE ]]; then
-        if grep -q "$SETUP_STATUS_COMPLETE" "$SETUP_STATUS_FILE"; then
-            return 0  # True, setup is complete
-        fi
+    if [[ -f $BACKEND_ENV_FILE ]]; then
+        return 0  # True, setup is complete
     fi
     return 1  # False, setup is not complete
 }
 
 record_setup_complete(){
-    echo "$SETUP_STATUS_COMPLETE" > "$SETUP_STATUS_FILE"
+    echo "$TRUE_VALUE" > "$SETUP_STATUS_FILE"
 }
 
 do_setup() {
@@ -84,14 +106,13 @@ do_setup() {
     configure_ai
     configure_search_engine
     configure_auth
+    configure_docker_profiles  # Needs to be last because it also exports file
 
     export_backend_env
     export_frontend_env
     export_root_env
 
-    # record_setup_complete
-    # return 0  # Return 0 to indicate success
-    return 1
+    return 0  # Return 0 to indicate success
 }
 
 # Function to ask a yes/no question
@@ -188,11 +209,13 @@ configure_auth() {
 configure_ai() {
     # What ai providers would you like to use?
     # What are your keys?
-    echo "To use Abbey, you will need to configure some AI providers, like the OpenAI API. Otherwise, you can implement your own API in the integrations folder in the backend."
-    if ask_yes_no "Would you like to configure the OpenAI API?"; then
+    echo "To use Abbey, you will need to configure some AI providers, like the OpenAI API. You can implement your own API in the integrations folder in the backend."
+    if ask_yes_no "It is required at this time to provide an OpenAI API key. Do you have a key, or would you like to exit this setup?"; then
         USE_OPENAI=$TRUE_VALUE
         OPENAI_KEY=$(ask_credential "OK, please provide an OpenAI API key")
     else
+        echo "The OpenAI API key is mandatory. Please see the README on GitHub for more details and ways around this."
+        exit 1
         USE_OPENAI=$FALSE_VALUE
     fi
 
@@ -229,6 +252,22 @@ configure_search_engine() {
         BING_KEY=$(ask_credential "OK, please provide a Bing API key")
     else
         USE_WEB=$FALSE_VALUE
+    fi
+}
+
+# Needs to be run AFTER setup complete / affirmed (because it loads in environment variables which could mess with stuff)
+is_email_enabled() {
+    # Load the environment variables from BACKEND_ENV_FILE
+    if [[ -f "$BACKEND_ENV_FILE" ]]; then
+        # Source the environment file to load variables
+        source "$BACKEND_ENV_FILE"
+    fi
+
+    # Check if either SMTP_SERVER or SENDGRID_API_KEY is set
+    if [[ -n "$SMTP_SERVER" || -n "$SENDGRID_API_KEY" ]]; then
+        return 0  # True: Email is enabled
+    else
+        return 1  # False: Email is not enabled
     fi
 }
 
@@ -357,7 +396,7 @@ if command -v docker-compose >/dev/null 2>&1; then  # If the docker compose comm
     fi
 
     if $do_run; then
-        run
+        run "$@";  # Pass all command line arguments to run function
     fi
 else
     echo "docker-compose is not available."

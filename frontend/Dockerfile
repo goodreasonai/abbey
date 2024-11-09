@@ -1,8 +1,13 @@
-# Context for running this is in the parent directory
-
 FROM node:20
-COPY frontend /app
-WORKDIR /app
-RUN npm install
+COPY frontend /frontend-build
+WORKDIR /frontend-build
+RUN npm install --force
+
+ARG MY_BUILD_ENV=prod
+ENV MY_BUILD_ENV=${MY_BUILD_ENV}
+
+RUN if [ "$MY_BUILD_ENV" = "prod" ]; then npm run build; fi
+
 EXPOSE 3000
-CMD ["npm", "run", "dev"]
+CMD ["sh", "-c", "if [ \"$MY_BUILD_ENV\" = \"prod\" ]; then npm run start; else npm run dev; fi"]
+

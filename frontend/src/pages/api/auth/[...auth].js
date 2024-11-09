@@ -267,7 +267,7 @@ export class GoogleAuth extends BaseAuth {
 export class BlankAuth extends BaseAuth {
     login(req, res) {
         const { returnUrl } = req.query
-        const url = `/api/auth/callback/${this.config.code}`
+        const url = `/api/auth/callback/blank`
          // Redirect the user to make the authorization request
          const urlParams = new URLSearchParams({
             state: returnUrl ? this._encodeState({ returnUrl }) : this._encodeState({returnUrl: "/"})
