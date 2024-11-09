@@ -69,7 +69,7 @@ run() {
         esac
     done
 
-    if ["$BUILD_ENV" = "dev" ]; then
+    if [ "$BUILD_ENV" = "dev" ]; then
         PYTHONUNBUFFERED="true"
     fi
 
@@ -84,7 +84,7 @@ run() {
 
     # Execute the command
     echo "Executing: $cmd"
-    eval $cmd
+    eval "$cmd"
 }
 
 # Checks if set up by seeing if there's a backend ENV file written.
@@ -141,7 +141,7 @@ generate_password() {
     local length=15
     local charset="A-Za-z0-9"
     local password=$(LC_ALL=C tr -dc "$charset" < /dev/urandom | head -c $length)
-    echo $password
+    echo "$password"
 }
 
 configure_url() {
