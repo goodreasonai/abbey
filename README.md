@@ -128,6 +128,9 @@ CUSTOM_AUTH_DB_USER="root"
 CUSTOM_AUTH_DB_PASSWORD="your-mysql-db-password"
 CUSTOM_AUTH_DB_NAME="custom_auth"
 CUSTOM_AUTH_DB_PORT="3306"
+
+# If you want to use images from an external domain, you need to list them here (separated by commas)
+IMAGE_DOMAINS="some-domain.com,some-domain-2.com"
 ```
 
 The `.env` file in the root has just one variable:
@@ -160,6 +163,24 @@ Authentication (auth.py - if none is available, one default sign in is provided)
 - GitHub
 - Keycloak
 - Clerk (contact us for instructions if you're interested)
+
+## Homepage Artwork
+
+You may notice that on the homepage (while signed in), the right side has an image and a description. On initialization of the database, there is one image that will appear there by default (which is hosted on the internet). To change that image, or to add more, you need to add entries to the `art_history` table in the `learn` database (on the MySQL service). There you put a URL for the image and markdown for the description. The domain where the image is hosted needs also to be included in the `IMAGE_DOMAINS` frontend environment variable (see manual setup).
+
+To add the entry into `art_history`, you need to execute some SQL. With docker-compose, you can use:
+
+```
+docker-compose exec mysql mysql -u root -p
+```
+
+and then use your MySQL root password (available in the `.env` file located in the root of the project). Then, you'll need to execute:
+
+```
+use learn;
+INSERT INTO art_history (`markdown`, `image`)
+VALUES ('This is my *description*', 'https://some-hosted-image.com/image.webp');
+```
 
 ## Contributing Your Own Integration
 
