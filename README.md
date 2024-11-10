@@ -203,3 +203,11 @@ On the frontend, all templates are implemented in one file, `frontend/src/templa
 Some templates are like leaves; for example, documents have no linked asset sources, which means that when you chat with a document, you are truly chatting only with that one document. Other templates have linked sources. For example, a folder's contents are linked assets. This system exists for other templates like the text editor, which can source material from other assets with its AI write functionality. Using sources in a consistent way makes sure that functionality that extends across templates, like sharing assets, remains functional. If you share a folder with someone, for example, the permissions propagate down to all of the items inside that folder.
 
 The standard way to retrieve information about an asset's sources on the frontend is with the `/assets/sources-info` endpoint. The standard way to add a source to an asset is with the endpoints `/assets/add-resource` and `/assets/add-resources`. These endpoints are looking for an entry in the `asset_metadata` table with key `retrieval_source` whose value is an asset id. See more details on those endpoints in `backend/app/assets.py`.
+
+## Deploying on a Network
+
+The frontend is exposed on port 3000, and the backend is exposed on port 5000. Both services need to be available to your users. A straightforward way to make Abbey available is to use a tunneling service like [Cloudflare Tunnel](https://www.cloudflare.com/products/tunnel/) or [Ngrok](https://ngrok.com/). You would map two tunnels to ports 3000 and 5000. Knowing the URLs of your tunnels, you must set the correct frontend and backend URLs in the relevant environment variable files (see manual setup).
+
+Another way to deploy would be to put one or both services behind a reverse proxy server like Nginx. You may find it convenient to change the `docker-compose.yml` file to map at least one of the services to port 80.
+
+**Remember to set the `NEXT_PUBLIC_BACKEND_URL` and `NEXT_PUBLIC_ROOT_URL` variables to their correct values in `frontend/.env.local` if you didn't specify them in your initial setup.**
