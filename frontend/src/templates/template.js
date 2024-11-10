@@ -811,8 +811,6 @@ class InfiniteQuizTemplate extends Template {
     }
 }
 
-
-
 export const TEMPLATES = [
     new DocumentTemplate(),
     new FolderTemplate(),
@@ -829,7 +827,6 @@ export const TEMPLATES = [
 ];
 
 
-
 // These templates may be included as sources to other templates
 export const DATA_TEMPLATES = ['folder', 'document', 'website', 'text_editor', 'video', 'section', 'notebook']
 
@@ -838,7 +835,6 @@ export const ADD_TO_WORKSPACE_TEMPLATES = ['document', 'website', 'video']
 
 // Gives option when deleting to delete all of the associated resources
 export const ALLOW_DELETE_CONTENTS = ['folder']
-
 
 export const POPULAR_TEMPLATES = ['document', 'detached_chat', 'folder', 'notebook']
 export const GROUP_TEMPLATE_OPTIONS = ['folder', 'document', 'website']

@@ -28,7 +28,7 @@ AVAILABLE_PROVIDERS = {
 }
 
 # Enabled models by provider profile
-AVAILABLE_LLMS = {
+AVAILABLE_LMS = {
     'openai': ['gpt-4o', 'gpt-4o-mini', 'gpt-4', 'gpt-4-turbo'],
     'anthropic': ['claude-3-5-sonnet', 'claude-3-opus']
 }
@@ -74,19 +74,19 @@ def get_highest_ranked_available(rankings, provider_map):
 APP_NAME = "Abbey"  # Used in certain prompts
 
 # Models and their codes are specified in integrations/lm.py
-DEFAULT_CHAT_MODEL = get_highest_ranked_available(DEFAULT_CHAT_MODEL_RANKINGS, AVAILABLE_LLMS)
-HIGH_PERFORMANCE_CHAT_MODEL = get_highest_ranked_available(HIGH_PERFORMANCE_CHAT_MODEL_RANKINGS, AVAILABLE_LLMS)
-BALANCED_CHAT_MODEL = get_highest_ranked_available(BALANCED_CHAT_MODEL_RANKINGS, AVAILABLE_LLMS)
-FAST_CHAT_MODEL = get_highest_ranked_available(FAST_CHAT_MODEL_RANKINGS, AVAILABLE_LLMS)
-LONG_CONTEXT_CHAT_MODEL = get_highest_ranked_available(LONG_CONTEXT_CHAT_MODEL_RANKINGS, AVAILABLE_LLMS)
-FAST_LONG_CONTEXT_MODEL = get_highest_ranked_available(FAST_LONG_CONTEXT_MODEL_RANKINGS, AVAILABLE_LLMS)
-ALT_LONG_CONTEXT_MODEL = get_highest_ranked_available(ALT_LONG_CONTEXT_MODEL_RANKINGS, AVAILABLE_LLMS)
+DEFAULT_CHAT_MODEL = get_highest_ranked_available(DEFAULT_CHAT_MODEL_RANKINGS, AVAILABLE_LMS)
+HIGH_PERFORMANCE_CHAT_MODEL = get_highest_ranked_available(HIGH_PERFORMANCE_CHAT_MODEL_RANKINGS, AVAILABLE_LMS)
+BALANCED_CHAT_MODEL = get_highest_ranked_available(BALANCED_CHAT_MODEL_RANKINGS, AVAILABLE_LMS)
+FAST_CHAT_MODEL = get_highest_ranked_available(FAST_CHAT_MODEL_RANKINGS, AVAILABLE_LMS)
+LONG_CONTEXT_CHAT_MODEL = get_highest_ranked_available(LONG_CONTEXT_CHAT_MODEL_RANKINGS, AVAILABLE_LMS)
+FAST_LONG_CONTEXT_MODEL = get_highest_ranked_available(FAST_LONG_CONTEXT_MODEL_RANKINGS, AVAILABLE_LMS)
+ALT_LONG_CONTEXT_MODEL = get_highest_ranked_available(ALT_LONG_CONTEXT_MODEL_RANKINGS, AVAILABLE_LMS)
 
 DEFAULT_SUBSCRIPTION_CODE = 'free'  # For users that don't have any subscription entries in their user metadata
 # Options for user-selected chat models by subscription
 
 _SUB_TO_MODELS = os.environ.get('SUBSCRIPTION_CODE_TO_MODEL_OPTIONS')
-SUBSCRIPTION_CODE_TO_MODEL_OPTIONS = json.loads(_SUB_TO_MODELS) if _SUB_TO_MODELS else {DEFAULT_SUBSCRIPTION_CODE: get_available(AVAILABLE_LLMS)}
+SUBSCRIPTION_CODE_TO_MODEL_OPTIONS = json.loads(_SUB_TO_MODELS) if _SUB_TO_MODELS else {DEFAULT_SUBSCRIPTION_CODE: get_available(AVAILABLE_LMS)}
 
 # The templates that are available to a user with a specific subscription tier
 _SUB_TO_TEMPLATES = os.environ.get('SUBSCRIPTION_CODE_TO_TEMPLATES')
