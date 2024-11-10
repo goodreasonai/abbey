@@ -13,7 +13,7 @@ import CreateWrapper from "../Quick/CreateWrapper";
 import Tooltip from "../Tooltip/Tooltip";
 import HairClipperIcon from '../../../public/icons/HairClipperIcon.png';
 import { convertToHTMLContent } from "@/utils/html";
-import TextEditorIcon from '../../../public/icons/TextIcon.png';
+import AIWriteIcon from '../../../public/icons/AIWriteIcon.png';
 import SpeakerIcon from '../../../public/icons/SpeakerIcon.png'
 import AudioControls from "../Audio/AudioControls";
 import { addCitations, removeCitations } from "@/utils/text";
@@ -269,44 +269,52 @@ function SummaryTab({ manifestRow, text = "", isDone, allowSpeech, setRoundState
         scrollToBottom()
     }
 
+    async function makeLonger(){
+        // note: are we worried about a double trigger here?
+        setRoundStates((prev) => {
+            let newState = {...getDefaultRoundState(), 'user': `Give a detailed essay summarizing the document. Do not be brief; instead, be comprehensive. Start your response, 'This work is about...'`, 'autoAsk': true}
+            
+            let lastIndex = prev.length - 1
+            // Don't want to add to already fresh state
+            if (prev.length > 0){
+                if (!prev[lastIndex].user){
+                    lastIndex -= 1
+                }
+            }
+            // make new states variable list of states including previous up to lastIndex plus newState
+            let newStates = [...prev.slice(0, lastIndex + 1), newState];
+
+            return newStates
+        })
+        setTabState(undefined)
+        scrollToBottom()
+    }
+
     return (
         <div style={{'paddingTop': '1.5rem'}}>
             {isDone ? (
                 <div style={{'display': 'flex', 'flexWrap': 'wrap', 'gap': '10px', 'alignItems': 'center'}}>
-                    <div className="_touchableOpacity" onClick={() => makeShorter()} style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
-                        <div>
-                            Shorten
+                    <Tooltip content={"Make a Shorter Summary"}>
+                        <div className="_touchableOpacity" onClick={() => makeShorter()} style={{'display': 'flex', 'alignItems': 'center', 'gap': '5px'}}>
+                            <div>
+                                Shorter
+                            </div>
+                            <MyImage src={HairClipperIcon} alt={"Shorten"} height={20} />
                         </div>
-                        <MyImage src={HairClipperIcon} alt={"Shorten"} height={20} />
-                    </div>
-                    <div style={{'display': 'flex'}}>
-                        <CreateWrapper
-                            templateCode={'text_editor'}
-                            data={{'title': `${manifestRow.title} - Notes`, 'text': convertToHTMLContent(text), 'selections': JSON.stringify([manifestRow.id])}}
-                            noStretch={true}
-                            noShow={true}
-                            loadCallback={() => {setCreateNotesLoading(true)}}
-                            callback={() => {setCreateNotesLoading(false)}}
-                        >
-                            {createNotesLoading ? (
-                                <Loading text="" />
-                            ) : (
-                                <Tooltip content={"Continue in text editor"} verticalAlign='bottom' margin='5px'>
-                                    <div className="_touchableOpacity" style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
-                                        <div>
-                                            Editor
-                                        </div>
-                                        <MyImage src={TextEditorIcon} alt={"Editor"} height={20} />
-                                    </div>
-                                </Tooltip>
-                            )}
-                        </CreateWrapper>
-                    </div>
+                    </Tooltip>
+                    <Tooltip content={"Make a Longer Summary"}>
+                        <div className="_touchableOpacity" onClick={() => makeLonger()} style={{'display': 'flex', 'alignItems': 'center', 'gap': '5px'}}>
+                            <div>
+                                Longer
+                            </div>
+                            <MyImage src={AIWriteIcon} alt={"Longer"} height={20} />
+                        </div>
+                    </Tooltip>
                     {allowSpeech ? (
                         listenClicked ? (
                             <AudioControls text={text} assetId={manifestRow.id} name={SUMMARY_AUDIO_NAME} />
                         ) : (
-                            <Tooltip content={"Listen"} verticalAlign="bottom">
+                            <Tooltip content={"Listen"}>
                                 <MyImage className={"_touchableOpacity"} width={20} height={20} src={SpeakerIcon} alt={"Speaker"} onClick={() => setListenClicked(true)} />
                             </Tooltip>
                         )
