@@ -178,6 +178,14 @@ The file `backend/app/config/user_config.py` is **extremely important** for actu
 
 For more information, simply look at the file; it's well-commented and not that complicated. In some cases, there is basic logic to determine which integrations are used: for example, if AWS credentials are present, s3 is used as the storage option; otherwise, Abbey uses local storage in the `static` folder.
 
+### Note on Authentication Integrations
+
+Unlike the other integrations, if you're simply adding an OAuth2 provider, there is in fact no reason to do anything whatsoever on the flask backend. The Next.js frontend server handles everything. What you need to do is:
+
+1. Create a provider class in `frontend/src/pages/api/auth/[...auth].js`. The simplest example is the GoogleAuth class (extending BaseAuth) which provides three URLs: an OAuth2 auth endpoint; an OAuth2 token endpoint; and an OpenID Connect user info endpoint. Since GitHub does not implement standard OpenID connect, it implements the getUserData() function directly.
+2. Conditionally add an instance that provider class to the `authProviders` variable based on the availability of secrets.
+3. Create a frontend login button for that provider in `frontend/src/auth/custom.js`. First, that means pushing to `enabledProviders` the code of your new provider conditionally based on whether an environment variable is set to 1 (the environment variable must start with NEXT_PUBLIC so that it's available client-side). Second, that means adding an object to the `providers` list specifying your provider code and button value (you can add your provider's logo by following the pattern and adding the logo to `frontend/public/random`).
+
 ### Note on Search Engine Integrations
 
 One note on search engines: some class functions for a search engine return custom search objects; the relevant classes are implemented in `web.py`, and you should take a look if you choose to implement a new search engine integration.
