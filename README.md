@@ -6,6 +6,12 @@ If you have any questions or suggestions, please open a GitHub issue! Otherwise,
 
 If Abbey is not by default configurable to your liking, and you're comfortable writing code, please consider opening a PR with your improvements! Adding new integrations and even full interfaces is straightforward; see more details in the "Contributing" section below.
 
+## Screenshots
+
+![Document screenshot](screenshots/doc-ss.png)
+
+![Workspace screenshot](screenshots/workspace-ss.png)
+
 ## Setup and Install
 
 ### Prerequisites
