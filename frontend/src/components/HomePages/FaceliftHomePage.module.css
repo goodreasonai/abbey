@@ -157,6 +157,23 @@
     gap: 1rem;
 }
 
+.tutorialButton {
+    background-color: var(--light-background);
+    padding: 5px 10px;
+    border: 1px solid var(--light-border);
+    border-radius: var(--small-border-radius);
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    transition: all .1s ease-in-out;
+    opacity: .75;
+}
+
+.tutorialButton:hover {
+    transform: translateY(-2px);
+    opacity: 1;
+}
+
 @media (max-width: 900px) {
     .doubleContainer {
         width: 100%;

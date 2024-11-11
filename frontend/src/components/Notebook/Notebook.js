@@ -771,8 +771,8 @@ export default function Notebook({ manifestRow, canEdit, collabSocket }) {
                             Error loading data
                         </div>
                     ) : (!blocks.length ? (
-                        <div style={{'height': '100%', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'}}>
-                            Nothing yet! Try adding notes or files.
+                        <div style={{'height': '100%', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center', 'fontSize': '1.25rem', 'color': 'var(--passive-text)', 'cursor': 'default'}}>
+                            Your collaborative notebook. Try adding notes or files.
                         </div>
                     ) : (
                         <DndProvider backend={HTML5Backend}>
@@ -799,7 +799,7 @@ export default function Notebook({ manifestRow, canEdit, collabSocket }) {
                             <>
                                 <div className={styles.customTemplatesScroll} style={{'overflowX': 'scroll', 'overflowY': 'hidden', 'display': 'flex', 'gap': '10px', 'alignItems': 'center', 'overflow': 'scroll', 'paddingBottom': '5px'}}>
                                     {!blocks?.length && notebookLoadState == 2 ? (
-                                        <div style={{'position': 'absolute', 'top': '0px', 'left': '100px', 'display': 'flex', 'flexDirection': 'column', 'gap': '10px', 'transform': 'translateY(-100%)', 'fontSize': '1.25rem'}}>
+                                        <div style={{'position': 'absolute', 'top': '0px', 'left': '100px', 'display': 'flex', 'flexDirection': 'column', 'gap': '10px', 'transform': 'translateY(-100%)', 'fontSize': '1.5rem'}}>
                                             Upload Files
                                             <CurvedArrow />
                                         </div>
@@ -842,7 +842,7 @@ export default function Notebook({ manifestRow, canEdit, collabSocket }) {
                                             onChangeHTML={(x) => {setInputText(x)}}
                                             htmlContent={inputText}
                                             disablePromptSelector={true}
-                                            placeholder="Write notes..."
+                                            placeholder="Write notes to your future self..."
                                         />
                                         {inReplyTo ? (
                                             <div style={{'position': 'absolute', 'bottom': 'var(--medium-border-radius)', 'left': '0px', 'backgroundColor': 'var(--dark-primary)', 'color': 'var(--light-text)', 'transform': 'translateY(100%)', 'padding': '3px 10px', 'paddingTop': 'calc(var(--medium-border-radius) + 3px)', 'fontSize': '.8rem', 'borderBottomLeftRadius': 'var(--small-border-radius)', 'borderBottomRightRadius': 'var(--small-border-radius)', 'display': 'flex', 'gap': '10px'}}>

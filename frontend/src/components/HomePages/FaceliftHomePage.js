@@ -315,7 +315,7 @@ export default function FaceliftHomePage({}) {
                                             <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
                                                 <div>
                                                     <CreateWrapper loadCallback={() => setNotebookIsLoading(true)} callback={() => setNotebookIsLoading(false)} noShow={true} templateCode={'notebook'}>
-                                                        <div style={{'backgroundColor': 'var(--light-background)', 'padding': '5px 10px', 'border': '1px solid var(--light-border)', 'borderRadius': 'var(--small-border-radius)', 'display': 'flex', 'gap': '5px', 'alignItems': 'center'}}>
+                                                        <div className={styles.tutorialButton}>
                                                             {`Start Using a Workspace`}
                                                             {notebookIsLoading ? (
                                                                 <Loading text="" />
@@ -327,7 +327,7 @@ export default function FaceliftHomePage({}) {
                                                 </div>
                                                 <div>
                                                     <CreateWrapper templateCode={'document'}>
-                                                        <div style={{'backgroundColor': 'var(--light-background)', 'padding': '5px 10px', 'border': '1px solid var(--light-border)', 'borderRadius': 'var(--small-border-radius)', 'display': 'flex', 'gap': '5px', 'alignItems': 'center'}}>
+                                                        <div className={styles.tutorialButton}>
                                                             {`Upload a Document`}
                                                             <MyImage style={{}} width={20} height={20} src={DocumentIcon} alt={"Workspace icon"} />
                                                         </div>
@@ -346,7 +346,7 @@ export default function FaceliftHomePage({}) {
                                             <div style={{'display': 'flex'}}>
                                                 <div>
                                                     <CreateWrapper loadCallback={() => setChatIsLoading(true)} callback={() => setChatIsLoading(false)} noShow={true} templateCode={'detached_chat'}>
-                                                        <div style={{'backgroundColor': 'var(--light-background)', 'padding': '5px 10px', 'border': '1px solid var(--light-border)', 'borderRadius': 'var(--small-border-radius)', 'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
+                                                        <div className={styles.tutorialButton}>
                                                             {`Start chatting`}
                                                             {chatIsLoading ? (
                                                                 <Loading text="" />
@@ -369,7 +369,7 @@ export default function FaceliftHomePage({}) {
                                             <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
                                                 <div>
                                                     <CreateWrapper templateCode={'quiz'}>
-                                                        <div style={{'backgroundColor': 'var(--light-background)', 'padding': '5px 10px', 'border': '1px solid var(--light-border)', 'borderRadius': 'var(--small-border-radius)', 'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
+                                                        <div className={styles.tutorialButton}>
                                                             {`Make a Quiz`}
                                                             <MyImage style={{}} width={20} height={20} src={QuizIcon} alt={"Quiz icon"} />
                                                         </div>
@@ -377,7 +377,7 @@ export default function FaceliftHomePage({}) {
                                                 </div>
                                                 <div>
                                                     <CreateWrapper templateCode={'inf_quiz'}>
-                                                        <div style={{'backgroundColor': 'var(--light-background)', 'padding': '5px 10px', 'border': '1px solid var(--light-border)', 'borderRadius': 'var(--small-border-radius)', 'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
+                                                        <div className={styles.tutorialButton}>
                                                             {`Infinite Quiz`}
                                                             <MyImage style={{}} width={20} height={20} src={InfinityIcon} alt={"Infinite quiz icon"} />
                                                         </div>
@@ -396,7 +396,7 @@ export default function FaceliftHomePage({}) {
                                             <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
                                                 <div>
                                                     <CreateWrapper templateCode={'video'}>
-                                                        <div style={{'backgroundColor': 'var(--light-background)', 'padding': '5px 10px', 'border': '1px solid var(--light-border)', 'borderRadius': 'var(--small-border-radius)', 'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
+                                                        <div className={styles.tutorialButton}>
                                                             {`Chat With a YouTube Video`}
                                                             <MyImage style={{}} width={20} height={20} src={VideoIcon} alt={"Video icon"} />
                                                         </div>
