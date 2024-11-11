@@ -4,7 +4,7 @@ Abbey is an open source AI interface for chat, documents, YouTube videos, worksp
 
 If you have any questions or suggestions, please open a GitHub issue! Otherwise, you may email us at `team@us.ai`.
 
-If Abbey is not by default configurable to your liking, and you're comfortable writing code, please consider opening a PR with your improvements! Adding new integrations and even full interfaces is straightforward; see more details in the "Contributing" section below.
+If Abbey is not by default configurable to your liking, and you're comfortable writing code, please consider opening a PR with your improvements! Adding new integrations and even full interfaces is straightforward; see more details in the "Contributing" section below. Lastly, Abbey provides simple configuration variables for things like its name, logo, and color scheme. See below how to switch them up.
 
 ## Screenshots
 
@@ -17,7 +17,7 @@ If Abbey is not by default configurable to your liking, and you're comfortable w
 ### Prerequisites
 
 - **Installs**: You must have `docker-compose` installed. See details [here](https://docs.docker.com/compose/install/).
-- **3rd Party Credentials**: AI functionality on Abbey relies on 3rd party API keys, which you should have ready while installing. *You must have an API key for OpenAI* – this is due to a dependence on OpenAI embedding functions (and also, you should probably use some of their models). In order to enable different users, you must have a client ID and secret key for at least one OAuth2 provider; Abbey currently supports Google, Keycloak, and GitHub. You may also have API keys ready for Anthropic, Bing, and Mathpix; to send emails using Abbey, you must provide credentials for an SMTP server (like, your own email) or a Sendgrid API key.
+- **3rd Party Credentials**: AI functionality on Abbey relies on 3rd party integrations. If you're planning on using an API like the OpenAI API, you should have those credentials handy. *Without adding your own AI service manually, you must have an API key for OpenAI* – this is due to a dependence on OpenAI embedding functions (and also, you should probably use some of their models). In order to enable different users, you must have a client ID and secret key for at least one OAuth2 provider; Abbey currently supports Google, Keycloak, and GitHub. You may also have API keys ready for Anthropic, Bing, and Mathpix; to send emails using Abbey, you must provide credentials for an SMTP server (like, your own email) or a Sendgrid API key.
 
 ### Setup Options
 
@@ -35,7 +35,7 @@ Running Abbey with `./run.sh` is recommended; you may need to use `sudo ./run.sh
 
 If you would like to run Abbey in development mode (i.e. because you're trying to contribute to Abbey), use the `--dev` flag. If you're switching between dev and prod builds, use the `--build` flag to rebuild the containers.
 
-If you'd like to use `docker-compose` directly, you need to make sure that it's run with at least two environment variables: `BUILD_ENV=prod` (or dev) and `PYTHONUNBUFFERED=false`. If you're allowing Abbey to send emails, use also `--profile email`
+If you'd like to use `docker-compose` directly, you might want to use the environment variable `BUILD_ENV=prod` (or dev). If you're allowing Abbey to send emails, use also `--profile email`
 
 ## Manual Setup and Configuration
 
@@ -50,7 +50,7 @@ OPENAI_API_KEY="sk-my-openai-key"
 # Email Server Details (Optional, and you can use either SMTP or Sendgrid)
 SMTP_SERVER="mail.server.com"
 SMTP_PORT="465"
-SMTP_EMAIL="your_email@us.ai"
+SMTP_EMAIL="your-email@us.ai"
 SMTP_PASSWORD="my-smtp-password"
 
 SENDGRID_API_KEY="sendgrid-api-key"
@@ -198,19 +198,23 @@ VALUES ('This is my *description*', 'https://some-hosted-image.com/image.webp');
 
 It is possible to change all of the branding of Abbey. On the frontend, the relevant file is `frontend/src/config/config.js`, which contains constants like Abbey's name, as well as React components that stand in for the logo. Images for logos and things can be place in `frontend/public`. It might be easiest to simply replace those images rather than mess around in the config.
 
+Pretty much all colors on abbey are defined in `frontend/src/styles/globals.css`. Feel free to switch them up.
+
+Please do not submit a PR with your custom branding.
+
 ## Contributing Your Own Integration
 
 Abbey can integrate easily with a variety of 3rd party services, including AI APIs, authentication servers, storage servers, and more. It is straightforward to implement your own backend integration in Python. Details for doing so are below.
 
-Each type of integration (auth, embedding functions, language models, etc.) has its own file in `backend/app/integrations`. Each type of integration has its own base class implemented in the relevant file (e.g., `LM()`, `TTS()`, `OCR()`, ...). Each integration provider is implemented as a class that inherits from that base class (e.g., `OpenAI(LM)`, `Anthropic(LM)`). Each model is implemented as a class that inherits from a provider class (e.g., `GPT4(OpenAI)`, `Claude3Opus(Anthropic)`, etc.). Intances of these classes are put into a PROVIDERS dictionary (e.g., `LM_PROVIDERS`, `OCR_PROVIDERS`, `SEARCH_PROVIDERS`, etc.). Each instance has associated with it a hardcoded "code" which specifies the unique model (e.g., `gpt-4o`, `bing`, `claude-3-5-sonnet`), and the PROVIDERS dictionary maps from that code to the object instance.
+Each type of integration (auth, embedding functions, language models, etc.) has its own file in `backend/app/integrations`. Each type of integration has its own base class implemented in the relevant file (e.g., `LM()`, `TTS()`, `OCR()`, ...). Each integration provider is implemented as a class that inherits from that base class (e.g., `OpenAI(LM)`, `Anthropic(LM)`). Each model is implemented as a class that inherits from a provider class (e.g., `GPT4(OpenAI)`, `Claude3Opus(Anthropic)`, etc.). Intances of these classes are put into a PROVIDERS dictionary (e.g., `LM_PROVIDERS`, `OCR_PROVIDERS`, `SEARCH_PROVIDERS`, etc.) at the bottom of the file. Each instance has associated with it a hardcoded "code" which specifies the unique model (e.g., `gpt-4o`, `bing`, `claude-3-5-sonnet`), and the PROVIDERS dictionary maps from that code to the object instance.
 
 Each model class implements relevant class functions. For example, classes inheriting from `LM()` implement a `run(...)` function and a `stream(...)` function, which return generated tokens in an all-at-once or streaming context, respectively. You can and should look at the existing classes for details on their implementation.
 
 The file `backend/app/config/user_config.py` is **extremely important** for actually enabling your integration. Here are the details:
 
 - An `AVAILABLE_PROVIDERS` dictionary determines which providers are enabled based on the set environment variables. If you add a new API provider – especially for LLMs – you should add your availability condition and add a new provider code.
-- Other AVAILABLE dictionaries like `AVAILABLE_LM` or `AVAILABLE_EMBED` that map available providers to available models.
-- `LM_ORDER`, which specifies the order in which a user is shown available language models.
+- There are other AVAILABLE dictionaries like `AVAILABLE_LM` or `AVAILABLE_EMBED` that map available providers to available models.
+- You may need to add your model to `LM_ORDER`, which specifies the order in which a user is shown available language models.
 - Default model variables, like `DEFAULT_CHAT_MODEL_RANKINGS`, which specifies the order in which models should take precedence for default status (some may or may not be enabled in AVAILABLE_PROVIDERS in any given setup). There are also simpler default model variables, like `DEFAULT_EMBEDDING_OPTION`, which is simply the code for the embedding model to use.
 
 For more information, simply look at the file; it's well-commented and not that complicated. In some cases, there is basic logic to determine which integrations are used: for example, if AWS credentials are present, s3 is used as the storage option; otherwise, Abbey uses local storage in the `static` folder.
@@ -220,7 +224,7 @@ For more information, simply look at the file; it's well-commented and not that 
 Unlike the other integrations, if you're simply adding an OAuth2 provider, there is in fact no reason to do anything whatsoever on the flask backend. The Next.js frontend server handles everything. What you need to do is:
 
 1. Create a provider class in `frontend/src/pages/api/auth/[...auth].js`. The simplest example is the GoogleAuth class (extending BaseAuth) which provides three URLs: an OAuth2 auth endpoint; an OAuth2 token endpoint; and an OpenID Connect user info endpoint. Since GitHub does not implement standard OpenID connect, it implements the getUserData() function directly.
-2. Conditionally add an instance that provider class to the `authProviders` variable based on the availability of secrets.
+2. Conditionally add an instance for that provider class to the `authProviders` variable based on the availability of secrets.
 3. Create a frontend login button for that provider in `frontend/src/auth/custom.js`. First, that means pushing to `enabledProviders` the code of your new provider conditionally based on whether an environment variable is set to 1 (the environment variable must start with NEXT_PUBLIC so that it's available client-side). Second, that means adding an object to the `providers` list specifying your provider code and button value (you can add your provider's logo by following the pattern and adding the logo to `frontend/public/random`).
 
 ### Note on Search Engine Integrations
