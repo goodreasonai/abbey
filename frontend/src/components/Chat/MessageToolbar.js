@@ -54,7 +54,7 @@ export default function MessageToolbar({ detached, selectedModel, item, canEdit,
     )
     if (showUseWebTooltip){
         webSearchArea = (
-            <Tooltip content={`${getModKey()} + i`}>
+            <Tooltip content={`${getModKey()} i`}>
                 {webSearchArea}
             </Tooltip>
         )

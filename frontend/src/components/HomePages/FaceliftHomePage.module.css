@@ -147,6 +147,16 @@
     height: 200px;
 }
 
+.tutorialContainer {
+    background-color: var(--light-primary);
+    padding: 20px;
+    border-radius: var(--medium-border-radius);
+    border: 1px solid var(--light-border);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
 @media (max-width: 900px) {
     .doubleContainer {
         width: 100%;

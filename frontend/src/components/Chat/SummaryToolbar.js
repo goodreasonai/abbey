@@ -312,14 +312,14 @@ function SummaryTab({ manifestRow, text = "", isDone, allowSpeech, setRoundState
                     </Tooltip>
                     {allowSpeech ? (
                         listenClicked ? (
-                            <AudioControls text={text} assetId={manifestRow.id} name={SUMMARY_AUDIO_NAME} />
+                            <AudioControls text={removeCitations(text)} assetId={manifestRow.id} name={SUMMARY_AUDIO_NAME} />
                         ) : (
                             <Tooltip content={"Listen"}>
                                 <MyImage className={"_touchableOpacity"} width={20} height={20} src={SpeakerIcon} alt={"Speaker"} onClick={() => setListenClicked(true)} />
                             </Tooltip>
                         )
                     ) : ""}
-                    <CopyButton text='' textToCopy={text} />
+                    <CopyButton text='' textToCopy={removeCitations(text)} />
                 </div>
             ) : ""}
             <MarkdownViewer onCitationClick={onCitationClick}>

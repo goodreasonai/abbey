@@ -46,8 +46,6 @@ export const UPGRADE_SUBSCRIPTION_LINK = "/settings"  // if a user has surpassed
 export const MAX_USER_SOURCES = 7  // SHOULD MATCH BACKEND
 export const MAX_PDF_PAGES = 250  // SHOULD MATCH BACKEND
 
-export const HOME_PAGE_EXAMPLE_LINK = 'https://abbey.us.ai/assets/2569'
-
 export const SHOW_SIGNED_OUT_HOME_PAGE = true  // if false, the root path (home page) will display the login page if the user is signed out, rather than the landing page.
 
 export const HIDE_COLLECTIONS = process.env.NEXT_PUBLIC_HIDE_COLLECTIONS === '1'  // if true, "Collections" will not show up in the nav bar, and it will be to the user as though Collections doesn't exist.

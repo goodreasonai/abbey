@@ -650,7 +650,7 @@ class SectionTemplate extends FolderTemplate {
 class NotebookTemplate extends Template {
     static code = "notebook";
     static readableName = "Workspace"
-    static description = "Take notes, organize, and glean insights from many sources."
+    static description = "Organize your reading notes and ask questions of many sources at once."
     static icon = NotebookIcon
     static uploadable = true
     static summarizable = true
@@ -839,7 +839,7 @@ export const ALLOW_DELETE_CONTENTS = ['folder']
 export const POPULAR_TEMPLATES = ['document', 'detached_chat', 'folder', 'notebook']
 export const GROUP_TEMPLATE_OPTIONS = ['folder', 'document', 'website']
 
-export const PREMIER_TEMPLATES = ['notebook', 'document']  // The two main templates show in the FaceliftHomePage
+export const PREMIER_TEMPLATES = ['document', 'notebook']  // The two main templates show in the FaceliftHomePage
 export const SECONDARY_TEMPLATES = ['detached_chat', 'inf_quiz', 'video', 'website']
 
 export const getTemplateByCode = (code) => {

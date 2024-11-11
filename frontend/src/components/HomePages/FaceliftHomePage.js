@@ -1,7 +1,7 @@
 import DefaultPage from '@/components/DefaultPage';
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { HOME_PAGE_EXAMPLE_LINK, HOME_PAGE_HEADER, NAME  } from '@/config/config';
+import { HOME_PAGE_HEADER, NAME  } from '@/config/config';
 import { PREMIER_TEMPLATES, SECONDARY_TEMPLATES, getTemplateByCode } from '@/templates/template';
 import MyImage from '../MyImage/MyImage';
 import styles from './FaceliftHomePage.module.css'
@@ -19,13 +19,18 @@ import shortenText from '@/utils/text';
 import FadeOnLoad from '../visuals/FadeOnLoad';
 import { useIsMobile } from '@/utils/mobile';
 import { Auth } from '@/auth/auth';
+import WorkspaceIcon from '../../../public/icons/NotebookIcon.png'
+import ChatIcon from '../../../public/icons/ChatIcon.png'
+import QuizIcon from '../../../public/icons/QuizIcon.png'
+import InfinityIcon from '../../../public/icons/InfinityIcon.png'
+import DocumentIcon from '../../../public/icons/DocumentIcon.png'
+import VideoIcon from '../../../public/icons/VideoIcon.png'
+
 
 export default function FaceliftHomePage({}) {
 
     const { user } = Auth.useUser()
     const { getToken, isSignedIn } = Auth.useAuth()
-    /*const user = {'firstName': 'Gordon', 'lastName': 'Kamer', 'emailAddress': 'g@us.ai'}
-    const getToken = () => {return ""}*/
 
     const [recentsLoadingState, setRecentsLoadingState] = useState(0)
     const [recents, setRecents] = useState([])
@@ -33,6 +38,10 @@ export default function FaceliftHomePage({}) {
     const [chosenArt, setChosenArt] = useState({})
     const [attentionItems, setAttentionItems] = useState([])
     const [createLoading, setCreateLoading] = useState("")
+
+    // For hardcoded "What can you do with" tutorial
+    const [notebookIsLoading, setNotebookIsLoading] = useState(false)
+    const [chatIsLoading, setChatIsLoading] = useState(false)
 
     const { isMobile, isLarge } = useIsMobile()
 
@@ -295,63 +304,106 @@ export default function FaceliftHomePage({}) {
                                     <div style={{'color': 'var(--passive-text)', 'display': 'flex', 'justifyContent': 'center'}}>
                                         {`What can you do with ${NAME}?`}
                                     </div>
-                                    <div style={{'width': '100%', 'display': 'flex', 'flexDirection': 'column', 'gap': '2rem'}}>
-                                        <FadeOnLoad className={styles.canDoItemContainer}>
-                                            <div className={styles.canDoTextContainer}>
-                                                <div style={{'fontSize': '1.25rem'}}>
-                                                    Building a Rocket
-                                                </div>
-                                                <div style={{'color': 'var(--passive-text)', 'fontSize': '.9rem'}}>
-                                                    Make a course on anything - even learn the principles of aerospace engineering using content from Collections.
-                                                </div>
-                                                <div style={{'display': 'flex', 'gap': '15px', 'flexWrap': 'wrap'}}>
-                                                    <Link href={`/create?template=curriculum`}>
-                                                        <div className={`${styles.suggestedActionText} _touchableOpacity`}>
-                                                            Make Course
+                                    <div style={{'width': '100%', 'display': 'flex', 'flexDirection': 'column', 'gap': '2.5rem'}}>
+                                        <div className={styles.tutorialContainer}>
+                                            <div style={{'fontSize': '1.25rem'}}>
+                                                📓 Take reading notes for a project.
+                                            </div>
+                                            <div style={{'color': 'var(--passive-text)'}}>
+                                                {`Suppose you're doing research: collecting PDFs, websites, relevant videos, and other sources. ${NAME} can help you keep them together, automatically summarize them, answer questions, write notes with you, collaborate with others, and more.`}
+                                            </div>
+                                            <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
+                                                <div>
+                                                    <CreateWrapper loadCallback={() => setNotebookIsLoading(true)} callback={() => setNotebookIsLoading(false)} noShow={true} templateCode={'notebook'}>
+                                                        <div style={{'backgroundColor': 'var(--light-background)', 'padding': '5px 10px', 'border': '1px solid var(--light-border)', 'borderRadius': 'var(--small-border-radius)', 'display': 'flex', 'gap': '5px', 'alignItems': 'center'}}>
+                                                            {`Start Using a Workspace`}
+                                                            {notebookIsLoading ? (
+                                                                <Loading text="" />
+                                                            ) : (
+                                                                <MyImage style={{}} width={20} height={20} src={WorkspaceIcon} alt={"Workspace icon"} />
+                                                            )}
                                                         </div>
-                                                    </Link>
-                                                    <Link href={`/groups`}>
-                                                        <div className={`${styles.suggestedActionText} _touchableOpacity`}>
-                                                            See Collections
+                                                    </CreateWrapper>
+                                                </div>
+                                                <div>
+                                                    <CreateWrapper templateCode={'document'}>
+                                                        <div style={{'backgroundColor': 'var(--light-background)', 'padding': '5px 10px', 'border': '1px solid var(--light-border)', 'borderRadius': 'var(--small-border-radius)', 'display': 'flex', 'gap': '5px', 'alignItems': 'center'}}>
+                                                            {`Upload a Document`}
+                                                            <MyImage style={{}} width={20} height={20} src={DocumentIcon} alt={"Workspace icon"} />
                                                         </div>
-                                                    </Link>
+                                                    </CreateWrapper>
                                                 </div>
                                             </div>
-                                            <div className={styles.canDoImageContainer}>
-                                                <MyImage style={{'objectFit': 'contain'}} canSwitch={false} alt={"Course"} src={CourseScreenshot} fill={true} />
-                                                <Link href={HOME_PAGE_EXAMPLE_LINK}>
-                                                    <div style={{'position': 'absolute', 'right': '50%', 'bottom': '10px', 'transform': 'translateX(50%)', 'overflow': 'hidden', 'borderRadius': 'var(--medium-border-radius)', 'border': '1px solid var(--light-border)'}}>
-                                                        <div style={{'color': 'var(--light-text', 'position': 'relative', 'padding': '5px 10px', 'zIndex': '1', 'fontSize': '.8rem'}}>
-                                                            See Example
+
+                                        </div>
+                                        <div className={styles.tutorialContainer}>
+                                            <div style={{'fontSize': '1.25rem'}}>
+                                                🌐 Forget pop-ups: let AI search the web for you.
+                                            </div>
+                                            <div style={{'color': 'var(--passive-text)'}}>
+                                                {`What's the latest injury news in fantasy? Are there any riots in Paris today I can join? In a chat on ${NAME}, just tick "Use Web," and ${NAME} will write a search query and scan the results for an answer.`}
+                                            </div>
+                                            <div style={{'display': 'flex'}}>
+                                                <div>
+                                                    <CreateWrapper loadCallback={() => setChatIsLoading(true)} callback={() => setChatIsLoading(false)} noShow={true} templateCode={'detached_chat'}>
+                                                        <div style={{'backgroundColor': 'var(--light-background)', 'padding': '5px 10px', 'border': '1px solid var(--light-border)', 'borderRadius': 'var(--small-border-radius)', 'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
+                                                            {`Start chatting`}
+                                                            {chatIsLoading ? (
+                                                                <Loading text="" />
+                                                            ) : (
+                                                                <MyImage style={{}} width={20} height={20} src={ChatIcon} alt={"Chat icon"} />
+                                                            )}
                                                         </div>
-                                                        <GradientEffect style={{'width': '200%', 'height': '200%', 'zIndex': '0'}} />
-                                                    </div>
-                                                </Link>
+                                                    </CreateWrapper>
+                                                </div>
                                             </div>
-                                        </FadeOnLoad>
-                                        <FadeOnLoad className={styles.canDoItemContainer}>
-                                            <div className={styles.canDoImageContainer}>
-                                                <MyImage style={{'objectFit': 'cover'}} canSwitch={false} alt={"The Pyramids"} src={Egypt} fill={true} />
+
+                                        </div>
+                                        <div className={styles.tutorialContainer}>
+                                            <div style={{'fontSize': '1.25rem'}}>
+                                                📚 Study for a test with practice questions.
                                             </div>
-                                            <div className={styles.canDoTextContainer}>
-                                                <div style={{'fontSize': '1.25rem'}}>
-                                                    Finding a Mummy
-                                                </div>
-                                                <div style={{'color': 'var(--passive-text)', 'fontSize': '.9rem'}}>
-                                                    {`Got history reading? ${NAME} can help give you summaries, answer questions, or turn it into a podcast for you to listen to.`}
-                                                </div>
-                                                <div style={{'color': 'var(--passive-text)', 'fontSize': '.9rem'}}>
-                                                    {`Whether the text is in English or ancient hieroglyphics, ${NAME} can help you understand it.`}
-                                                </div>
-                                                <div style={{'display': 'flex', 'gap': '10px', 'flexWrap': 'wrap'}}>
-                                                    <Link href={`/create?template=document`}>
-                                                        <div className={`${styles.suggestedActionText} _touchableOpacity`}>
-                                                            Upload Document
+                                            <div style={{'color': 'var(--passive-text)'}}>
+                                                {`You read something: do you remember what you've just read? Click the 'Make Quiz' button at the top of any document to quiz yourself. Or, you can bundle readings together and get an infinite stream of questions in Infinite Quiz.`}
+                                            </div>
+                                            <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
+                                                <div>
+                                                    <CreateWrapper templateCode={'quiz'}>
+                                                        <div style={{'backgroundColor': 'var(--light-background)', 'padding': '5px 10px', 'border': '1px solid var(--light-border)', 'borderRadius': 'var(--small-border-radius)', 'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
+                                                            {`Make a Quiz`}
+                                                            <MyImage style={{}} width={20} height={20} src={QuizIcon} alt={"Quiz icon"} />
                                                         </div>
-                                                    </Link>
+                                                    </CreateWrapper>
+                                                </div>
+                                                <div>
+                                                    <CreateWrapper templateCode={'inf_quiz'}>
+                                                        <div style={{'backgroundColor': 'var(--light-background)', 'padding': '5px 10px', 'border': '1px solid var(--light-border)', 'borderRadius': 'var(--small-border-radius)', 'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
+                                                            {`Infinite Quiz`}
+                                                            <MyImage style={{}} width={20} height={20} src={InfinityIcon} alt={"Infinite quiz icon"} />
+                                                        </div>
+                                                    </CreateWrapper>
                                                 </div>
                                             </div>
-                                        </FadeOnLoad>
+
+                                        </div>
+                                        <div className={styles.tutorialContainer}>
+                                            <div style={{'fontSize': '1.25rem'}}>
+                                                📹 Summarize and chat with a YouTube Video.
+                                            </div>
+                                            <div style={{'color': 'var(--passive-text)'}}>
+                                                {`You've been "recommended" a 2hr lecture on Indo-Aryan migrations: copy the link into ${NAME} and get a summary with key points.`}
+                                            </div>
+                                            <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
+                                                <div>
+                                                    <CreateWrapper templateCode={'video'}>
+                                                        <div style={{'backgroundColor': 'var(--light-background)', 'padding': '5px 10px', 'border': '1px solid var(--light-border)', 'borderRadius': 'var(--small-border-radius)', 'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
+                                                            {`Chat With a YouTube Video`}
+                                                            <MyImage style={{}} width={20} height={20} src={VideoIcon} alt={"Video icon"} />
+                                                        </div>
+                                                    </CreateWrapper>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </FadeOnLoad>
