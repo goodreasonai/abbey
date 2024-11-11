@@ -274,6 +274,9 @@ is_email_enabled() {
 export_backend_env() {
     # Create or overwrite the .env file
     {
+
+        echo "FRONTEND_URL=\"$FRONTEND_URL\""
+
         if [ "$SEND_EMAILS" = "$TRUE_VALUE" ]; then
             echo "SMTP_SERVER=\"$SMTP_SERVER\""
             echo "SMTP_PORT=\"$SMTP_PORT\""

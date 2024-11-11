@@ -168,7 +168,7 @@ POOLER_CONNECTION_PARAMS = {
 #  Least Important Configuration Options
 #
 
-DEFAULT_PRODUCT_ID = 2  # for backwards compatibility reasons, if a subscription is stored without a product ID, we assign it a product ID of two (which you can make correspond to the correct legacy subscription).
+DEFAULT_PRODUCT_ID = os.environ.get('DEFAULT_PRODUCT_ID')
 
 # Controls whether actual permissioning applies or everyone is allowed to see everything
 PERMISSIONING = "real"  # "real" | "demo"

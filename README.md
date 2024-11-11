@@ -84,6 +84,9 @@ CUSTOM_AUTH_SECRET="your-custom-auth-secret"
 PROXY_URL_HTTP = "http://proxy-username:proxy-password@my-proxy.com:proxy-port"
 PROXY_URL_HTTPS = "https://proxy-username:proxy-password@my-proxy.com:proxy-port"
 
+# The backend may instruct a redirect here; it should be publicly accessible, but in development is http://localhost:3000
+FRONTEND_URL="https://your-frontend-url.com"
+
 # This is a flask argument
 SECRET_KEY="your-secret-key"
 ```
@@ -131,6 +134,9 @@ CUSTOM_AUTH_DB_PORT="3306"
 
 # If you want to use images from an external domain, you need to list them here (separated by commas)
 IMAGE_DOMAINS="some-domain.com,some-domain-2.com"
+
+# Unless you're trying to replicate the Abbey Collections system (see our hosted version), you should hide "Collections" from the user.
+NEXT_PUBLIC_HIDE_COLLECTIONS=1
 ```
 
 The `.env` file in the root has just one variable:
@@ -181,6 +187,10 @@ use learn;
 INSERT INTO art_history (`markdown`, `image`)
 VALUES ('This is my *description*', 'https://some-hosted-image.com/image.webp');
 ```
+
+## Branding
+
+It is possible to change all of the branding of Abbey. On the frontend, the relevant file is `frontend/src/config/config.js`, which contains constants like Abbey's name, as well as React components that stand in for the logo. Images for logos and things can be place in `frontend/public`. It might be easiest to simply replace those images rather than mess around in the config.
 
 ## Contributing Your Own Integration
 
