@@ -76,7 +76,7 @@ export function CustomLogin({ redirectUrl }) {
 
     function makeProvider(item, i){
         return (
-            <div>
+            <div key={i}>
                 <a href={`/api/auth/login/${item.name}?returnUrl=${redirectUrl}`}>
                     <div className={styles.button}>
                         <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>

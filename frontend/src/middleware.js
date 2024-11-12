@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { tokenName } from './auth/custom';
 
@@ -19,19 +18,11 @@ function customAuthMiddleware(req) {
     if (protectedRoutes.includes(url.pathname)) {
         const token = req.cookies.get(`${tokenName}`)        
         if (token?.value){
-            try {
-                const decoded = jwt.decode(token.value);
-                // Check if the token is expired
-                if (decoded.exp * 1000 < Date.now()) {  // the * 1000 is due to ms vs. s distinction
-                    throw new Error('Token expired');
-                }    
-                return NextResponse.next();
-            }
-            catch (error) {
-                console.error('Token validation failed:', error);
-            }
+            // I used to verify this JWT
+            // However, NextJS middleware runs on a special runtime that doesn't support the jsonwebtoken module
+            // Alas – I can think of some ways around it, but annoying!
+            return NextResponse.next();
         }
-
         return NextResponse.redirect(`${process.env.NEXT_PUBLIC_ROOT_URL}/login`);
     }
 
@@ -51,16 +42,6 @@ function getDefaultExport(){
 
 export default getDefaultExport()
 
-function getConfigExport(){
-    const authSystem = process.env.NEXT_PUBLIC_AUTH_SYSTEM 
-    if (authSystem === 'clerk'){
-        return {
-            matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)'],
-        }
-    }
-    else if (authSystem === 'custom'){
-        return ['/settings', '/library', '/create', '/bug']
-    }
+export const config = {
+    matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)'],
 }
-
-export const config = getConfigExport()
