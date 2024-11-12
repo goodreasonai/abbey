@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   backend:
     build:
@@ -12,7 +10,7 @@ services:
     volumes:
       - ./backend:/app
     environment:
-      PYTHONUNBUFFERED: ${PYTHONUNBUFFERED:-false}
+      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-false}
 
   frontend:
     build:
@@ -24,13 +22,14 @@ services:
       - "3000:3000"
     volumes:
       - ./frontend:/frontend-build
-      - /frontend-build/node_modules
+      - frontend-node-modules:/frontend-build/node_modules
+      - frontend-next:/frontend-build/.next
 
   mysql:
     image: mysql:8
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: learn
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=learn
     ports:
       - "3306:3306"
     volumes:
@@ -42,7 +41,7 @@ services:
       context: .
       dockerfile: backend/Dockerfile
       args:
-      - MY_BUILD_ENV=${MY_BUILD_ENV:-prod}
+        - MY_BUILD_ENV=${MY_BUILD_ENV:-prod}
     command: >
       sh -c "if [ "$MY_BUILD_ENV" = "prod" ]; then
              celery -A app.worker.celery worker;
@@ -86,3 +85,5 @@ services:
 
 volumes:
   mysql-data:
+  frontend-node-modules:
+  frontend-next:

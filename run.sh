@@ -73,6 +73,9 @@ run() {
         PYTHONUNBUFFERED="true"
     fi
 
+    # This is the for the root mysql password
+    source ".env"
+
     # Construct the docker-compose command
     cmd="MY_BUILD_ENV=$MY_BUILD_ENV PYTHONUNBUFFERED=$PYTHONUNBUFFERED docker-compose"
     

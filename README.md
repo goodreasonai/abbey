@@ -33,7 +33,7 @@ or
 
 Running Abbey with `./run.sh` is recommended; you may need to use `sudo ./run.sh` if your setup requires superuser privileges to run `docker-compose`. That's it.
 
-If you would like to run Abbey in development mode (i.e. because you're trying to contribute to Abbey), use the `--dev` flag. If you're switching between dev and prod builds, use the `--build` flag to rebuild the containers.
+If you would like to run Abbey in development mode (i.e. because you're trying to contribute to Abbey), use the `--dev` flag. If you're switching between dev and prod builds, use the `--build` flag to rebuild the containers. You may also need to delete the `frontend-next` and `frontend-node-modules` volumes so that they are properly rebuilt.
 
 If you'd like to use `docker-compose` directly, you might want to use the environment variable `BUILD_ENV=prod` (or dev). If you're allowing Abbey to send emails, use also `--profile email`
 
