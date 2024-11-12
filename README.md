@@ -23,11 +23,13 @@ If Abbey is not by default configurable to your liking, and you're comfortable w
 
 You may either run the `run.sh` bash script and follow directions to enter in your keys and preferences, or you can manually define environment variables.
 
-1. Setting up with `run.sh`: Run the setup bash script, `run.sh`, using `./run.sh` on Mac or Linux, or using `bash run.sh` on Windows with Git Bash or some other way to run bash scripts. You may need to run the script with superuser privileges depending on your setup, like `sudo ./run.sh`. The script will prompt you for API keys and other credentials and automatically generate three environment variable files for the backend, frontend, and root directories. If you're using `run.sh` and don't have all your API keys handy, you can go in after and add the keys; see the manual setup guide below. Otherwise, you're done.
+1. Clone the repo and navigate inside it.
+2. Setting up with `run.sh`: Run the setup bash script, `run.sh`, using `./run.sh` on Mac or Linux, or using `bash run.sh` on Windows with Git Bash or some other way to run bash scripts. You may need to run the script with superuser privileges depending on your setup, like `sudo ./run.sh`. The script will prompt you for API keys and other credentials and automatically generate three environment variable files for the backend, frontend, and root directories. If you're using `run.sh` and don't have all your API keys handy, you can go in after and add the keys; see the manual setup guide below. Otherwise, you're done.
 
 or
 
-2. Setting up manually: see the "Manual Setup" section below for more details.
+1. Clone the repo.
+2. Set up manually: see the "Manual Setup" section below for more details.
 
 ### Run
 

@@ -236,7 +236,7 @@ configure_ai() {
         USE_MATHPIX=$FALSE_VALUE
     fi
 
-    if ask_yes_no "Would you like to configure the Eleven Labs for text-to-speech?"; then
+    if ask_yes_no "Would you like to configure Eleven Labs for text-to-speech?"; then
         USE_ELEVEN_LABS=$TRUE_VALUE
         ELEVEN_LABS_KEY=$(ask_credential "OK, please provide an Eleven Labs API key")
     else

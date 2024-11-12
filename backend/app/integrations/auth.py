@@ -109,7 +109,7 @@ class Clerk(Auth):
 class CustomAuth(Auth):
     def __init__(self):
         super().__init__(code="custom")
-        if AUTH_SYSTEM == self.code:
+        if AUTH_SYSTEM != self.code:
             pass
         elif CUSTOM_AUTH_USE_DATABASE:
             db_params = {
