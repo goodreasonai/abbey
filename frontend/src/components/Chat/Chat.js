@@ -800,7 +800,7 @@ export default function Chat({id,
                                                 options={[{'title': 'All', 'id': id}, ...splitSummarySources].map((x) => {
                                                     return {'value': shortenText(x.title, 4, 35, true), 'onClick': () => setSyntheticId(x['id'])}  
                                                 })}
-                                                value={syntheticId == id ? 'All' : shortenText(splitSummarySources.filter((x) => x.id == syntheticId)[0].title, 4, 35, true)}
+                                                value={syntheticId == id ? 'All' : shortenText(splitSummarySources.filter((x) => x.id == syntheticId)[0]?.title, 4, 35, true)}
                                             />
                                         </div>
                                     )}
