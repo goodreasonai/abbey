@@ -5,12 +5,12 @@ COPY backend/requirements.txt .
 RUN pip install -r requirements.txt
 COPY backend /app
 
-ARG BUILD_ENV=dev
-ENV BUILD_ENV=${BUILD_ENV}
+ARG MY_BUILD_ENV=dev
+ENV MY_BUILD_ENV=${MY_BUILD_ENV}
 
 EXPOSE 5000
 
-CMD ["/bin/bash", "-c", "if [ \"$BUILD_ENV\" = \"prod\" ]; then \
+CMD ["/bin/bash", "-c", "if [ \"$MY_BUILD_ENV\" = \"prod\" ]; then \
         gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 -b 0.0.0.0:5000 --reload 'app:create_app()'; \
     else \
         gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 -b 0.0.0.0:5000 --reload --log-level debug 'app:create_app()'; \

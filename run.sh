@@ -53,7 +53,7 @@ REFRESH_SECRET=""
 
 run() {
     # Initialize variables
-    BUILD_ENV="prod"
+    MY_BUILD_ENV="prod"
     build_flag=""
     PYTHONUNBUFFERED="false"
 
@@ -61,7 +61,7 @@ run() {
     for arg in "$@"; do
         case $arg in
             --dev)
-                BUILD_ENV="dev"
+                MY_BUILD_ENV="dev"
                 ;;
             --build)
                 build_flag="--build"
@@ -69,12 +69,12 @@ run() {
         esac
     done
 
-    if [ "$BUILD_ENV" = "dev" ]; then
+    if [ "$MY_BUILD_ENV" = "dev" ]; then
         PYTHONUNBUFFERED="true"
     fi
 
     # Construct the docker-compose command
-    cmd="BUILD_ENV=$BUILD_ENV PYTHONUNBUFFERED=$PYTHONUNBUFFERED docker-compose"
+    cmd="MY_BUILD_ENV=$MY_BUILD_ENV PYTHONUNBUFFERED=$PYTHONUNBUFFERED docker-compose"
     
     if is_email_enabled; then
         cmd+=" --profile email"
@@ -106,7 +106,6 @@ do_setup() {
     configure_ai
     configure_search_engine
     configure_auth
-    configure_docker_profiles  # Needs to be last because it also exports file
 
     export_backend_env
     export_frontend_env
@@ -210,7 +209,7 @@ configure_ai() {
     # What ai providers would you like to use?
     # What are your keys?
     echo "To use Abbey, you will need to configure some AI providers, like the OpenAI API. You can implement your own API in the integrations folder in the backend."
-    if ask_yes_no "It is required at this time to provide an OpenAI API key. Do you have a key, or would you like to exit this setup?"; then
+    if ask_yes_no "It is required at this time to provide an OpenAI API key. Do you have a key?"; then
         USE_OPENAI=$TRUE_VALUE
         OPENAI_KEY=$(ask_credential "OK, please provide an OpenAI API key")
     else

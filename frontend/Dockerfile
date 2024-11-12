@@ -1,6 +1,6 @@
 FROM node:20
-COPY frontend /app
-WORKDIR /app
+COPY frontend /frontend-build
+WORKDIR /frontend-build
 RUN npm install --force
 
 ARG MY_BUILD_ENV=prod

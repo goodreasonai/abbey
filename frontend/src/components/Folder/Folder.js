@@ -18,7 +18,7 @@ import Quick from "../Quick/Quick";
 import UpIcon from '../../../public/icons/UpIcon.png'
 import CurriculumIcon from '../../../public/icons/CurriculumIcon.png'
 import { handleGeneralStreaming } from "@/utils/streaming";
-import { DIVIDER_TEXT } from "@/utils/streaming";
+import { DIVIDER_TEXT } from "@/config/strConstants";
 import Tooltip from "../Tooltip/Tooltip";
 import WarningIcon from '../../../public/icons/WarningIcon.png'
 import { useRouter } from "next/router";

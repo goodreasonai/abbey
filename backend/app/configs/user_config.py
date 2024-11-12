@@ -109,7 +109,7 @@ DEFAULT_IMAGE_SEARCH_ENGINE = "bing"  # searching for images
 DEFAULT_EMAIL_SERVICE = 'sendgrid' if SENDGRID_API_KEY else 'smtp'  # codes match integrations/email.py
 EMAIL_FROM_NAME = "Abbey"  # The author of auto-generated emails
 EMAIL_FROM_ADDRESS = os.environ.get('SENDGRID_EMAIL') if DEFAULT_EMAIL_SERVICE == 'sendgrid' else SMTP_EMAIL  # The address from which auto-generated emails are sent
-SENDGRID_UNSUB_GROUP = int(os.environ.get('SENDGRID_UNSUB_GROUP'))
+SENDGRID_UNSUB_GROUP = int(os.environ.get('SENDGRID_UNSUB_GROUP')) if os.environ.get('SENDGRID_UNSUB_GROUP') else ""
 DISABLE_EMAILS = not (SENDGRID_API_KEY or (SMTP_EMAIL and SMTP_PASSWORD and SMTP_PORT and SMTP_SERVER))
 
 # Total limit on assets created by subscription tier

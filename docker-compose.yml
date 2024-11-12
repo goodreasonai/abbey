@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: backend/Dockerfile
       args:
-        - BUILD_ENV=${BUILD_ENV:-prod}
+        - MY_BUILD_ENV=${MY_BUILD_ENV:-prod}
     ports:
       - "5000:5000"
     volumes:
@@ -19,12 +19,12 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        - MY_BUILD_ENV=${BUILD_ENV:-prod}  # BUILD_ENV as a name seems to cause problems
+        - MY_BUILD_ENV=${MY_BUILD_ENV:-prod}  # BUILD_ENV as a name seems to cause problems
     ports:
       - "3000:3000"
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - ./frontend:/frontend-build
+      - /frontend-build/node_modules
 
   mysql:
     image: mysql:8
@@ -42,9 +42,9 @@ services:
       context: .
       dockerfile: backend/Dockerfile
       args:
-      - BUILD_ENV=${BUILD_ENV:-prod}
+      - MY_BUILD_ENV=${MY_BUILD_ENV:-prod}
     command: >
-      sh -c "if [ "$BUILD_ENV" = "prod" ]; then
+      sh -c "if [ "$MY_BUILD_ENV" = "prod" ]; then
              celery -A app.worker.celery worker;
            else
              celery -A app.worker.celery worker --loglevel=INFO;
