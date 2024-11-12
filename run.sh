@@ -126,7 +126,7 @@ ask_yes_no() {
         case "$response" in
             [Yy]*) return 0 ;;
             [Nn]*) return 1 ;;
-            *) echo "Please answer yes or no." ;;
+            *) echo "Please answer yes or no ('y' or 'n')." ;;
         esac
     done
 }
@@ -176,7 +176,7 @@ configure_auth() {
     # What are your client ids / client secrets
     
     echo "Abbey relies on 3rd party OAuth2 authentication providers, like Google. You need to have a client ID and client secret for each OAuth provider you wish to configure."
-    echo "Abbey supports Google, GitHub, and Keycloak. If you'd like more, please contribute on GitHub!"
+    echo "Abbey supports Google, GitHub, and Keycloak. You only have to configure a provider if you're using Abbey in a multi-user setting."
     
     if ask_yes_no "Would you like to configure Google OAuth2?"; then
         USE_GOOGLE_AUTH=$TRUE_VALUE
