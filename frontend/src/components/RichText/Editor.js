@@ -85,7 +85,7 @@ export const extensions = [
 ]
 
 // onChange should be (myJson) => {} and onChangeHTML should be (html) => {}
-export default function Editor({ htmlContent=undefined, editable=true, jsonContent=undefined, showMenu=true, showDelete=false, assetId=undefined, deleteCallback=()=>{}, onChange=undefined, onChangeHTML=undefined, minHeightOption='medium', customRightMenu=undefined, editorPaddingOption="medium", clearContentCounter=0, style={}, shortcuts=[], exclude=[], disablePromptSelector=false, placeholder='', ...props }) {
+export default function Editor({ htmlContent=undefined, editable=true, jsonContent=undefined, showMenu=true, showDelete=false, assetId=undefined, deleteCallback=()=>{}, onChange=undefined, onChangeHTML=undefined, minHeightOption='medium', customRightMenu=undefined, editorPaddingOption="medium", clearContentCounter=0, style={}, shortcuts=[], exclude=[], disablePromptSelector=false, placeholder='', smallMenuBar, includeSelf, ...props }) {
 
     const [contextMenu, setContextMenu] = useState(null);
     const editorContainerRef = useRef()
@@ -154,7 +154,7 @@ export default function Editor({ htmlContent=undefined, editable=true, jsonConte
             <EditorProvider
                 onUpdate={onUpdate}
                 editable={editable}
-                slotBefore={(showMenu ? <MenuBar disablePromptSelector={disablePromptSelector} exclude={exclude} clearContentCounter={clearContentCounter} showDelete={showDelete} assetId={assetId} deleteCallback={deleteCallback} customRightMenu={customRightMenu} /> : "")}
+                slotBefore={(showMenu ? <MenuBar disablePromptSelector={disablePromptSelector} exclude={exclude} clearContentCounter={clearContentCounter} showDelete={showDelete} assetId={assetId} deleteCallback={deleteCallback} customRightMenu={customRightMenu} smallMenuBar={smallMenuBar} includeSelf={includeSelf} /> : "")}
                 extensions={editorExtensions}
                 content={content}
                 className={`${styles.editorProvider}`}

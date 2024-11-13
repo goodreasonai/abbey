@@ -1,7 +1,7 @@
 import MyImage from "../MyImage/MyImage";
 import GearIcon from '../../../public/icons/GearIcon.png'
 import KeyIcon from '../../../public/icons/KeyIcon.png'
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Auth } from "@/auth/auth";
 import MarkdownViewer from "../Markdown/MarkdownViewer";
 import Loading from "../Loading/Loading";
@@ -9,15 +9,16 @@ import { handleGeneralStreaming } from "@/utils/streaming";
 import DocumentIcon from '../../../public/icons/DocumentIcon.png'
 import CopyButton from "../CopyButton/CopyButton";
 import { getDefaultRoundState } from "./Chat";
-import CreateWrapper from "../Quick/CreateWrapper";
 import Tooltip from "../Tooltip/Tooltip";
 import HairClipperIcon from '../../../public/icons/HairClipperIcon.png';
-import { convertToHTMLContent } from "@/utils/html";
 import AIWriteIcon from '../../../public/icons/AIWriteIcon.png';
 import SpeakerIcon from '../../../public/icons/SpeakerIcon.png'
 import AudioControls from "../Audio/AudioControls";
 import { addCitations, removeCitations } from "@/utils/text";
 import LoadingIcon from '../../../public/icons/LoadingIcon.png'
+import EditIcon from '../../../public/icons/EditIcon.png'
+import RichTextSavingEditor from "../RichText/SavingEditor";
+import { NOTES_FILE } from "@/config/strConstants";
 
 
 export default function SummaryToolbar({ manifestRow, allowSpeech, setRoundStates, invertColor, chatContainerRef, onSourceButtonClick, showTitle, scrollToBottom, tabDisplay, setTabDisplay, tabState, setTabState, ...props}){
@@ -27,6 +28,9 @@ export default function SummaryToolbar({ manifestRow, allowSpeech, setRoundState
     const [summaryLoadState, setSummaryLoadState] = useState(0)
     const [keyPointsBullets, setKeyPointsBullets] = useState([])
     const [keyPointsLoadState, setKeyPointsLoadState] = useState(0)
+    const [notes, setNotes] = useState("")
+    const [notesLoadState, setNotesLoadState] = useState(0)
+    const [notesSaveState, setNotesSaveState] = useState(0)
 
     async function doSummary(noCreate, redo){
         if (summary && (summaryLoadState == 2 || summaryLoadState == 1) && !(redo && summaryLoadState != 1)){
@@ -119,9 +123,42 @@ export default function SummaryToolbar({ manifestRow, allowSpeech, setRoundState
         }
     }
 
+    async function getNotes() {
+        setNotesLoadState(1)
+        try {
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/files?id=${manifestRow.id}&name=${NOTES_FILE}`
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                },
+                'method': 'GET'
+            })
+
+            // Means that there are no notes yet
+            if (response.status == 404){
+                setNotesLoadState(2)
+                return
+            }
+
+            // Otherwise not O?
+            if (!response.ok){
+                throw Error("Response was not ok")
+            }
+
+            let text = await response.text()
+            setNotes(text)
+            setNotesLoadState(2)
+        }
+        catch(e) {
+            setNotesLoadState(3)
+            console.log(e)
+        }
+    }
+
     useEffect(() => {
         doSummary(true)
         doKeyPoints(true)
+        getNotes()
     }, [manifestRow])
 
     const tabs = useMemo(() => {
@@ -136,7 +173,7 @@ export default function SummaryToolbar({ manifestRow, allowSpeech, setRoundState
                 'isLoading': summaryLoadState == 1,
                 'isDone': summaryLoadState == 2 && summary,
                 'tabDisplay': <SummaryTab onSourceButtonClick={onSourceButtonClick} redoCallback={() => {doSummary(false, true)}} setTabState={setTabState} scrollToBottom={scrollToBottom} manifestRow={manifestRow} allowSpeech={allowSpeech} text={summary} isDone={summaryLoadState == 2 && summary} setRoundStates={setRoundStates} chatContainerRef={chatContainerRef} />,
-                'onClick': ()=>doSummary()
+                'onClick': ()=>doSummary(),
             },
             {
                 'title': "Key Points",
@@ -149,9 +186,21 @@ export default function SummaryToolbar({ manifestRow, allowSpeech, setRoundState
                 'isDone': keyPointsLoadState == 2 && keyPointsBullets?.length,
                 'tabDisplay': <KeyPointsTab redoCallback={() => {doKeyPoints(false, true)}} onSourceButtonClick={onSourceButtonClick} manifestRow={manifestRow} bullets={keyPointsBullets} />,
                 'onClick': ()=>{doKeyPoints()}
+            },
+            {
+                'title': '',
+                'doneText': '',
+                'doneImg': (EditIcon),
+                'img': (EditIcon),
+                'code': 'notes',
+                'isLoading': false,
+                'isDone': notesLoadState === 2,
+                'tabDisplay': notesLoadState == 2 ? <NotesTab notes={notes} setNotes={setNotes} setSaveState={setNotesSaveState} manifestRow={manifestRow} /> : "",  // this business keeps from saving notes before they can save properly
+                'onClick': ()=>{},
+                'tooltip': 'Open notepad'
             }
         ]
-    }, [keyPointsLoadState, keyPointsBullets, summaryLoadState, summary])
+    }, [keyPointsLoadState, keyPointsBullets, summaryLoadState, summary, notes, notesLoadState])
 
     useEffect(() => {
         let tabDisplay = ""
@@ -182,27 +231,7 @@ export default function SummaryToolbar({ manifestRow, allowSpeech, setRoundState
                         }
                     }
 
-                    // temporary - should be deleted
-                    if (item.code == 'summary'){
-                        return (
-                            <Tooltip key={item.code} tooltipStyle={{'minWidth': '150px', 'fontSize': '.75rem'}} content={'New Faster and Better Summary'}>
-                                <div
-                                    className={`_touchableOpacity`}
-                                    style={{'display': 'flex', 'gap': '5px', 'alignItems': 'center', ...((tabState == item.code || item.isLoading) ? {'opacity': 1} : {})}}
-                                    onClick={onTabClick}
-                                >
-                                    {item.isDone ? item.doneText : item.title}
-                                    {item.isLoading ? (
-                                        <Loading text="" />
-                                    ) : (
-                                        <MyImage src={item.isDone ? item.doneImg : item.img} alt={"Icon"} width={20} height={20} />
-                                    )}
-                                </div>
-                            </Tooltip>
-                        )
-                    }
-
-                    return (
+                    const inner = (
                         <div
                             className={`_touchableOpacity`}
                             style={{'display': 'flex', 'gap': '5px', 'alignItems': 'center', ...((tabState == item.code || item.isLoading) ? {'opacity': 1} : {})}}
@@ -217,6 +246,15 @@ export default function SummaryToolbar({ manifestRow, allowSpeech, setRoundState
                             )}
                         </div>
                     )
+
+                    if (item.tooltip){
+                        return (
+                            <Tooltip key={item.code} tooltipStyle={{'fontSize': '.75rem'}} content={item.tooltip}>
+                                {inner}
+                            </Tooltip>
+                        )
+                    }
+                    return inner
                 })}
             </div>
         </div>
@@ -226,7 +264,6 @@ export default function SummaryToolbar({ manifestRow, allowSpeech, setRoundState
 
 function SummaryTab({ manifestRow, text = "", isDone, allowSpeech, setRoundStates, setTabState, chatContainerRef, redoCallback, onSourceButtonClick, scrollToBottom, ...props}){
 
-    const [createNotesLoading, setCreateNotesLoading] = useState(false)
     const [listenClicked, setListenClicked] = useState(false)
     const SUMMARY_AUDIO_NAME = 'summary_audio'
 
@@ -383,4 +420,22 @@ function KeyPointsTab({manifestRow, bullets, onSourceButtonClick, redoCallback, 
         </div>
     )
 
+}
+
+function NotesTab({ notes, setNotes, manifestRow, setSaveState }) {
+
+    return (
+        <div style={{'paddingTop': '1rem', 'paddingBottom': '1rem', 'height': '100%'}}>
+            <RichTextSavingEditor
+                value={notes}
+                setState={setSaveState}
+                setSave={(x) => {setNotes(x)}}
+                manifestRow={manifestRow}
+                canEditSources={false}
+                name={NOTES_FILE}
+                smallMenuBar={true}
+                editorStyle={{'height': '100%', 'borderRadius': 'var(--medium-border-radius)', 'overflow': 'scroll'}}
+            />
+        </div>
+    )
 }

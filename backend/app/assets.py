@@ -474,6 +474,7 @@ def files(user: User):
     id = request.args.get("id")
     token = request.args.get("token")
     only_headers = request.args.get("only_headers")
+    name = request.args.get('name', MAIN_FILE)
 
     try:
         id = int(id)
@@ -489,7 +490,7 @@ def files(user: User):
     # According to template and args, return appropriate file, if non specified
     
     this_template: Template = get_template_by_code(res['template'])
-    return this_template.get_file(user, id, only_headers=only_headers, db=db)
+    return this_template.get_file(user, id, only_headers=only_headers, name=name, db=db)
 
 
 @bp.route('/metadata', methods=('GET',))

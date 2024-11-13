@@ -13,7 +13,7 @@ import Tooltip from "../Tooltip/Tooltip";
 
 // The idea here is to have an editor that saves to the main file of the asset
 // setState = set the saving state, setSave = setValue for redundancy reasons
-export default function RichTextSavingEditor({ value, manifestRow, setSave=()=>{}, setState=()=>{}, ext="html", canEditSources=false, editorStyle={}, ...props }) {
+export default function RichTextSavingEditor({ value, manifestRow, name='', setSave=()=>{}, setState=()=>{}, ext="html", canEditSources=false, editorStyle={}, smallMenuBar, ...props }) {
     
     const { getToken } = Auth.useAuth()
 
@@ -31,6 +31,7 @@ export default function RichTextSavingEditor({ value, manifestRow, setSave=()=>{
             const data = {
                 'html_str': x,
                 'ext': ext,
+                'name': name,
                 'id': manifestRow.id
             }
             const url = process.env.NEXT_PUBLIC_BACKEND_URL + "/text-editor/save"
@@ -80,6 +81,8 @@ export default function RichTextSavingEditor({ value, manifestRow, setSave=()=>{
                 htmlContent={value}
                 customRightMenu={customRightMenu}
                 style={editorStyle}
+                includeSelf={!!name}
+                smallMenuBar={smallMenuBar}
             />
             {canEditSources ? (
                 <Modal minWidth="75vw" isOpen={editSourcesModalOpen} close={() => setEditSourcesModalOpen(false)} title={"Edit Sources"}>

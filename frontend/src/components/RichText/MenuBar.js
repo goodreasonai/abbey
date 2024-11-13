@@ -29,7 +29,7 @@ import { generateJSON } from '@tiptap/react'
 import { extensions } from './Editor'
 
 
-export default function MenuBar({ showDelete=false, assetId=undefined, deleteCallback=()=>{}, clearContentCounter=0, customRightMenu=undefined, exclude=[], disablePromptSelector=false }) {
+export default function MenuBar({ showDelete=false, assetId=undefined, deleteCallback=()=>{}, clearContentCounter=0, customRightMenu=undefined, exclude=[], disablePromptSelector=false, smallMenuBar=false, includeSelf=false }) {
     const { editor } = useCurrentEditor()
 
     const [showLinkOptions, setShowLinkOptions] = useState(false)
@@ -158,7 +158,8 @@ export default function MenuBar({ showDelete=false, assetId=undefined, deleteCal
             const data = {
                 'context': context,
                 'id': assetId,
-                'exclude': exclude
+                'exclude': exclude,
+                'include_self': includeSelf
             }
             if (selectedPrompt){
                 data['system_prompt'] = selectedPrompt  // Should be obj with keys preamble and conclusion
@@ -238,38 +239,44 @@ export default function MenuBar({ showDelete=false, assetId=undefined, deleteCal
 
     const currFontSize = editor.getAttributes('textStyle').fontSize || (editor.isActive('heading', { level: 1 }) ? '18pt' : '12pt')
 
-    const buttons = [
+    let buttons = [
         {
             'onClick': () => editor.chain().focus().toggleBold().run(),
             'isActive': editor.isActive('bold'),
             'value': (
                 <div style={{'fontWeight': 'bold'}}>B</div>
             ),
+            'code': 'bold'
         },
         {
             'onClick': () => editor.chain().focus().toggleItalic().run(),
             'isActive': editor.isActive('italic'),
-            'value': (<div style={{'fontStyle': 'italic'}}>I</div>)
+            'value': (<div style={{'fontStyle': 'italic'}}>I</div>),
+            'code': 'italic'
         },
         {
             'onClick': () => editor.chain().focus().toggleUnderline().run(),
             'isActive': editor.isActive('underline'),
-            'value': (<div style={{'textDecoration': 'underline'}}>U</div>)
+            'value': (<div style={{'textDecoration': 'underline'}}>U</div>),
+            'code': 'underline'
         },
         {
             'onClick': () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
             'isActive': editor.isActive('heading', { level: 1 }),
-            'value': (<div style={{'fontWeight': '700'}}>H1</div>)
+            'value': (<div style={{'fontWeight': '700'}}>H1</div>),
+            'code': 'h1'
         },
         {
             'onClick': () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
             'isActive': editor.isActive('heading', { level: 2 }),
-            'value': (<div style={{'fontWeight': '600'}}>H2</div>)
+            'value': (<div style={{'fontWeight': '600'}}>H2</div>),
+            'code': 'h2'
         },
         {
             'onClick': () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
             'isActive': editor.isActive('heading', { level: 3 }),
-            'value': (<div style={{'fontWeight': '500'}}>H3</div>)
+            'value': (<div style={{'fontWeight': '500'}}>H3</div>),
+            'code': '.h3'
         },
         {
             'onClick': () => {},
@@ -278,7 +285,8 @@ export default function MenuBar({ showDelete=false, assetId=undefined, deleteCal
                 <div style={{'display': 'flex', 'alignItems': 'center'}} onClick={() => {editor.isActive('link') && setLinkUrl(editor.getAttributes('link').href); !editor.isActive('link') && setLinkUrl(''); setShowLinkOptions(true)}}>
                     <MyImage src={LinkIcon} width={20} height={20} alt={"Link"} />
                 </div>
-            )
+            ),
+            'code': 'link'
         },
         {
             'onClick': () => {
@@ -297,14 +305,16 @@ export default function MenuBar({ showDelete=false, assetId=undefined, deleteCal
                     />
                     <MyImage src={ImageIcon} width={17} height={17} alt={"Image"} />
                 </>
-            )
+            ),
+            'code': 'image'
         },
         {
             'onClick': () => {editor.commands.toggleBlockquote()},
             'isActive': editor.isActive('blockquote'),
             'value': (
                 <MyImage src={BlockQuoteIcon} width={18} height={18} alt={"Blockquote"} />
-            )
+            ),
+            'code': 'blockquote'
         },
         {
             'onClick': () => editor.chain().focus().setHorizontalRule().run(),
@@ -314,35 +324,40 @@ export default function MenuBar({ showDelete=false, assetId=undefined, deleteCal
                     <div style={{'borderBottom': '1px solid black', 'width': '20px', 'textAlign': 'center'}}>H</div>
                     <div style={{'textAlign': 'center'}}>R</div>
                 </div>
-            )
+            ),
+            'code': 'hr',
         },
         {
             'onClick': () => editor.chain().focus().setTextAlign('left').run(),
             'isActive': editor.isActive({ textAlign: 'left' }),
             'value': (
                 <MyImage src={LeftAlignIcon} width={20} height={20} alt={"Left align"} />
-            )
+            ),
+            'code': 'left-align'
         },
         {
             'onClick': () => editor.chain().focus().setTextAlign('center').run(),
             'isActive': editor.isActive({ textAlign: 'center' }),
             'value': (
                 <MyImage src={CenterAlignIcon} width={20} height={20} alt={"Center align"} />
-            )
+            ),
+            'code': 'center-align'
         },
         {
             'onClick': () => editor.chain().focus().setTextAlign('right').run(),
             'isActive': editor.isActive({ textAlign: 'right' }),
             'value': (
                 <MyImage src={RightAlignIcon} width={20} height={20} alt={"Right align"} />
-            )
+            ),
+            'code': 'right-align'
         },
         {
             'onClick': () => editor.commands.insertTable({ rows: 3, cols: 3 }),
             'isActive': false,
             'value': (
                 <MyImage src={TableIcon} width={20} height={20} alt={"Table"} />
-            )
+            ),
+            'code': 'table'
         },
         {
             'onClick': () => {},
@@ -362,7 +377,8 @@ export default function MenuBar({ showDelete=false, assetId=undefined, deleteCal
                         {'value': '1.0', 'style': {'minWidth': 'unset', 'width': '50px', ...(editor.isActive({ lineHeight: '100%' }) ? {'backgroundColor': 'var(--dark-primary)', 'color': 'var(--light-text)'} : {'backgroundColor': 'var(--light-primary)', 'color': 'var(--dark-text)'})}, 'onClick': ()=>{editor.chain().focus().setLineHeight('100%').run()}},
                     ]}
                 />
-            )
+            ),
+            'code': 'line-height'
         },
         {
             'onClick': () => {},
@@ -372,7 +388,8 @@ export default function MenuBar({ showDelete=false, assetId=undefined, deleteCal
                 <div style={{'display': 'flex', 'alignItems': 'center', 'height': '100%'}}>
                     <Number style={{'border': '1px solid var(--light-border)', 'padding': '2px', 'width': 'calc(2em + 5px)', 'marginLeft': '5px', 'marginRight': '5px'}} value={parseInt(currFontSize.replace(/\D/g, ''))} onChange={(e) => editor.commands.setFontSize(`${e.target.value}pt`)} width={2} />
                 </div>
-            )
+            ),
+            'code': 'font-size'
         },
         {
             'onClick': () => {aiWrite()},
@@ -392,9 +409,14 @@ export default function MenuBar({ showDelete=false, assetId=undefined, deleteCal
                         ) : ""}
                     </div>
                 </Tooltip>
-            )
+            ),
+            'code': 'ai'
         }
     ]
+
+    if (smallMenuBar){
+        buttons = buttons.filter((x) => ['bold', 'italic', 'underline', 'ai'].includes(x.code))
+    }
 
     return (
         <>
@@ -406,7 +428,7 @@ export default function MenuBar({ showDelete=false, assetId=undefined, deleteCal
                         </div>
                     )
                 })}
-                {customRightMenu ? (<><div style={{'flex': '1'}}></div><div style={{'padding': '5px 10px'}}>{customRightMenu}</div></>) : ""}
+                {customRightMenu ? (<><div style={{'flex': '1'}}></div><div style={{'padding': '5px 10px', 'display': 'flex', 'alignItems': 'center'}}>{customRightMenu}</div></>) : ""}
                 {showDelete ? (
                     <>
                         <div style={{'flex': '1'}}></div>

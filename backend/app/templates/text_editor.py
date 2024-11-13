@@ -41,6 +41,7 @@ def save_file(user: User):
     id = request.json.get("id")
     html_str = request.json.get('html_str')
     ext = request.json.get('ext', 'html')
+    name = request.json.get('name', MAIN_FILE)
     res = get_asset(user, id, needs_edit_permission=True)
     if not res:
         return MyResponse(False, reason="No asset found", status=404).to_json()
@@ -49,7 +50,7 @@ def save_file(user: User):
     asset_title = res['title']
 
     path, from_key = upload_asset_file(asset_id, None, ext, use_data=html_str)
-    replace_asset_resource(asset_id, MAIN_FILE, from_key, path, asset_title)
+    replace_asset_resource(asset_id, name, from_key, path, asset_title)
 
     return MyResponse(True, { 'html_str': html_str }).to_json()
     
@@ -98,25 +99,36 @@ def ai_continue(user: User):
     
     exclude = request.json.get('exclude', [])
     context = request.json.get('context')
+    include_self = request.json.get('include_self')
     user_system_prompt = request.json.get('system_prompt')
     user_system_prompt_kwargs = {'preamble': user_system_prompt['preamble'], 'conclusion': user_system_prompt['conclusion']} if user_system_prompt else {}
 
     lm: LM = LM_PROVIDERS[LONG_CONTEXT_CHAT_MODEL]
 
     system_prompt = ""
-    sources = get_sources(user, asset_id)
-    if len(sources):
+
+    if include_self:
         from .templates import get_template_by_code
         asset_resources = []
-        for source in sources:
-            if source['id'] not in exclude and source['id'] != asset_id:
-                tmp: Template = get_template_by_code(source['template'])
-                asset_resources.extend(tmp.get_asset_resources(user, source['id']))
-        mixed_ret: Retriever = get_or_create_retriever(user, asset_row, asset_resources, 'mixed')        
+        tmp: Template = get_template_by_code(asset_row['template'])
+        asset_resources.extend(tmp.get_asset_resources(user, asset_row['id']))
+        mixed_ret: Retriever = get_or_create_retriever(user, asset_row, asset_resources, 'retriever')        
         chunks = mixed_ret.max_chunks(lm, context=context)  # suitable chunks for long context
         system_prompt = get_editor_continue_system_prompt(chunks=chunks, **user_system_prompt_kwargs)
     else:
-        system_prompt = get_editor_continue_system_prompt(**user_system_prompt_kwargs)
+        sources = get_sources(user, asset_id)
+        if len(sources):
+            from .templates import get_template_by_code
+            asset_resources = []
+            for source in sources:
+                if source['id'] not in exclude and source['id'] != asset_id:
+                    tmp: Template = get_template_by_code(source['template'])
+                    asset_resources.extend(tmp.get_asset_resources(user, source['id']))
+            mixed_ret: Retriever = get_or_create_retriever(user, asset_row, asset_resources, 'mixed')        
+            chunks = mixed_ret.max_chunks(lm, context=context)  # suitable chunks for long context
+            system_prompt = get_editor_continue_system_prompt(chunks=chunks, **user_system_prompt_kwargs)
+        else:
+            system_prompt = get_editor_continue_system_prompt(**user_system_prompt_kwargs)
     
     def stream_ai():
         for x in lm.stream(context, system_prompt=system_prompt):
