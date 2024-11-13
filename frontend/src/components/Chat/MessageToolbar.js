@@ -44,21 +44,19 @@ export default function MessageToolbar({ detached, selectedModel, item, canEdit,
         modelsDropdown = ("Can't use chat")
     }
 
+    let webSearchCheckbox = <FakeCheckbox value={item.useWeb ? true : false} checkedOpacity="1" iconSize={15} setValue={detached ? toggleUseWeb : ()=>{}} />
     let webSearchArea = (
         <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '5px'}}>
             <div className={styles.detachButton}>
                 Use Web
             </div>
-            <FakeCheckbox value={item.useWeb ? true : false} checkedOpacity="1" iconSize={15} setValue={detached ? toggleUseWeb : ()=>{}} />
+            {showUseWebTooltip ? (
+                <Tooltip content={`${getModKey()} i`}>
+                    {webSearchCheckbox}
+                </Tooltip>
+            ) : (webSearchCheckbox)}
         </div>
     )
-    if (showUseWebTooltip){
-        webSearchArea = (
-            <Tooltip content={`${getModKey()} i`}>
-                {webSearchArea}
-            </Tooltip>
-        )
-    }
 
     let greenDot = (
         <div style={{'position': 'absolute', 'width': 10, 'height': 10, 'backgroundColor': 'var(--dark-primary)', 'borderRadius': 5, 'bottom': -3, 'left': -3, 'borderColor': 'var(--light-primary)', 'borderWidth': '1px', 'borderStyle': 'solid'}}></div>
