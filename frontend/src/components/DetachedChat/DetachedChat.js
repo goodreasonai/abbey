@@ -1,6 +1,6 @@
 import Chat from "@/components/Chat/Chat";
 import { Auth } from "@/auth/auth";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ChatSearch from "./ChatSearch";
 import styles from './DetachedChat.module.css';
 import Head from "next/head";
@@ -13,8 +13,10 @@ import { useIsMobile } from "@/utils/mobile";
 export default function DetachedChat({manifestRow, canEdit, ...props}) {
 
     const { isSignedIn, getToken } = Auth.useAuth()
-    const [chatTitle, setChatTitle] = useState(manifestRow['title'])
     const { isMobile } = useIsMobile()
+
+    const [chatTitle, setChatTitle] = useState(manifestRow['title'])
+    const calledMakeDescription = useRef(false)
 
     useEffect(() => {
         if (manifestRow.title != chatTitle){
@@ -29,38 +31,71 @@ export default function DetachedChat({manifestRow, canEdit, ...props}) {
         }
     }, [manifestRow])
 
+    async function makeTitle(txt){
+        try {
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/detached-chat/make-title'
+            const data = {
+                'id': manifestRow['id'],
+                'txt': txt
+            }
+            const response = await fetch(url, {
+                'method': 'POST',
+                'headers': {
+                    'x-access-token': await getToken(),
+                    'Content-Type': 'application/json'
+                },
+                'body': JSON.stringify(data)
+            })
+            const myJson = await response.json()
+            if (myJson['response'] != 'success'){
+                throw Error(`Response was not success: ${myJson['reason']}`)
+            }
+
+            let newTitle = myJson['title']
+            if (newTitle != chatTitle){
+                setChatTitle(newTitle)
+                animateTitle(newTitle, 75)
+            }
+        }
+        catch(e) {
+            console.log(e)
+        }
+    }
+
+    async function makeDescription(newRoundStates){
+        try {
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/detached-chat/make-description'
+            const data = {
+                'id': manifestRow['id'],
+            }
+            const response = await fetch(url, {
+                'method': 'POST',
+                'headers': {
+                    'x-access-token': await getToken(),
+                    'Content-Type': 'application/json'
+                },
+                'body': JSON.stringify(data)
+            })
+            const myJson = await response.json()
+            if (myJson['response'] != 'success'){
+                throw Error(`Response was not success: ${myJson['reason']}`)
+            }
+        }
+        catch(e) {
+            console.log(e)
+        }
+    }
 
     async function onAsk(txt, i){
         if (i == 0){
+            makeTitle(txt)         
+        }
+    }
 
-            try {
-                const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/detached-chat/make-title'
-                const data = {
-                    'id': manifestRow['id'],
-                    'txt': txt
-                }
-                const response = await fetch(url, {
-                    'method': 'POST',
-                    'headers': {
-                        'x-access-token': await getToken(),
-                        'Content-Type': 'application/json'
-                    },
-                    'body': JSON.stringify(data)
-                })
-                const myJson = await response.json()
-                if (myJson['response'] != 'success'){
-                    throw Error(`Response was not success: ${myJson['reason']}`)
-                }
-
-                let newTitle = myJson['title']
-                if (newTitle != chatTitle){
-                    setChatTitle(newTitle)
-                    animateTitle(newTitle, 75)
-                }
-            }
-            catch(e) {
-                console.log(e)
-            }
+    function saveCallback(newRoundStates) {
+        if (newRoundStates?.length >= 2 && !calledMakeDescription.current ){
+            calledMakeDescription.current = true
+            makeDescription(newRoundStates)
         }
     }
 
@@ -99,6 +134,7 @@ export default function DetachedChat({manifestRow, canEdit, ...props}) {
                                 detached={true}
                                 showFindMore={true}
                                 onAsk={onAsk}
+                                saveCallback={saveCallback}
                                 canEdit={canEdit}
                                 showSignIn={false}
                             />

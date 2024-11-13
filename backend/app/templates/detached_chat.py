@@ -4,7 +4,7 @@ from flask import (
     request
 )
 
-from ..asset_actions import get_asset, has_asset_title_been_updated, mark_asset_title_as_updated
+from ..asset_actions import get_asset, has_asset_title_been_updated, mark_asset_title_as_updated, has_asset_desc_been_updated, make_retriever
 from .template import Template
 import json
 from ..auth import User, token_required
@@ -16,6 +16,8 @@ from ..integrations.lm import LM, LM_PROVIDERS
 from ..configs.user_config import FAST_CHAT_MODEL
 import sys
 from ..configs.str_constants import CHAT_CONTEXT
+from ..worker import task_new_desc
+import pickle
 
 
 bp = Blueprint('detached-chat', __name__, url_prefix="/detached-chat")
@@ -52,6 +54,31 @@ def make_title(user: User):
     db.commit()  # should already be done by the mark_asset_title_as_updated call
 
     return MyResponse(True, {'title': new_title}).to_json()
+
+
+# This would ordinarily be triggered in a retriever, but detached chats do not use a retriever.
+@bp.route('/make-description', methods=('POST',))
+@cross_origin()
+@token_required
+def make_Description(user: User):
+
+    asset_id = request.json.get('id')
+
+    asset_row = get_asset(user, asset_id, needs_edit_permission=True)
+    if not asset_row:
+        return MyResponse(False, reason="Asset not found").to_json()
+
+    ret = make_retriever(user, asset_row, 'retriever')
+    sret = ret.resource_retrievers[0]
+    if sret:
+        has_been_edited = has_asset_desc_been_updated(asset_id, new_conn=True)
+        if not has_been_edited:
+            task_new_desc.apply_async(args=[pickle.dumps(sret)])
+
+        # Start description job
+        return MyResponse(True).to_json()
+    else:
+        return MyResponse(False, reason="Couldn't make retriever").to_json()
 
 
 class DetachedChat(Template):

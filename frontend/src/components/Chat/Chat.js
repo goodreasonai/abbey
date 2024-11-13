@@ -66,6 +66,7 @@ export default function Chat({id,
                             hideStatus=false,
                             invertColor=false,  // light background instead of light primary
                             onAsk=undefined,  // function to send the user text to on ask
+                            saveCallback=undefined,  // function triggered after a save finishes - passes roundStates.
                             exclude=[],
                             extraButtons=[],
                             allowOCR=false,
@@ -309,6 +310,7 @@ export default function Chat({id,
             if (myJson['response'] != 'success'){
                 throw Error("Response was not success")
             }
+            saveCallback(newRoundStates)
         }
         catch (e) {
             console.log(e)

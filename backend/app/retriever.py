@@ -529,6 +529,11 @@ class Retriever():
                 'force_ocr': self.force_ocr
             }
         }
+    
+    def make_new_desc(self):
+        for ret in self.resource_retrievers:
+            ret: ResourceRetriever
+            ret.make_new_desc()
 
 """
 
