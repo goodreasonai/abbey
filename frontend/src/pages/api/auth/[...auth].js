@@ -16,6 +16,10 @@ const pool = useDatabaseForUsers ? mysql.createPool({
 const refreshTokenLongevity = '30d'
 const jwtLongevity = '2m'
 
+// Determines if the "Secure" attribute for a cookie gets set
+// Disables itself if using localhost, basically.
+const usingHttps = process.env.NEXT_PUBLIC_ROOT_URL.includes('https')
+
 export default function handler(req, res) {
     if (process.env.NEXT_PUBLIC_AUTH_SYSTEM != 'custom'){
         return res.status(404)
@@ -163,7 +167,7 @@ export class BaseAuth {
 
         res.setHeader('Set-Cookie', [
             `${tokenName}=${token}; Path=/`,
-            `${refreshTokenName}=${refreshToken}; Path=/; HttpOnly; Secure`
+            `${refreshTokenName}=${refreshToken}; Path=/; HttpOnly;${usingHttps ? ' Secure' : ''}`
         ]);
 
         // Redirect the user back to his original URL, or the home page.
@@ -332,7 +336,7 @@ if (!Object.keys(authProviders).length){
 function handleLogout(req, res) {
     res.setHeader('Set-Cookie', [
         `${tokenName}=; Path=/`,
-        `${refreshTokenName}=; Path=/; HttpOnly; Secure`
+        `${refreshTokenName}=; Path=/; HttpOnly;${usingHttps ? ' Secure' : ''}`
     ]);
     res.redirect('/');
 }
