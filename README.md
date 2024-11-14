@@ -24,12 +24,13 @@ If Abbey is not by default configurable to your liking, and you're comfortable w
 You may either run the `run.sh` bash script and follow directions to enter in your keys and preferences, or you can manually define environment variables.
 
 1. Clone the repo and navigate inside it.
-2. Setting up with `run.sh`: Run the setup bash script, `run.sh`, using `./run.sh` on Mac or Linux, or using `bash run.sh` on Windows with Git Bash or some other way to run bash scripts. You may need to run the script with superuser privileges depending on your setup, like `sudo ./run.sh`. The script will prompt you for API keys and other credentials and automatically generate three environment variable files for the backend, frontend, and root directories. If you're using `run.sh` and don't have all your API keys handy, you can go in after and add the keys; see the manual setup guide below. Otherwise, you're done.
+2. Start the Docker daemon if necessary (i.e., by running Docker Desktop on Mac)
+
+3. Setting up with `run.sh`: Run the setup bash script, `run.sh`, using `./run.sh` on Mac or Linux, or using `bash run.sh` on Windows with Git Bash or some other way to run bash scripts. You may need to run the script with superuser privileges depending on your setup, like `sudo ./run.sh`. The script will prompt you for API keys and other credentials and automatically generate three environment variable files for the backend, frontend, and root directories. If you're using `run.sh` and don't have all your API keys handy, you can go in after and add the keys; see the manual setup guide below. Otherwise, you're done.
 
 or
 
-1. Clone the repo.
-2. Set up manually: see the "Manual Setup" section below for more details.
+3. Set up manually: see the "Manual Setup" section below for more details.
 
 ### Run
 
@@ -254,3 +255,30 @@ The frontend is exposed on port 3000, and the backend is exposed on port 5000. B
 Another way to deploy would be to put one or both services behind a reverse proxy server like Nginx. You may find it convenient to change the `docker-compose.yml` file to map at least one of the services to port 80.
 
 **Remember to set the `NEXT_PUBLIC_BACKEND_URL` and `NEXT_PUBLIC_ROOT_URL` variables to their correct values in `frontend/.env.local` if you didn't specify them in your initial setup.**
+
+## Troubleshooting
+
+1. Docker gets stuck downloading/intstalling/running an image.
+
+There is a possibility that you've run out of space on your machine. First, try running `docker system prune` to clean up any nasty stuff lying around in Docker that you've forgotten about. Then try clearing up space on your computer – perhaps enough for ~10gb on your machine. Then restart Docker and try again. If you still get issues – try uninstalling / reinstalling Docker.
+
+2. The`docker-compose` command refuses to run because of some "API" issue or something.
+
+If docker is running (Docker Desktop on Mac, for example), then you should restart it. If that doesn't help, try purging/cleaning its data before restarting (click the "Bug" icon in Docker Desktop if you have it - then see `clean/purge` data). 
+
+If docker isn't running, then that's your problem! You need to make sure the Docker daemon (i.e. Docker Desktop on Mac) is running before you run `./run.sh`.
+
+3. A port is already being used.
+
+The Abbey backend runs on port 5000 by default; the Abbey frontend runs on port 3000. It's possible that something on your computer is already using port 5000 or port 3000. On Mac that usually means AirPlay. Your goal should be to check whether anything's running on ports 3000 or 5000, and, if so, to shut down those processes.
+
+### Mac and Linux
+
+Use `lsof -i :5000` or `lsof -i :3000` to check if any process is running on those ports. If you notice a process like 'ControlCe' running on Mac, that means "Control Center," and it's probably an airplay receiver thing. You can go into your system settings and uncheck "AirPlay receiver".
+
+If you found something else, you can kill it with `kill -9 PID` where PID is replaced by the process ID (shown using lsof).
+
+### Windows
+
+Use `netstat -ano | findstr :5000` or `netstat -ano | findstr :3000`. You can then kill the process with `taskkill /PID YOUR_PID /F` - replace YOUR_PID with the process ID of the relevant process.
+
