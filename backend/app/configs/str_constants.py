@@ -60,9 +60,6 @@ BOOK_ORDER = 'book_order'
 # The job that makes a retriever, particularly on upload of an asset.
 MAKE_RETRIEVER = 'make_retriever'
 
-# For ai video gen
-MAKE_VIDEO = "make_video"
-
 # An applier response is a database entry containing information (probably in JSON) about an application of a particular asset.
 # You can use applier responses instead of jobs if you want the "temporary" data to stay in the database.
 APPLIER_RESPONSE = 'applier_response'
@@ -107,9 +104,6 @@ USER_SUBSCRIPTION = 'user_subscription'
 
 # The main file is what gets returned when you ask for an asset's file, like at /assets/file
 MAIN_FILE = 'main'
-
-# Main file for ai video
-MAIN_VIDEO_FILE = 'main_video'
 
 SUMMARY_FILE = 'summary'
 KEY_POINTS_FILE = 'key-points'

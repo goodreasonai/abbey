@@ -6,10 +6,9 @@ flask_cors
 pymysql
 pyjwt
 scikit-learn
-pypdf
 pymupdf
 boto3
-unstructured>=0.6.7
+unstructured[csv,doc,docx,epub,md,msg,odt,org,ppt,pptx,rtf,rst,tsv,xlsx]  # All document types EXCEPT IMAGES AND PDF - to try and avoid OCR stuff that's built in
 psutil
 stripe
 celery
