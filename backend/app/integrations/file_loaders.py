@@ -30,8 +30,14 @@ Why a class instead of a function? Mostly just to match langchain behavior, or t
 
 """
 class TextSplitter():
-    def __init__(self, max_chunk_size, separators=None, length_function=len, chunk_overlap=0):
-        default_separators = [  # the point of the weird character codes is to support multiple languages. Recommended here: https://python.langchain.com/v0.1/docs/modules/data_connection/document_transformers/recursive_text_splitter/
+    def __init__(self, max_chunk_size, length_function=len, chunk_overlap=0):
+        self.max_chunk_size = max_chunk_size
+        self.length_function=length_function
+        self.chunk_overlap = 0  # NOTE: doesn't yet support anything > 0 (in here for legacy langchain reasons)
+
+    def split_text(self, txt, separators=None):
+
+        DEFAULT_SEPARATORS = [  # the point of the weird character codes is to support multiple languages. Recommended here: https://python.langchain.com/v0.1/docs/modules/data_connection/document_transformers/recursive_text_splitter/
             "\n\n",
             "\n",
             " ",
@@ -43,12 +49,7 @@ class TextSplitter():
             "\uff0e",  # Fullwidth full stop
             "\u3002",  # Ideographic full stop
         ]
-        self.max_chunk_size = max_chunk_size
-        self.separators = separators if separators else default_separators
-        self.length_function=length_function
-        self.chunk_overlap = 0  # NOTE: doesn't yet support anything > 0 (in here for legacy langchain reasons)
-
-    def split_text(self, txt):
+        separators = separators if separators else DEFAULT_SEPARATORS
 
         def recursive_split(text, seps):
             max_chunks = []  # Holds chunks of their maximum size - not necessarily under max_chunk_size yet, though they'll never get bigger.
@@ -86,7 +87,7 @@ class TextSplitter():
         if self.length_function(txt) <= self.max_chunk_size:
             return [txt]
         
-        return recursive_split(txt, self.separators)
+        return recursive_split(txt, separators)
 
 
 class FileLoader():
@@ -173,8 +174,14 @@ class JsonLoader(FileLoader):
 
 CODE_SUPPORTS = ['java', 'py', 'cpp', 'c', 'cs', 'js', 'ts', 'rs', 'swift', 'kt', 'm', 'scala', 'lua', 'sh', 'pl', 'sql', 'r']
 class CodeLoader(FileLoader):
-    def load_and_split(self, text_splitter):
-        raise Exception("Code loader not implemented")
+    def load_and_split(self, text_splitter: TextSplitter):
+        all_code = ""
+        with open(self.fname, 'r') as fhand:
+            all_code = fhand.read()
+        # TODO: use special text splitter for code.
+        splits = text_splitter.split_text(all_code)
+        for split in splits:
+            yield RawChunk(page_content=split, metadata={})
 
 
 def get_loader(filetype, path):

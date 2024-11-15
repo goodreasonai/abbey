@@ -1,7 +1,7 @@
 import MyImage from '../MyImage/MyImage'
 import styles from './Modal.module.css'
 import RemoveIcon from '../../../public/icons/RemoveIcon.png'
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Loading from '../Loading/Loading';
 import ReactDOM from 'react-dom'
 import useKeyboardShortcut from '@/utils/keyboard';
@@ -16,11 +16,14 @@ export default function Modal({ isOpen, close, title, minWidth="500px", minHeigh
     const [contentHeight, setContentHeight] = useState(0)
 
     // For smooth width transition
-    useLayoutEffect(() => {
+    useEffect(() => {
         let resizeObserver = new ResizeObserver(entries => {
             entries.forEach(entry => {
                 let rect = entry.target.getBoundingClientRect()
-                let myRect = containerContainerRef.current.getBoundingClientRect()
+                let myRect = containerContainerRef.current?.getBoundingClientRect()
+                if (!myRect){
+                    return
+                }
                 setContentWidth(entry.target.offsetWidth + rect.x - myRect.x);
                 setContentHeight(entry.target.offsetHeight + rect.y - myRect.y)
             });

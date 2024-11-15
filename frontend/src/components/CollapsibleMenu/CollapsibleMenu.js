@@ -1,4 +1,4 @@
-import { useRef, useState, useLayoutEffect, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import styles from './CollapsibleMenu.module.css'
 import MyImage from '../MyImage/MyImage';
 import MinimizeIcon from '../../../public/icons/MinimizeIcon.png'
@@ -20,11 +20,14 @@ export default function CollapsibleMenu({ header="", rightButtons="", altHeader=
         }
     }, [forceOpen, open])
 
-    useLayoutEffect(() => {
+    useEffect(() => {
         let resizeObserver = new ResizeObserver(entries => {
             entries.forEach(entry => {
                 let rect = entry.target.getBoundingClientRect()
-                let myRect = myRef.current.getBoundingClientRect()
+                let myRect = myRef.current?.getBoundingClientRect()
+                if (!myRect){
+                    return
+                }
                 let offset = rect.y - myRect.y;
                 if (entry.target.offsetHeight + offset > 0){
                     // a height of zero for the content usually means that it's off the screen anyway
