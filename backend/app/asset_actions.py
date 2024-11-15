@@ -739,8 +739,7 @@ def get_retriever_cache_name(retriever_type_name, asset_id):
 
 # Returns None if failed
 # retriever_type_name can be used to give an asset new/multiple retrievers (ex., when you don't need embeddings)
-# Note that the force_create here is so that it won't use the cache, but force_create still needs to be set
-# ... in the retriever options to force the retriever to actually redo the loading.
+# Note: force_create and cache were from an era in which retrievers were cached in memory; currently, they are not.
 @needs_db
 def get_or_create_retriever(user: User, asset_row, asset_resources, retriever_type_name="retriever", retriever_options={}, force_create=False, no_cache=False, db=None):
     

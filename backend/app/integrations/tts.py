@@ -1,4 +1,4 @@
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from .file_loaders import TextSplitter
 import os
 import requests
 import sys
@@ -61,10 +61,10 @@ class OpenAITTS(TTS):
             "Authorization": f'Bearer {OPENAI_API_KEY}',  # Replace with your API key
         }
 
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size = 2048,  # in characters, needs to be less than 4096. Lower values allow us to abort faster if the user stops listening.
-            chunk_overlap = 0,
-            length_function = len
+        text_splitter = TextSplitter(
+            max_chunk_size=2048,  # in characters, needs to be less than 4096. Lower values allow us to abort faster if the user stops listening.
+            chunk_overlap=0,
+            length_function=len
         )
         documents = text_splitter.create_documents([txt])
 

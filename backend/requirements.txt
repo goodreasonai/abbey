@@ -5,16 +5,11 @@ gevent
 flask_cors
 pymysql
 pyjwt
-flask-caching
-langchain
-pydantic<2
-unstructured[local-inference]
 scikit-learn
 pypdf
 pymupdf
 boto3
 unstructured>=0.6.7
-ocrmypdf
 psutil
 stripe
 celery
@@ -22,7 +17,6 @@ redis
 watchdog
 beautifulsoup4
 html2text
-together
 markdownify
 flask-socketio
 gevent-websocket

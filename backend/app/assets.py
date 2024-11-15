@@ -877,8 +877,6 @@ def make_retriever_endpoint(user: User):
         'except_text': 'Failed to make retriever using endpoint',
         'retriever_options': ret_options
     }
-
-    # Remove our retriever from cache, since it's being force created
     
     task_general.apply_async(args=[pickle.dumps(make_retriever_job), user.to_json(), job_id, asset_row], kwargs=kwargs)
 

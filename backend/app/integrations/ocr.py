@@ -1,8 +1,6 @@
-import ocrmypdf
 import requests
 import time
 from ..configs.secrets import MATHPIX_API_KEY, MATHPIX_API_APP
-from multiprocessing import Process
 from ..utils import remove_ext
 import json
 import os
@@ -11,7 +9,6 @@ import os
 
 MATHPIX_OCR_MAX_WAIT = 10 * 60  # max wait time for mathpix OCR in seconds - remember though this uses exponetial fallback (see retriever.py)
 MATHPIX_OCR_MAX_ATTEMPTS = 2  # Max number of times to retry OCR in failure
-LOCAL_OCR_TIMEOUT = 20 * 60 #  The timeout for local optical character recognition, in seconds
 
 class OCR():
     def __init__(self, code, accept_formats) -> None:
@@ -22,34 +19,6 @@ class OCR():
     # Will raise an error if the OCR fails
     def do_ocr(self, ext, src_name) -> str:
         pass
-
-
-# Does OCR using a local instance of ocrmypdf, which is based on Tesseract
-# May require additional setup and installations to run properly!
-class LocalOCR(OCR):
-    def __init__(self) -> None:
-        super().__init__(
-            code='local',
-            accept_formats=['pdf']
-        )
-
-    def do_ocr(self, ext, src_name):
-        assert(ext == 'pdf')
-        # break off into separate process and wait.
-        def ocr_process(src_name):
-            ocrmypdf.configure_logging(-1)
-            ocrmypdf.ocr(src_name, src_name, deskew=True, force_ocr=True, progress_bar=False)
-        
-        p = Process(target=ocr_process, args=(src_name,))
-        p.daemon = True  # ensure it stops after server exits.
-        p.start()
-        p.join(timeout=LOCAL_OCR_TIMEOUT)
-
-        if p.is_alive():
-            p.terminate()
-            raise Exception("Local OCR process timed out")
-
-        return src_name
 
 
 class MathpixOCR(OCR):
@@ -216,7 +185,6 @@ class DisabledOCR(OCR):
 
 
 OCR_PROVIDERS = {
-    'local': LocalOCR(),
     'mathpix': MathpixOCR(),
     'disabled': DisabledOCR()
 }

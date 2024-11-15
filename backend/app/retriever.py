@@ -8,15 +8,7 @@ from .prompts.retrieval_prompts import guess_answer_prompt, guess_answer_prompt_
 import json
 import sys
 from .integrations.lm import LM, LM_PROVIDERS
-from langchain.document_loaders import (
-    UnstructuredWordDocumentLoader,
-    UnstructuredFileLoader,
-    UnstructuredExcelLoader,
-    PyMuPDFLoader,
-    UnstructuredHTMLLoader
-)
-from .integrations.file_loaders import ExcelLoader, DocxLoader, TextSplitter
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from .integrations.file_loaders import get_loader, TextSplitter
 from .utils import make_json_serializable, ntokens_to_nchars, get_extension_from_path
 import tempfile
 import warnings
@@ -31,7 +23,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import math
 from difflib import SequenceMatcher
 import random
-from .abbey_json import AbbeyJsonFileLoader
 from .prompts.auto_label_prompts import get_auto_desc_system_prompt
 from .utils import get_token_estimate, convert_heic_to_jpg
 from .integrations.ocr import OCR_PROVIDERS, OCR
@@ -57,7 +48,6 @@ class Chunk():
 
 
 # Check of a retriever is consistent wrt its resources and options
-# For ensuring correctness of cache
 def consistency_check(old_res_ret_info, resource_manifest, retriever_options):
 
     resource_manifest = make_json_serializable(resource_manifest)  # Because resource_manifest might have datetimes, which couldn't be in info.
@@ -904,52 +894,23 @@ class ResourceRetriever():
                     os.remove(source_name)
                 return outname
 
-        def choose_loader_from_ocr(name):
-            if name.endswith('abbeyjson'):
-                return  AbbeyJsonFileLoader(name)
-            else:
-                return UnstructuredFileLoader(name)
-
         attempted_ocr = False
         if force_ocr and filetype in ocr.accept_formats:
             using_name = do_ocr(src.name)
-            loader = choose_loader_from_ocr(using_name)
+            loader = get_loader(get_extension_from_path(None, using_name), using_name)
+            if not loader:
+                raise Exception("Could not get loader for OCR'd document")
             attempted_ocr = True
-        elif filetype == 'pdf':
-            loader = PyMuPDFLoader(using_name)
-        elif filetype == 'docx':
-            loader = DocxLoader(using_name)
-        elif filetype == 'doc':
-            loader = UnstructuredWordDocumentLoader(using_name)  # I have no idea if this is supposed to work
-        elif filetype == 'txt':
-            loader = UnstructuredFileLoader(using_name)
-        elif filetype == 'xlsx':
-            # loader = UnstructuredExcelLoader(using_name)
-            loader = ExcelLoader(using_name)
-        elif filetype == 'json':
-            outname = remove_ext(src.name) + '.txt'
-            with open(src.name, 'r') as file:
-                original_contents = file.read()
-            with open(outname, 'w') as file:
-                file.write("This is a JSON file:" + '\n' + original_contents)
-            if src.name != outname:
-                os.remove(using_name)
-            using_name = outname
-            loader = UnstructuredFileLoader(using_name)
-        elif filetype in ['html', 'ahtml']:
-            loader = UnstructuredHTMLLoader(using_name)
-        elif filetype in ['eml', 'md', 'msg', 'rst', 'rtf', 'xml', 'csv', 'epub', 'odt', 'ppt', 'pptx', 'tsv', 'pages']:
-            loader = UnstructuredFileLoader(using_name)
         elif filetype == 'zip':
             raise ZipFileRetrieverError
-        elif filetype in ['java', 'py', 'cpp', 'c', 'cs', 'js', 'ts', 'rs', 'swift', 'kt', 'm', 'scala', 'lua', 'sh', 'pl', 'sql', 'r']:
-            loader = UnstructuredFileLoader(using_name)
-        elif filetype in ocr.accept_formats:
-            using_name = do_ocr(src.name)
-            attempted_ocr = True
-            loader = choose_loader_from_ocr(using_name)
         else:
-            raise Exception(f"File type '{filetype}' not recognized in retriever.")
+            loader = get_loader(filetype, using_name)
+            if not loader and filetype in ocr.accept_formats:
+                using_name = do_ocr(src.name)
+                attempted_ocr = True
+                loader = get_loader(get_extension_from_path(None, using_name), using_name)
+            if not loader:
+                raise Exception(f"File type '{filetype}' not recognized in retriever.")
 
         # The file we're storing the chunks and stuff in
         serialized_file = tempfile.NamedTemporaryFile(delete=False)
@@ -995,7 +956,7 @@ class ResourceRetriever():
                     print(f"File '{self.resource_manifest['title']}' likely not readable (<300 c/chunk), using OCR if possible.", file=sys.stderr)
                     # For PDFs, we can do something about it.
                     using_name = do_ocr(using_name)
-                    loader = choose_loader_from_ocr(using_name)
+                    loader = get_loader(get_extension_from_path(None, using_name), using_name)
                     attempted_ocr = True
                 else:
                     satisfied = True

@@ -1,20 +1,17 @@
 from ..exceptions import PdfTooLongError
 from ..configs.user_config import MAX_PDF_PAGES
-from ..db import get_db, needs_db
+from ..db import needs_db
 from ..template_response import MyResponse
 from flask import (
     request,
     Blueprint,
 )
-from ..storage_interface import delete_resources, upload_asset_file
+from ..storage_interface import upload_asset_file
 from ..utils import get_extension_from_path
 from ..configs.str_constants import *
 from .template import Template
 from ..auth import User, token_required
 from flask_cors import cross_origin
-from langchain.document_loaders import (
-    PyMuPDFLoader
-)
 import tempfile
 import os
 import json
