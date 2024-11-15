@@ -105,9 +105,6 @@ The streaming-lm_resp function returns a Flask response rather than just text
 The first response is guaranteed to be JSON with any keyword arguments passed to it
 Then it yields plaintext until finished.
 
-Streaming here is done without langchain because langchain is terrible for this
-One problem is there's no default re-try call
-
 """
 
 def _threaded_stream_lm(q, prompt, _index=0, stream_lm: LM=LM_PROVIDERS[DEFAULT_CHAT_MODEL], **prompt_kwargs):

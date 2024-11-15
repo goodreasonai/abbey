@@ -15,6 +15,7 @@ from langchain.document_loaders import (
     PyMuPDFLoader,
     UnstructuredHTMLLoader
 )
+from .integrations.file_loaders import ExcelLoader, DocxLoader, TextSplitter
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from .utils import make_json_serializable, ntokens_to_nchars, get_extension_from_path
 import tempfile
@@ -837,10 +838,10 @@ class ResourceRetriever():
 
         MIN_CHAR_LENGTH_WARN = 100
 
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size = ntokens_to_nchars(self.chunk_size_tokens),
-            chunk_overlap = ntokens_to_nchars(self.chunk_overlap_tokens),
-            length_function = len
+        text_splitter = TextSplitter(
+            max_chunk_size=ntokens_to_nchars(self.chunk_size_tokens),
+            chunk_overlap=ntokens_to_nchars(self.chunk_overlap_tokens),
+            length_function=len
         )
 
         self.chunks = []
@@ -917,13 +918,14 @@ class ResourceRetriever():
         elif filetype == 'pdf':
             loader = PyMuPDFLoader(using_name)
         elif filetype == 'docx':
-            loader = UnstructuredWordDocumentLoader(using_name)
+            loader = DocxLoader(using_name)
         elif filetype == 'doc':
             loader = UnstructuredWordDocumentLoader(using_name)  # I have no idea if this is supposed to work
         elif filetype == 'txt':
             loader = UnstructuredFileLoader(using_name)
         elif filetype == 'xlsx':
-            loader = UnstructuredExcelLoader(using_name)
+            # loader = UnstructuredExcelLoader(using_name)
+            loader = ExcelLoader(using_name)
         elif filetype == 'json':
             outname = remove_ext(src.name) + '.txt'
             with open(src.name, 'r') as file:

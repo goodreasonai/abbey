@@ -134,5 +134,6 @@ def create_app():
     def home():
         return f"A British tar is a soaring soul, as free as a mountain bird. Version: {BACKEND_VERSION}"
 
+    print("Backend create_app() complete.")
 
     return app
