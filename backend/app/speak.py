@@ -21,7 +21,6 @@ import hashlib
 import json
 from .configs.str_constants import MEDIA_USER_INFO
 from mutagen.mp3 import MP3
-import io
 from .utils import mimetype_from_ext
 from .integrations.tts import TTS, TTS_PROVIDERS
 
