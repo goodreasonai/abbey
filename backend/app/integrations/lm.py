@@ -1,8 +1,9 @@
 import warnings
-from ..configs.secrets import OPENAI_API_KEY, ANTHROPIC_API_KEY
-from ..configs.user_config import LM_ORDER
+from ..configs.secrets import OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_URL
 from ..utils import extract_from_base64_url
 import os
+import requests
+import json
 
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 from openai import OpenAI
@@ -239,6 +240,99 @@ class Anthropic(LM):
                 yield text
 
 
+class Ollama(LM):
+    def __init__(self, ollama_code, code, name, desc, traits, context_length, supports_json=True, accepts_images=False) -> None:
+        self.model = ollama_code
+        super().__init__(
+            code=code,
+            name=name,
+            desc=desc,
+            traits=traits,
+            context_length=context_length,
+            supports_json=supports_json,
+            accepts_images=accepts_images
+        )
+
+    def _make_messages(self, txt, system_prompt=None, context=[], images=[]):
+        messages = []
+
+        if system_prompt:
+            messages.append({
+                'role': 'system',
+                'content': system_prompt
+            })
+
+        def get_images_content(imgs):
+            image_content = []
+            for x in imgs:
+                _, img_data = extract_from_base64_url(x)
+                image_content.append(img_data)
+            return image_content
+
+        for round in context:
+            messages.append({
+                'role': 'user', 
+                'content': round['user'],
+                'images': get_images_content(round['images']) if 'images' in round and round['images'] and len(round['images']) and self.accepts_images else None
+            })
+            messages.append({'role': 'assistant', 'content': round['ai']})
+
+        messages.append({
+            'role': 'user', 
+            'content': txt,
+            'images': get_images_content(round['images']) if images is not None and self.accepts_images and len(images) else None
+        })
+        return messages
+
+    def run(self, txt, system_prompt=None, context=[], temperature=.7, make_json=False, images=[]):
+        messages = self._make_messages(txt, system_prompt=system_prompt, context=context, images=images)
+        params = {
+            'model': self.model,
+            'messages': messages,
+            'options': {
+                'temperature': temperature if temperature else .7
+            },
+            'stream': False
+        }
+        url = f'{OLLAMA_URL}/api/chat'
+        try:
+            response = requests.post(url, json=params, stream=False)
+            response.raise_for_status()  # Raise an error for bad responses
+            my_json = response.json()
+            x = my_json['message']['content']
+            return x
+
+        except requests.exceptions.RequestException as e:
+            print(f"An error occurred: {e}")
+
+    def stream(self, txt, system_prompt=None, context=[], temperature=None, images=[]):
+        params = {
+            'model': self.model,
+            'messages': self._make_messages(txt, system_prompt=system_prompt, context=context, images=images),
+            'options': {
+                'temperature': temperature if temperature else .7
+            },
+            'stream': True
+        }
+        url = f'{OLLAMA_URL}/api/chat'
+        try:
+            response = requests.post(url, json=params, stream=True)
+            response.raise_for_status()  # Raise an error for bad responses
+
+            # Process the streaming response
+            for line in response.iter_lines():
+                if line:
+                    # Assuming each line is a JSON object
+                    data = line.decode('utf-8')
+                    my_json = json.loads(data)
+                    # Process the data as needed
+                    yield my_json['message']['content']
+
+        except requests.exceptions.RequestException as e:
+            print(f"An error occurred: {e}")
+
+
+
 class GPT4(OpenAILM):
     def __init__(self) -> None:
         super().__init__(
@@ -365,6 +459,21 @@ class Claude35Sonnet(Anthropic):
         )
 
 
+class Llama32_Ollama(Ollama):
+    def __init__(self) -> None:
+        super().__init__(
+            ollama_code='llama3.2',
+            code='llama-3-2-ollama',
+            name='Llama 3.2',
+            desc='Llama 3.2 is an open source edge model from Meta designed to run on consumer hardware.',
+            traits="Slim",
+            context_length=128_000,
+            supports_json=True,
+            accepts_images=False
+        )
+
+
+
 LM_PROVIDERS = {
     'gpt-4': GPT4(),
     'gpt-4o-mini': GPT4oMini(),
@@ -372,6 +481,8 @@ LM_PROVIDERS = {
     'claude-3-opus': Claude3Opus(),
     'claude-3-5-sonnet': Claude35Sonnet(),
     'gpt-4o': GPT4o(),
+    'llama-3-2-ollama': Llama32_Ollama(),
+    # o1-preview and o1-mini don't yet support system prompts, images, and streaming - so they are disabled in user_config.
     'o1-preview': O1Preview(),
     'o1-mini': O1Mini()
 }

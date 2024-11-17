@@ -11,7 +11,8 @@ def get_suggest_questions_system_prompt(nquestions, chunks, question, context):
     return "\n".join([start, questions_posed_to_doc, example, doc])
 
 def get_suggest_questions_prompt(nquestions, question):
-    question = f"""Here is the user's last question to help you create the follow-up(s): "{question}". Now respond with {nquestions} question{'s' if nquestions > 1 else ''} using the correct JSON schema."""
+    prev = f'Here is the user\'s last question to help you create the follow-up(s): "{question}". ' if question else ""
+    question = f"""{prev}Please respond with {nquestions} question{'s' if nquestions > 1 else ''} using the correct JSON schema."""
     return question
 
 def get_suggest_questions_system_prompt_detached(n, question):

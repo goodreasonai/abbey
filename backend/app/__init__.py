@@ -19,6 +19,7 @@ def create_app():
     global LOCAL_STORAGE_PATH
 
     # create and configure the app
+    print("Creating app...")
     app = Flask(__name__, instance_relative_config=True)
 
     stripe.api_key = STRIPE_SECRET_KEY
