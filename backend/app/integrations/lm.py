@@ -1,5 +1,5 @@
 import warnings
-from ..configs.secrets import OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_URL
+from ..configs.secrets import OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_URL, OLLAMA_LMS
 from ..utils import extract_from_base64_url
 import os
 import requests
@@ -310,7 +310,8 @@ class Ollama(LM):
             'model': self.model,
             'messages': self._make_messages(txt, system_prompt=system_prompt, context=context, images=images),
             'options': {
-                'temperature': temperature if temperature else .7
+                'temperature': temperature if temperature else .7,
+                'num_ctx': self.context_length
             },
             'stream': True
         }
@@ -459,19 +460,43 @@ class Claude35Sonnet(Anthropic):
         )
 
 
-class Llama32_Ollama(Ollama):
-    def __init__(self) -> None:
-        super().__init__(
-            ollama_code='llama3.2',
-            code='llama-3-2-ollama',
-            name='Llama 3.2',
-            desc='Llama 3.2 is an open source edge model from Meta designed to run on consumer hardware.',
-            traits="Slim",
-            context_length=128_000,
-            supports_json=True,
-            accepts_images=False
-        )
+# Unlike others, ollama model objects are made from environment variables.
+def gen_ollama_lms():
 
+    if not OLLAMA_URL or not OLLAMA_LMS:
+        return []
+    
+    ollama_lms = json.loads(OLLAMA_LMS)
+    if not len(ollama_lms):
+        return []
+
+    # Just check to make sure ollama URL is setup correctly.
+    url = f'{OLLAMA_URL}/api/tags'
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"Could not retrieve ollama models at {OLLAMA_URL}. Maybe you should change the URL? See manual setup in the README.")
+        exit(1)
+
+    # TODO: confirm that all the models are downloaded / available.
+
+    models = []
+    for model in ollama_lms:
+        code = model['code']
+        models.append(Ollama(
+            ollama_code=code,
+            code=f'{code}-ollama',
+            name=code,
+            desc=f'{code} is an open source edge model run via Ollama.',
+            traits="Open Source",
+            context_length=model['context_length'],
+            supports_json=True,
+            accepts_images=model['vision']
+        ))
+    return models
+
+ollama_models = {x.code: x for x in gen_ollama_lms()}
 
 
 LM_PROVIDERS = {
@@ -481,7 +506,8 @@ LM_PROVIDERS = {
     'claude-3-opus': Claude3Opus(),
     'claude-3-5-sonnet': Claude35Sonnet(),
     'gpt-4o': GPT4o(),
-    'llama-3-2-ollama': Llama32_Ollama(),
+    # Add the generated ollama models
+    **ollama_models,
     # o1-preview and o1-mini don't yet support system prompts, images, and streaming - so they are disabled in user_config.
     'o1-preview': O1Preview(),
     'o1-mini': O1Mini()

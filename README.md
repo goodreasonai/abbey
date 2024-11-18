@@ -47,8 +47,17 @@ Abbey requires three environment variable files to run properly: a backend `.env
 Here is what the `.env` backend file looks like:
 
 ```
-# The OpenAI API key is mandatory
+# The OpenAI API key is mandatory if you don't have any other embedding function setup (like an ollama one)
 OPENAI_API_KEY="sk-my-openai-key"
+
+# You can optionally setup Abbey to use Ollama, a local LLM inference server.
+# If Ollama is running on the same machine as Abbey but not in the same docker VM, you should use this URL:
+OLLAMA_URL="http://host.docker.internal:11434"
+# You should specify which language models and embedding models from llama you want using JSON.
+# For language models, you should also give the context length (in tokens) you want them to have and whether or not they support images as input (vision).
+OLLAMA_LMS='[{"code": "llama3.2", "context_length": 4096, "vision": true}, {...}, ...]'
+# These are embedding models.
+OLLAMA_EMBEDS='[{"code": "all-minilm"}, {...}, ...]'
 
 # Email Server Details (Optional, and you can use either SMTP or Sendgrid)
 SMTP_SERVER="mail.server.com"
@@ -96,7 +105,7 @@ PROXY_URL_HTTPS = "https://proxy-username:proxy-password@my-proxy.com:proxy-port
 # The backend may instruct a redirect here; it should be publicly accessible, but in development is http://localhost:3000
 FRONTEND_URL="https://your-frontend-url.com"
 
-# This is a flask argument
+# This is a flask argument that may or may not be unused.
 SECRET_KEY="your-secret-key"
 ```
 

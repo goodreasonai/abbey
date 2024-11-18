@@ -332,7 +332,7 @@ class Retriever():
                         points[x] *= diversity_reward
 
                 # The 1.5 is thrown in to look out for potential dup score benefits
-                if len(best_scores) >= (max_results * 1.5) and best_scores[-1] > points[x]:
+                if len(best_scores) and (len(best_scores) >= (max_results * 1.5) and best_scores[-1] > points[x]):
                     break
 
                 if enable_dup_and_diversity_scheme:

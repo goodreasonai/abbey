@@ -41,6 +41,8 @@ STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
 FRONTEND_URL = os.environ.get("FRONTEND_URL")  # used in Stripe integration.
 
 OLLAMA_URL = os.environ.get('OLLAMA_URL')
+OLLAMA_LMS = os.environ.get('OLLAMA_LMS')
+OLLAMA_EMBEDS = os.environ.get('OLLAMA_EMBEDS')
 
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
 

@@ -5,6 +5,8 @@ from .secrets import (
     CLERK_JWT_PEM, CLERK_SECRET_KEY, CUSTOM_AUTH_SECRET, CUSTOM_AUTH_DB_ENDPOINT, CUSTOM_AUTH_DB_USERNAME, CUSTOM_AUTH_DB_PASSWORD, CUSTOM_AUTH_DB_PORT, CUSTOM_AUTH_DB_NAME,
     BING_API_KEY, OLLAMA_URL
 )
+from ..integrations.lm import gen_ollama_lms
+from ..integrations.embed import gen_ollama_embeds
 import os
 import json
 
@@ -21,7 +23,7 @@ NOTE: Variables are organized by how likely a user would consider changing the v
 BACKEND_VERSION = '0.12.6'  # Viewable when a user goes to the root "/" endpoint of the backend
 
 AVAILABLE_PROVIDERS = {
-    'openai': True if OPENAI_API_KEY else False,
+    'openai': False, #True if OPENAI_API_KEY else False,
     'anthropic': True if ANTHROPIC_API_KEY else False,
     'eleven-labs': True if ELEVEN_LABS_API_KEY else False,
     'bing': True if BING_API_KEY else False,
@@ -32,7 +34,7 @@ AVAILABLE_PROVIDERS = {
 AVAILABLE_LMS = {
     'openai': ['gpt-4o', 'gpt-4o-mini', 'gpt-4', 'gpt-4-turbo'],
     'anthropic': ['claude-3-5-sonnet', 'claude-3-opus'],
-    'ollama': ['llama-3-2-ollama']
+    'ollama': [x.code for x in gen_ollama_lms()]
 }
 
 AVAILABLE_TTS = {
@@ -41,7 +43,8 @@ AVAILABLE_TTS = {
 }
 
 AVAILABLE_EMBED = {
-    'openai': ['openai-text-embedding-ada-002']
+    'openai': ['openai-text-embedding-ada-002', 'openai-text-embedding-3-small'],
+    'ollama': [x.code for x in gen_ollama_embeds()]
 }
 
 AVAILABLE_TEMPLATES = ['document', 'folder', 'detached_chat', 'website', 'classroom', 'curriculum', 'quiz', 'text_editor', 'video', 'notebook', 'inf_quiz', 'section']  # could use the list in templates.py, but want to avoid imports here.
@@ -55,8 +58,7 @@ LONG_CONTEXT_CHAT_MODEL_RANKINGS = ['gpt-4o', 'claude-3-5-sonnet']  # The model 
 FAST_LONG_CONTEXT_MODEL_RANKINGS = ['gpt-4o-mini', 'claude-3-5-sonnet']  # The model used when speed is important and it also needs long-context
 ALT_LONG_CONTEXT_MODEL_RANKINGS = LONG_CONTEXT_CHAT_MODEL_RANKINGS[::-1]  # exists to provide some variability in situations where long context makes generations repetitive
 
-LM_RANKINGS = ['gpt-4o', 'claude-3-5-sonnet', 'claude-3-opus', 'gpt-4', 'gpt-4-turbo', 'gpt-4o-mini', 'llama-3-2-ollama']
-LM_ORDER = [x for x in LM_RANKINGS if x in get_available(AVAILABLE_LMS)]  # Order that a user would see in settings or a dropdown
+EMBEDDING_MODEL_RANKINGS = ['openai-text-embedding-ada-002', 'openai-text-embedding-3-small', *[x.code for x in gen_ollama_embeds()]]
 
 def get_available(provider_map):
     return sum([y for x, y in provider_map.items() if AVAILABLE_PROVIDERS[x]], [])  # neat trick, no?
@@ -69,6 +71,9 @@ def get_highest_ranked_available(rankings, provider_map):
         
     raise Exception("No available model")
 
+# This extra ranking is done so that a user sees a consistent / sensible ordering of LM options
+LM_RANKINGS = ['gpt-4o', 'claude-3-5-sonnet', 'claude-3-opus', 'gpt-4', 'gpt-4-turbo', 'gpt-4o-mini', *[x.code for x in gen_ollama_lms()]]
+LM_ORDER = [x for x in LM_RANKINGS if x in get_available(AVAILABLE_LMS)]  # Order that a user would see in settings or a dropdown
 
 #
 #  Most Important Configuration Options
@@ -85,6 +90,8 @@ LONG_CONTEXT_CHAT_MODEL = get_highest_ranked_available(LONG_CONTEXT_CHAT_MODEL_R
 FAST_LONG_CONTEXT_MODEL = get_highest_ranked_available(FAST_LONG_CONTEXT_MODEL_RANKINGS, AVAILABLE_LMS)
 ALT_LONG_CONTEXT_MODEL = get_highest_ranked_available(ALT_LONG_CONTEXT_MODEL_RANKINGS, AVAILABLE_LMS)
 
+DEFAULT_EMBEDDING_OPTION = get_highest_ranked_available(EMBEDDING_MODEL_RANKINGS, AVAILABLE_EMBED)
+
 DEFAULT_SUBSCRIPTION_CODE = 'free'  # For users that don't have any subscription entries in their user metadata
 # Options for user-selected chat models by subscription
 
@@ -100,8 +107,6 @@ SUBSCRIPTION_CODE_TO_TEMPLATES = json.loads(_SUB_TO_TEMPLATES) if _SUB_TO_TEMPLA
 # However, in the future this could be user selected – once there are more options available.
 DISABLE_OCR = not (MATHPIX_API_APP and MATHPIX_API_KEY)  # If true, OCR is disabled, which means that DisabledOCR ('disabled') is used for all users (and it accepts nothing, does nothing).
 DEFAULT_OCR_OPTION = 'mathpix'  # codes match integrations/ocr.py
-
-DEFAULT_EMBEDDING_OPTION = "openai-text-embedding-ada-002"  # codes match integrations/embed.py
 
 DEFAULT_STORAGE_OPTION = "s3" if AWS_ACCESS_KEY and AWS_SECRET_KEY else "local"  # codes match integrations/file_storage.py
 

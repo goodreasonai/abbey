@@ -21,6 +21,11 @@ MYSQL_ROOT_PASSWORD=""
 USE_OPENAI=""
 OPENAI_KEY=""
 
+USE_OLLAMA=""
+OLLAMA_URL=""
+OLLAMA_LMS="[]"
+OLLAMA_EMBEDS="[]"
+
 USE_ANTHROPIC=""
 ANTHROPIC_KEY=""
 
@@ -87,7 +92,7 @@ run() {
 
     # Execute the command
     echo "Executing: $cmd"
-    eval "$cmd"
+    #eval "$cmd"
 }
 
 # Checks if set up by seeing if there's a backend ENV file written.
@@ -208,17 +213,78 @@ configure_auth() {
     REFRESH_SECRET=$(generate_password)
 }
 
+add_model_to_json() {
+    local json_array=$1
+    local model_entry=$2
+
+    if [ "$json_array" = "[]" ]; then
+        json_array="["
+    else
+        json_array="${json_array%]}"
+        json_array="${json_array},"
+    fi
+
+    json_array="${json_array}${model_entry}]"
+
+    echo "$json_array"
+}
+
 configure_ai() {
     # What ai providers would you like to use?
     # What are your keys?
     echo "To use Abbey, you will need to configure some AI providers, like the OpenAI API. You can implement your own API in the integrations folder in the backend."
-    if ask_yes_no "It is required at this time to provide an OpenAI API key. Do you have a key?"; then
+    echo "Note that you will need to configure at least the OpenAI API or Ollama."
+    if ask_yes_no "Would you like to configure the OpenAI API?"; then
         USE_OPENAI=$TRUE_VALUE
         OPENAI_KEY=$(ask_credential "OK, please provide an OpenAI API key")
     else
-        echo "The OpenAI API key is mandatory. Please see the README on GitHub for more details and ways around this."
-        exit 1
         USE_OPENAI=$FALSE_VALUE
+    fi
+
+    if ask_yes_no "Would you like to configure Ollama to run local models?"; then
+        USE_OLLAMA=$TRUE_VALUE
+        echo "If you're running Ollama on the same machine as Abbey, it's available at http://host.docker.internal:11434. If you're running it on another machine, it might be https://example.com or something."
+        OLLAMA_URL=$(ask_credential "Please provide the Ollama URL")
+
+        while ask_yes_no "Do you want to add an Ollama language model? Note that you must have these models already pulled."; do
+            model_code=$(ask_credential "Enter language model code (like 'llama3.2')")
+            context_length=$(ask_credential "Enter context length (default 4096)")
+            vision_support=$(ask_yes_no "Does this model support vision?")
+
+            # Convert vision support to boolean
+            vision_boolean="false"
+            if [ "$vision_support" = "y" ]; then
+                vision_boolean="true"
+            fi
+
+            model_entry="{\"code\": \"$model_code\", \"context_length\": ${context_length:-4096}, \"vision\": $vision_boolean}"
+            OLLAMA_LMS=$(add_model_to_json "$OLLAMA_LMS" "$model_entry")
+        done
+
+        # Collect embedding models
+        while ask_yes_no "Do you want to add an embedding model? Note that you must have these models already pulled."; do
+            model_code=$(ask_credential "Enter embedding model code:")
+            
+            model_entry="{\"code\": \"$model_code\"}"
+            OLLAMA_EMBEDS=$(add_model_to_json "$OLLAMA_EMBEDS" "$model_entry")
+        done
+
+        if [ "$OLLAMA_EMBEDS" = "[]" ]; then
+            if [ "$USE_OPENAI" = "$FALSE_VALUE" ]; then
+                echo "You must configure at least one embedding model from OpenAI or Ollama! Exiting."
+                exit 1
+            fi
+        fi
+
+    else
+        USE_OLLAMA=$FALSE_VALUE
+    fi
+
+    if [ "$USE_OLLAMA" = "$FALSE_VALUE" ]; then
+        if [ "$USE_OPENAI" = "$FALSE_VALUE" ]; then
+            echo "You must configure at least Ollama or the OpenAI API. Exiting."
+            exit 1
+        fi
     fi
 
     if ask_yes_no "Would you like to configure the Anthropic API?"; then
@@ -305,6 +371,12 @@ export_backend_env() {
 
         if [ "$USE_WEB" = "$TRUE_VALUE" ]; then
             echo "BING_API_KEY=\"$BING_KEY\""
+        fi
+
+        if [ "$USE_OLLAMA" = "$TRUE_VALUE" ]; then
+            echo "OLLAMA_URL='$OLLAMA_URL'"
+            echo "OLLAMA_LMS='$OLLAMA_LMS'"
+            echo "OLLAMA_EMBEDS='$OLLAMA_EMBEDS'"
         fi
 
         echo "DB_ENDPOINT=mysql"  # Hard coded into the docker compose
