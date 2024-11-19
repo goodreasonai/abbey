@@ -1,6 +1,6 @@
 # Abbey 📚
 
-Abbey is an open source AI interface with notebooks, basic chat, documents, YouTube videos, and more. It orchestrates a variety of AI models in a private self-hosted package. You can run Abbey as a server for multiple users using your own authentication provider, or you can run it for yourself on your own machine. Abbey is highly configurable and extendible, using your chosen LLMs, TTS models, OCR models, and search engines. You can find a hosted version of Abbey [here](https://abbey.us.ai), which is used by many students and professionals.
+Abbey is an AI interface with notebooks, basic chat, documents, YouTube videos, and more. It orchestrates a variety of AI models in a private self-hosted package. You can run Abbey as a server for multiple users using your own authentication provider, or you can run it for yourself on your own machine. Abbey is highly configurable and extendible, using your chosen LLMs, TTS models, OCR models, and search engines. You can find a hosted version of Abbey [here](https://abbey.us.ai), which is used by many students and professionals.
 
 If you have any questions or suggestions, please feel free to open a GitHub issue. Otherwise, you may email us at `team@us.ai`.
 
