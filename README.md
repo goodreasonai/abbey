@@ -1,8 +1,8 @@
 # Abbey 📚
 
-Abbey is an open source AI interface for chat, documents, YouTube videos, workspaces, and more. It orchestrates a variety of AI models in a private self-hosted package. You can run Abbey as a server for multiple users using your own authentication provider, or you can run it for yourself on your own machine. Abbey is highly configurable and extendible, using your chosen LLMs, TTS models, OCR models, and search engines. You can find a hosted version of Abbey [here](https://abbey.us.ai), which is used by many students and professionals.
+Abbey is an open source AI interface with notebooks, basic chat, documents, YouTube videos, and more. It orchestrates a variety of AI models in a private self-hosted package. You can run Abbey as a server for multiple users using your own authentication provider, or you can run it for yourself on your own machine. Abbey is highly configurable and extendible, using your chosen LLMs, TTS models, OCR models, and search engines. You can find a hosted version of Abbey [here](https://abbey.us.ai), which is used by many students and professionals.
 
-If you have any questions or suggestions, please open a GitHub issue! Otherwise, you may email us at `team@us.ai`.
+If you have any questions or suggestions, please feel free to open a GitHub issue. Otherwise, you may email us at `team@us.ai`.
 
 If Abbey is not by default configurable to your liking, and you're comfortable writing code, please consider opening a PR with your improvements! Adding new integrations and even full interfaces is straightforward; see more details in the "Contributing" section below. Lastly, Abbey provides simple configuration variables for things like its name, logo, and color scheme. See below how to switch them up.
 
@@ -17,7 +17,7 @@ If Abbey is not by default configurable to your liking, and you're comfortable w
 ### Prerequisites
 
 - **Installs**: You must have `docker-compose` installed. See details [here](https://docs.docker.com/compose/install/).
-- **3rd Party Credentials**: AI functionality on Abbey relies on 3rd party integrations. If you're planning on using an API like the OpenAI API, you should have those credentials handy. *Without adding your own AI service manually, you must have an API key for OpenAI* – this is due to a dependence on OpenAI embedding functions (and also, you should probably use some of their models). In order to enable different users, you must have a client ID and secret key for at least one OAuth2 provider; Abbey currently supports Google, Keycloak, and GitHub. You may also have API keys ready for Anthropic, Bing, and Mathpix; to send emails using Abbey, you must provide credentials for an SMTP server (like, your own email) or a Sendgrid API key.
+- **3rd Party Credentials**: AI functionality on Abbey relies on 3rd party integrations. If you're planning on using an API like the OpenAI API, you should have those credentials handy. *You must use at least one of Ollama and the OpenAI API* – this is due to the fact that you need at least one embedding function and at least one LLM. In order to enable different users, you must have a client ID and secret key for at least one OAuth2 provider; Abbey currently supports Google, Keycloak, and GitHub. You may also have API keys ready for Anthropic, Bing, and Mathpix; to send emails using Abbey, you must provide credentials for an SMTP server (like, your own email) or a Sendgrid API key.
 
 ### Setup Options
 
@@ -30,21 +30,25 @@ You may either run the `run.sh` bash script and follow directions to enter in yo
 
 or
 
-3. Set up manually: see the "Manual Setup" section below for more details.
+3. Set up manually by defining three environment variable files: see the "Manual Setup" section below for more details.
 
 ### Run
 
 Running Abbey with `./run.sh` is recommended; you may need to use `sudo ./run.sh` if your setup requires superuser privileges to run `docker-compose`. That's it.
 
-If you would like to run Abbey in development mode (i.e. because you're trying to contribute to Abbey), use the `--dev` flag. If you're switching between dev and prod builds, use the `--build` flag to rebuild the containers. You may also need to delete the `frontend-next` and `frontend-node-modules` volumes so that they are properly rebuilt.
+If you would like to run Abbey in development mode (i.e. because you're trying to contribute to Abbey), use the `--dev` flag. If you're switching between dev and prod builds, use the `--build` flag to rebuild the containers. You may also need to delete the `frontend-next` and `frontend-node-modules` volumes in Docker so that they are properly rebuilt.
 
-If you'd like to use `docker-compose` directly, you might want to use the environment variable `BUILD_ENV=prod` (or dev). If you're allowing Abbey to send emails, use also `--profile email`
+If you'd like to use `docker-compose` directly, you might want to use the environment variable `MY_BUILD_ENV=prod` (or dev). If you want Abbey to send reminder emails, use also `--profile email` to start the special emailing service. You also need to make sure that the root password for the MySQL service is set correctly, for which you need to set `MYSQL_ROOT_PASSWORD="your-password"` (which is stored in the root `.env` file). So you might type in:
+
+```
+source .env && MY_BUILD_ENV=prod docker-compose --profile email up
+```
 
 ## Manual Setup and Configuration
 
-Abbey requires three environment variable files to run properly: a backend `.env` file with path `backend/app/configs/.env`; a frontend `.env.local` file with the path `frontend/.env.local`; and a `.env` file located in the root of the project. These files contain your third party keys for accessing AI APIs, email servers, and more. Some keys should match between the front and backend; some are only present on one of the two.
+Abbey requires three environment variable files to run properly: a backend `.env` file with path `backend/app/configs/.env`; a frontend `.env.local` file with the path `frontend/.env.local`; and a `.env` file located in the root of the project. These files contain your third party keys for accessing AI APIs, email servers, and other configurations. Some keys should match between the front and backend; some are only present on one of the two.
 
-Here is what the `.env` backend file looks like:
+Here is what the `backend/app/configs/.env` backend file looks like:
 
 ```
 # The OpenAI API key is mandatory if you don't have any other embedding function setup (like an ollama one)
@@ -109,7 +113,7 @@ FRONTEND_URL="https://your-frontend-url.com"
 SECRET_KEY="your-secret-key"
 ```
 
-Here is what the `.env.local` file for the frontend looks like:
+Here is what the `frontend/.env.local` file for the frontend looks like:
 
 ```
 # The backend URL must be accessible to the client; when running only for one user on the same machine, it's http://localhost:5000
