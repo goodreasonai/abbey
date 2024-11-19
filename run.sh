@@ -92,7 +92,7 @@ run() {
 
     # Execute the command
     echo "Executing: $cmd"
-    #eval "$cmd"
+    eval "$cmd"
 }
 
 # Checks if set up by seeing if there's a backend ENV file written.
