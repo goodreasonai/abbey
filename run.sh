@@ -434,9 +434,6 @@ export_frontend_env() {
         echo "JWT_SECRET=$JWT_SECRET"
         echo "REFRESH_TOKEN_SECRET=$REFRESH_SECRET"
 
-        echo "JWT_SECRET=$JWT_SECRET"
-        echo "REFRESH_TOKEN_SECRET=$REFRESH_SECRET"
-
         if [ "$USE_MATHPIX" = "$FALSE_VALUE" ]; then
             echo "NEXT_PUBLIC_DISABLE_OCR=1"
         fi
