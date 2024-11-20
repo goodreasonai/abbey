@@ -8,9 +8,9 @@ import EnterCode from "@/components/EnterCode/EnterCode"
 import { useRouter } from "next/router"
 import Link from "next/link"
 import { Auth } from "@/auth/auth"
+import { ALLOW_SUBSCRIPTION } from "@/config/config"
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);  // Replace with your Stripe public key
-
+const stripePromise = ALLOW_SUBSCRIPTION ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) : async ()=>{return ""};  // Replace with your Stripe public key
 
 export default function PurchaseButton({ groupManifest }) {
     const [product, setProduct] = useState({})

@@ -2,7 +2,6 @@ import { Auth } from "@/auth/auth";
 import Button from '../form/Button'
 import styles from './SubscriptionSelect.module.css'
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import { useState } from 'react';
 import Loading from '../Loading/Loading';
 import BeggingIcon from '../../../public/icons/BeggingIcon.png'
@@ -11,8 +10,9 @@ import EnterpriseIcon from '../../../public/icons/EnterpriseIcon.png'
 import Image from 'next/image'
 import SensitiveButton from '../form/SensitiveButton';
 import MyImage from '../MyImage/MyImage';
+import { ALLOW_SUBSCRIPTION } from "@/config/config";
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);  // Replace with your Stripe public key
+const stripePromise = ALLOW_SUBSCRIPTION ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) : async ()=>{return ""};  // Replace with your Stripe public key
 
 export default function SubscriptionSelect({selected=undefined,  ...props}){
 
