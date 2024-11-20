@@ -44,19 +44,11 @@ Running Abbey with `./run.sh` is recommended; you may need to use `sudo ./run.sh
 
 2. Things look blank / don't load / requests to the backend don't seem to work quite right. First, navigate to the backend in the browser, like to `http://localhost:5000` or whatever URL you put in originally. It should give you a message like "A British tar is a soaring soul..." If you see that, then the backend is up and running but your backend URL config is wrong or incomplete. Remember to type it out completely like `http://localhost:5000`. **If you messed it up then changed it, it might still be wrong because it's saved in the frontend-next docker volume. Delete the frontend container, delete that volume, and then rebuild.** If you don't even get the "British tar" thing, then make sure that your backend service is actually running.
 
-3. Docker gets stuck downloading/intstalling/running an image.
+3. Docker gets stuck downloading/intstalling/running an image. There is a possibility that you've run out of space on your machine. First, try running `docker system prune` to clean up any nasty stuff lying around in Docker that you've forgotten about. Then try clearing up space on your computer – perhaps enough for ~10gb on your machine. Then restart Docker and try again. If you still get issues – try uninstalling / reinstalling Docker.
 
-There is a possibility that you've run out of space on your machine. First, try running `docker system prune` to clean up any nasty stuff lying around in Docker that you've forgotten about. Then try clearing up space on your computer – perhaps enough for ~10gb on your machine. Then restart Docker and try again. If you still get issues – try uninstalling / reinstalling Docker.
+4. The`docker-compose` command refuses to run because of some "API" issue or something. If docker is running (Docker Desktop on Mac, for example), then you should restart it. If that doesn't help, try purging/cleaning its data before restarting (click the "Bug" icon in Docker Desktop if you have it - then see `clean/purge` data). If docker isn't running, then that's your problem! You need to make sure the Docker daemon (i.e. Docker Desktop on Mac) is running before you run `./run.sh`.
 
-4. The`docker-compose` command refuses to run because of some "API" issue or something.
-
-If docker is running (Docker Desktop on Mac, for example), then you should restart it. If that doesn't help, try purging/cleaning its data before restarting (click the "Bug" icon in Docker Desktop if you have it - then see `clean/purge` data). 
-
-If docker isn't running, then that's your problem! You need to make sure the Docker daemon (i.e. Docker Desktop on Mac) is running before you run `./run.sh`.
-
-5. A port is already being used.
-
-The Abbey backend runs on port 5000 by default; the Abbey frontend runs on port 3000. It's possible that something on your computer is already using port 5000 or port 3000. On Mac that usually means AirPlay. Your goal should be to check whether anything's running on ports 3000 or 5000, and, if so, to shut down those processes.
+5. A port is already being used. The Abbey backend runs on port 5000 by default; the Abbey frontend runs on port 3000. It's possible that something on your computer is already using port 5000 or port 3000. On Mac that usually means AirPlay. Your goal should be to check whether anything's running on ports 3000 or 5000, and, if so, to shut down those processes.
 
 #### Mac and Linux
 
