@@ -5,11 +5,11 @@ import os
 import requests
 import json
 
-os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY if OPENAI_API_KEY else ""
 from openai import OpenAI
-openai_client = OpenAI()
+openai_client = OpenAI() if OPENAI_API_KEY else None
 import anthropic
-client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
 
 
 class LM():
