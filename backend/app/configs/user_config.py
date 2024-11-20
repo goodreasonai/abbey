@@ -68,6 +68,9 @@ def get_highest_ranked_available(rankings, provider_map):
     for model in rankings:
         if model in all_available:
             return model
+    available = get_available(provider_map)
+    if len(available):
+        return available[0]
         
     raise Exception("No available model")
 
