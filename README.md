@@ -36,6 +36,41 @@ or
 
 Running Abbey with `./run.sh` is recommended; you may need to use `sudo ./run.sh` if your setup requires superuser privileges to run `docker-compose`. That's it.
 
+**If the backend/celery/db_pooler services stop immediately when running the first time - calmly restart them.** Use `docker-compose restart db_pooler` first, then the same for backend and celery. This issue is due to the fact that on the first startup, MySQL can take a bit longer than expected to initialize.
+
+### Troubleshooting
+
+1. docker config invalid: If it's telling you your docker compose is invalid, then you probably need to upgrade docker on your machine to something >= version 2. Abbey takes advantage of certain relatively new docker features like defaults for env variables and profiles. It's going to be easier just to upgrade docker in the long run - trust.
+
+2. Things look blank / don't load / requests to the backend don't seem to work quite right. First, navigate to the backend in the browser, like to `http://localhost:5000` or whatever URL you put in originally. It should give you a message like "A British tar is a soaring soul..." If you see that, then the backend is up and running but your backend URL config is wrong or incomplete. Remember to type it out completely like `http://localhost:5000`. **If you messed it up then changed it, it might still be wrong because it's saved in the frontend-next docker volume. Delete the frontend container, delete that volume, and then rebuild.** If you don't even get the "British tar" thing, then make sure that your backend service is actually running.
+
+3. Docker gets stuck downloading/intstalling/running an image.
+
+There is a possibility that you've run out of space on your machine. First, try running `docker system prune` to clean up any nasty stuff lying around in Docker that you've forgotten about. Then try clearing up space on your computer – perhaps enough for ~10gb on your machine. Then restart Docker and try again. If you still get issues – try uninstalling / reinstalling Docker.
+
+4. The`docker-compose` command refuses to run because of some "API" issue or something.
+
+If docker is running (Docker Desktop on Mac, for example), then you should restart it. If that doesn't help, try purging/cleaning its data before restarting (click the "Bug" icon in Docker Desktop if you have it - then see `clean/purge` data). 
+
+If docker isn't running, then that's your problem! You need to make sure the Docker daemon (i.e. Docker Desktop on Mac) is running before you run `./run.sh`.
+
+5. A port is already being used.
+
+The Abbey backend runs on port 5000 by default; the Abbey frontend runs on port 3000. It's possible that something on your computer is already using port 5000 or port 3000. On Mac that usually means AirPlay. Your goal should be to check whether anything's running on ports 3000 or 5000, and, if so, to shut down those processes.
+
+#### Mac and Linux
+
+Use `lsof -i :5000` or `lsof -i :3000` to check if any process is running on those ports. If you notice a process like 'ControlCe' running on Mac, that means "Control Center," and it's probably an airplay receiver thing. You can go into your system settings and uncheck "AirPlay receiver".
+
+If you found something else, you can kill it with `kill -9 PID` where PID is replaced by the process ID (shown using lsof).
+
+#### Windows
+
+Use `netstat -ano | findstr :5000` or `netstat -ano | findstr :3000`. You can then kill the process with `taskkill /PID YOUR_PID /F` - replace YOUR_PID with the process ID of the relevant process.
+
+
+### Other run options
+
 If you would like to run Abbey in development mode (i.e. because you're trying to contribute to Abbey), use the `--dev` flag. If you're switching between dev and prod builds, use the `--build` flag to rebuild the containers. You may also need to delete the `frontend-next` and `frontend-node-modules` volumes in Docker so that they are properly rebuilt.
 
 If you'd like to use `docker-compose` directly, you might want to use the environment variable `MY_BUILD_ENV=prod` (or dev). If you want Abbey to send reminder emails, use also `--profile email` to start the special emailing service. You also need to make sure that the root password for the MySQL service is set correctly, for which you need to set `MYSQL_ROOT_PASSWORD="your-password"` (which is stored in the root `.env` file). So you might type in:
@@ -268,30 +303,3 @@ The frontend is exposed on port 3000, and the backend is exposed on port 5000. B
 Another way to deploy would be to put one or both services behind a reverse proxy server like Nginx. You may find it convenient to change the `docker-compose.yml` file to map at least one of the services to port 80.
 
 **Remember to set the `NEXT_PUBLIC_BACKEND_URL` and `NEXT_PUBLIC_ROOT_URL` variables to their correct values in `frontend/.env.local` if you didn't specify them in your initial setup.**
-
-## Troubleshooting
-
-1. Docker gets stuck downloading/intstalling/running an image.
-
-There is a possibility that you've run out of space on your machine. First, try running `docker system prune` to clean up any nasty stuff lying around in Docker that you've forgotten about. Then try clearing up space on your computer – perhaps enough for ~10gb on your machine. Then restart Docker and try again. If you still get issues – try uninstalling / reinstalling Docker.
-
-2. The`docker-compose` command refuses to run because of some "API" issue or something.
-
-If docker is running (Docker Desktop on Mac, for example), then you should restart it. If that doesn't help, try purging/cleaning its data before restarting (click the "Bug" icon in Docker Desktop if you have it - then see `clean/purge` data). 
-
-If docker isn't running, then that's your problem! You need to make sure the Docker daemon (i.e. Docker Desktop on Mac) is running before you run `./run.sh`.
-
-3. A port is already being used.
-
-The Abbey backend runs on port 5000 by default; the Abbey frontend runs on port 3000. It's possible that something on your computer is already using port 5000 or port 3000. On Mac that usually means AirPlay. Your goal should be to check whether anything's running on ports 3000 or 5000, and, if so, to shut down those processes.
-
-### Mac and Linux
-
-Use `lsof -i :5000` or `lsof -i :3000` to check if any process is running on those ports. If you notice a process like 'ControlCe' running on Mac, that means "Control Center," and it's probably an airplay receiver thing. You can go into your system settings and uncheck "AirPlay receiver".
-
-If you found something else, you can kill it with `kill -9 PID` where PID is replaced by the process ID (shown using lsof).
-
-### Windows
-
-Use `netstat -ano | findstr :5000` or `netstat -ano | findstr :3000`. You can then kill the process with `taskkill /PID YOUR_PID /F` - replace YOUR_PID with the process ID of the relevant process.
-
