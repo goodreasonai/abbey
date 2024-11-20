@@ -133,7 +133,9 @@ _SUB_TO_TTS = os.environ.get('SUBSCRIPTION_CODE_TO_TTS_OPTIONS')
 SUBSCRIPTION_CODE_TO_TTS_OPTIONS = json.loads(_SUB_TO_TTS) if _SUB_TO_TTS else {DEFAULT_SUBSCRIPTION_CODE: get_available(AVAILABLE_TTS)}
 
 DEFAULT_TTS_RANKINGS = ['openai_onyx', 'eleven_adam']
-DEFAULT_TTS_MODEL = get_highest_ranked_available(DEFAULT_TTS_RANKINGS, AVAILABLE_TTS)  # text-to-speech model used when a user has none selected
+DEFAULT_TTS_MODEL = ""
+if len(get_available(AVAILABLE_TTS)):
+    DEFAULT_TTS_MODEL = get_highest_ranked_available(DEFAULT_TTS_RANKINGS, AVAILABLE_TTS)  # text-to-speech model used when a user has none selected
 
 AUTH_SYSTEM = "clerk" if CLERK_SECRET_KEY and CLERK_JWT_PEM else "custom"
 CUSTOM_AUTH_USE_DATABASE = True if (CUSTOM_AUTH_SECRET and CUSTOM_AUTH_DB_ENDPOINT and CUSTOM_AUTH_DB_USERNAME and CUSTOM_AUTH_DB_PASSWORD and CUSTOM_AUTH_DB_PORT and CUSTOM_AUTH_DB_NAME) else False
