@@ -132,7 +132,7 @@ class HTMLLoader(UnstructuredLoader):
 # https://docs.unstructured.io/open-source/core-functionality/partitioning#partition
 Contains information on what it supports - also, I removed the image extensions in auto_supports to make sure it doesn't try local OCR
 """
-AUTO_SUPPORTS = ['docx', 'doc', 'odt', 'pptx', 'ppt', 'xlsx', 'csv', 'tsv', 'eml', 'msg', 'rtf', 'epub', 'html', 'xml', 'txt']
+AUTO_SUPPORTS = ['docx', 'doc', 'odt', 'pptx', 'ppt', 'xlsx', 'csv', 'tsv', 'eml', 'msg', 'md', 'rtf', 'epub', 'html', 'xml', 'txt']
 class AutoLoader(UnstructuredLoader):
     def _get_elements(self):
         return partition(filename=self.fname)
@@ -184,6 +184,16 @@ class CodeLoader(FileLoader):
             yield RawChunk(page_content=split, metadata={})
 
 
+class TextLoader(FileLoader):
+    def load_and_split(self, text_splitter):
+        content = ""
+        with open(self.fname, 'r') as file:
+            content = file.read()
+        splitsville = text_splitter.split_text(content)
+        for split in splitsville:
+            yield RawChunk(split, {})
+
+
 def get_loader(filetype, path):
     if filetype == 'docx':
         return DocxLoader(path)
@@ -197,6 +207,8 @@ def get_loader(filetype, path):
         return PdfLoader(path)
     elif filetype == 'abbeyjson':
         return AbbeyJsonLoader(path)
+    elif filetype == 'txt':
+        return TextLoader(path)
     elif filetype in CODE_SUPPORTS:
         return CodeLoader(path)
     elif filetype in AUTO_SUPPORTS:

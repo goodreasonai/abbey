@@ -92,7 +92,7 @@ OPENAI_COMPATIBLE_KEY="not-a-key"
 OPENAI_COMPATIBLE_EMBEDS='[{"code": "text-embedding-3-small"}]'
 OPENAI_COMPATIBLE_LMS='[{"code": "gpt-4o", "context_length": 100000, "vision": true}]'
 
-# Ollama specifically is given extra attention and has different
+# Ollama specifically is given extra attention and has a more featureful API at the moment.
 # If Ollama is running on the same machine as Abbey but not in the same docker VM, you should use this URL:
 OLLAMA_URL="http://host.docker.internal:11434"
 # You specify which language models and embedding models from ollama you want using JSON.
