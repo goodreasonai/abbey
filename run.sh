@@ -159,8 +159,8 @@ generate_password() {
 
 configure_url() {
     echo "When Abbey runs altogether on your machine inside docker containers, those containers expose port 3000 for the frontend, and port 5000 for the backend, by default."
-    FRONTEND_URL=$(ask_credential "What public-facing URL will your machine use for the frontend? Ex: https://my-frontend.com or http://localhost:3000 if just used locally.")
-    BACKEND_URL=$(ask_credential "What public-facing URL will your machine use for the backend? Ex: https://my-backend.com or http://localhost:5000 if just used locally.")
+    FRONTEND_URL=$(ask_credential "What FULL public-facing URL will your machine use for the frontend? Ex: https://my-frontend.com or http://localhost:3000 if just used locally.")
+    BACKEND_URL=$(ask_credential "What FULL public-facing URL will your machine use for the backend? Ex: https://my-backend.com or http://localhost:5000 if just used locally.")
 }
 
 configure_email() {
@@ -269,7 +269,7 @@ configure_ai() {
 
         # Collect embedding models
         while ask_yes_no "Do you want to add an embedding model? Note that you must have these models already pulled."; do
-            model_code=$(ask_credential "Enter embedding model code:")
+            model_code=$(ask_credential "Enter embedding model code")
             
             model_entry="{\"code\": \"$model_code\"}"
             OLLAMA_EMBEDS=$(add_model_to_json "$OLLAMA_EMBEDS" "$model_entry")
@@ -309,7 +309,7 @@ configure_ai() {
 
         # Collect embedding models
         while ask_yes_no "Do you want to add an API embedding model?"; do
-            model_code=$(ask_credential "Enter embedding model code:")
+            model_code=$(ask_credential "Enter embedding model code")
             
             model_entry="{\"code\": \"$model_code\"}"
             OPENAI_COMPATIBLE_EMBEDS=$(add_model_to_json "$OPENAI_COMPATIBLE_EMBEDS" "$model_entry")
@@ -469,8 +469,8 @@ export_frontend_env() {
         echo "NEXT_PUBLIC_AUTH_SYSTEM=custom"  # all self-hosters use custom auth
         echo "NEXT_SERVER_SIDE_BACKEND_URL=http://backend:5000"  # hardcoded into the docker compose
 
-        echo "JWT_SECRET=$JWT_SECRET"
-        echo "REFRESH_TOKEN_SECRET=$REFRESH_SECRET"
+        echo "JWT_SECRET=\"$JWT_SECRET\""
+        echo "REFRESH_TOKEN_SECRET=\"$REFRESH_SECRET\""
 
         if [ "$USE_MATHPIX" = "$FALSE_VALUE" ]; then
             echo "NEXT_PUBLIC_DISABLE_OCR=1"
