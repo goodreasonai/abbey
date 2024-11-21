@@ -6,7 +6,7 @@ from .secrets import (
     BING_API_KEY, OLLAMA_URL, OPENAI_COMPATIBLE_URL
 )
 from ..integrations.lm import gen_ollama_lms, gen_openai_compatible_lms
-from ..integrations.embed import gen_ollama_embeds
+from ..integrations.embed import gen_ollama_embeds, gen_openai_compatible_embeds
 import os
 import json
 
@@ -46,7 +46,8 @@ AVAILABLE_TTS = {
 
 AVAILABLE_EMBED = {
     'openai': ['openai-text-embedding-ada-002', 'openai-text-embedding-3-small'],
-    'ollama': [x.code for x in gen_ollama_embeds()]
+    'ollama': [x.code for x in gen_ollama_embeds()],
+    'openai-compatible': [x.code for x in gen_openai_compatible_embeds()]
 }
 
 AVAILABLE_TEMPLATES = ['document', 'folder', 'detached_chat', 'website', 'classroom', 'curriculum', 'quiz', 'text_editor', 'video', 'notebook', 'inf_quiz', 'section']  # could use the list in templates.py, but want to avoid imports here.
@@ -60,7 +61,7 @@ LONG_CONTEXT_CHAT_MODEL_RANKINGS = ['gpt-4o', 'claude-3-5-sonnet']  # The model 
 FAST_LONG_CONTEXT_MODEL_RANKINGS = ['gpt-4o-mini', 'claude-3-5-sonnet']  # The model used when speed is important and it also needs long-context
 ALT_LONG_CONTEXT_MODEL_RANKINGS = LONG_CONTEXT_CHAT_MODEL_RANKINGS[::-1]  # exists to provide some variability in situations where long context makes generations repetitive
 
-EMBEDDING_MODEL_RANKINGS = ['openai-text-embedding-ada-002', 'openai-text-embedding-3-small', *[x.code for x in gen_ollama_embeds()]]
+EMBEDDING_MODEL_RANKINGS = ['openai-text-embedding-ada-002', 'openai-text-embedding-3-small', *[x.code for x in gen_ollama_embeds()], *[x.code for x in gen_openai_compatible_embeds()]]
 
 def get_available(provider_map):
     return sum([y for x, y in provider_map.items() if AVAILABLE_PROVIDERS[x]], [])  # neat trick, no?

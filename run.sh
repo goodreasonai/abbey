@@ -26,6 +26,12 @@ OLLAMA_URL=""
 OLLAMA_LMS="[]"
 OLLAMA_EMBEDS="[]"
 
+USE_OPENAI_COMPATIBLE=""
+OPENAI_COMPATIBLE_URL=""
+OPENAI_COMPATIBLE_LMS="[]"
+OPENAI_COMPATIBLE_EMBEDS="[]"
+OPENAI_COMPATIBLE_KEY=""
+
 USE_ANTHROPIC=""
 ANTHROPIC_KEY=""
 
@@ -232,8 +238,8 @@ add_model_to_json() {
 configure_ai() {
     # What ai providers would you like to use?
     # What are your keys?
-    echo "To use Abbey, you will need to configure some AI providers, like the OpenAI API. You can implement your own API in the integrations folder in the backend."
-    echo "Note that you will need to configure at least the OpenAI API or Ollama."
+    echo "To use Abbey, you will need to configure some AI providers, like the OpenAI API."
+    echo "Note that you will need to configure at least one language model and one embeddings model."
     if ask_yes_no "Would you like to configure the OpenAI API?"; then
         USE_OPENAI=$TRUE_VALUE
         OPENAI_KEY=$(ask_credential "OK, please provide an OpenAI API key")
@@ -280,11 +286,36 @@ configure_ai() {
         USE_OLLAMA=$FALSE_VALUE
     fi
 
-    if [ "$USE_OLLAMA" = "$FALSE_VALUE" ]; then
-        if [ "$USE_OPENAI" = "$FALSE_VALUE" ]; then
-            echo "You must configure at least Ollama or the OpenAI API. Exiting."
-            exit 1
-        fi
+    if ask_yes_no "Would you like to configure an OpenAI Compatible API (like LocalAI, LMStudio, etc.)?"; then
+        USE_OPENAI_COMPATIBLE=$TRUE_VALUE
+        echo "If you're running the API on the same machine as Abbey, it's available at http://host.docker.internal:1234, with 1234 replaced by the appropriate port. If you're running it on another machine, it might be https://example.com or something."
+        OPENAI_COMPATIBLE_URL=$(ask_credential "Please provide the full API URL")
+        OPENAI_COMPATIBLE_KEY=$(ask_credential "Please provide your API key, if any is required")
+
+        while ask_yes_no "Do you want to add an API language model?"; do
+            model_code=$(ask_credential "Enter language model code (like 'llama-3.2-3b-instruct')")
+            context_length=$(ask_credential "Enter context length (default 8192)")
+            vision_support=$(ask_yes_no "Does this model support vision?")
+
+            # Convert vision support to boolean
+            vision_boolean="false"
+            if [ "$vision_support" = "y" ]; then
+                vision_boolean="true"
+            fi
+
+            model_entry="{\"code\": \"$model_code\", \"context_length\": ${context_length:-8192}, \"vision\": $vision_boolean}"
+            OPENAI_COMPATIBLE_LMS=$(add_model_to_json "$OPENAI_COMPATIBLE_LMS" "$model_entry")
+        done
+
+        # Collect embedding models
+        while ask_yes_no "Do you want to add an API embedding model?"; do
+            model_code=$(ask_credential "Enter embedding model code:")
+            
+            model_entry="{\"code\": \"$model_code\"}"
+            OPENAI_COMPATIBLE_EMBEDS=$(add_model_to_json "$OPENAI_COMPATIBLE_EMBEDS" "$model_entry")
+        done
+    else
+        USE_OPENAI_COMPATIBLE=$FALSE_VALUE
     fi
 
     if ask_yes_no "Would you like to configure the Anthropic API?"; then
@@ -377,6 +408,13 @@ export_backend_env() {
             echo "OLLAMA_URL='$OLLAMA_URL'"
             echo "OLLAMA_LMS='$OLLAMA_LMS'"
             echo "OLLAMA_EMBEDS='$OLLAMA_EMBEDS'"
+        fi
+
+        if [ "$USE_OPENAI_COMPATIBLE" = "$TRUE_VALUE" ]; then
+            echo "OPENAI_COMPATIBLE_URL='$OPENAI_COMPATIBLE_URL'"
+            echo "OPENAI_COMPATIBLE_LMS='$OPENAI_COMPATIBLE_LMS'"
+            echo "OPENAI_COMPATIBLE_EMBEDS='$OPENAI_COMPATIBLE_EMBEDS'"
+            echo "OPENAI_COMPATIBLE_KEY='$OPENAI_COMPATIBLE_KEY'"
         fi
 
         echo "DB_ENDPOINT=mysql"  # Hard coded into the docker compose
