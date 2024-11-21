@@ -46,7 +46,7 @@ source .env && MY_BUILD_ENV=prod docker-compose --profile email up
 
 ## Manual Setup and Configuration
 
-**When changing frontend ENV variables, you must make sure to delete your old abbey_frontend-next volume so that the frontend is rebuilt!**
+**Note: When changing frontend ENV variables, you must make sure to delete your old abbey_frontend-next volume so that the frontend is rebuilt!**
 
 Abbey requires three environment variable files to run properly: a backend `.env` file with path `backend/app/configs/.env`; a frontend `.env.local` file with the path `frontend/.env.local`; and a `.env` file located in the root of the project. These files contain your third party keys for accessing AI APIs, email servers, and other configurations. Some keys should match between the front and backend; some are only present on one of the two.
 
@@ -171,7 +171,7 @@ IMAGE_DOMAINS="some-domain.com,some-domain-2.com"
 NEXT_PUBLIC_HIDE_COLLECTIONS=1
 ```
 
-**When changing frontend ENV variables, you must make sure to delete your old abbey_frontend-next volume so that the frontend is rebuilt!**
+**Note: When changing frontend ENV variables, you must make sure to delete your old abbey_frontend-next volume so that the frontend is rebuilt!**
 
 The `.env` file in the root has just one variable:
 
