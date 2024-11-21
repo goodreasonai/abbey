@@ -1,5 +1,5 @@
 import warnings
-from ..configs.secrets import OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_URL, OLLAMA_LMS
+from ..configs.secrets import OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_URL, OLLAMA_LMS, OPENAI_COMPATIBLE_URL, OPENAI_COMPATIBLE_KEY, OPENAI_COMPATIBLE_LMS
 from ..utils import extract_from_base64_url
 import os
 import requests
@@ -50,7 +50,6 @@ class LM():
 class OpenAILM(LM):
     def __init__(self, openai_code, code, name, desc, traits, context_length, supports_json=False, accepts_images=False) -> None:
         self.openai_code = openai_code
-        self.supports_json=supports_json
         super().__init__(
             code=code,
             name=name,
@@ -92,12 +91,6 @@ class OpenAILM(LM):
 
         extra_kwargs = {}
         if temperature is not None:
-            if temperature > 1:
-                warnings.warn("Temperature in request found to be above 1; this is not recommended.")
-                temperature = 1.0
-            if temperature < 0:
-                warnings.warn("Temperature can't go below zero!")
-                temperature = 0.0
             extra_kwargs['temperature'] = temperature
 
         if make_json and self.supports_json:
@@ -295,15 +288,11 @@ class Ollama(LM):
             'stream': False
         }
         url = f'{OLLAMA_URL}/api/chat'
-        try:
-            response = requests.post(url, json=params, stream=False)
-            response.raise_for_status()  # Raise an error for bad responses
-            my_json = response.json()
-            x = my_json['message']['content']
-            return x
-
-        except requests.exceptions.RequestException as e:
-            print(f"An error occurred: {e}")
+        response = requests.post(url, json=params, stream=False)
+        response.raise_for_status()  # Raise an error for bad responses
+        my_json = response.json()
+        x = my_json['message']['content']
+        return x
 
     def stream(self, txt, system_prompt=None, context=[], temperature=None, images=[]):
         params = {
@@ -332,6 +321,104 @@ class Ollama(LM):
         except requests.exceptions.RequestException as e:
             print(f"An error occurred: {e}")
 
+
+class OpenAICompatibleLM(LM):
+    def __init__(self, model_code, code, name, desc, traits, context_length, supports_json=False, accepts_images=False) -> None:
+        self.model_code = model_code
+        super().__init__(
+            code=code,
+            name=name,
+            desc=desc,
+            traits=traits,
+            context_length=context_length,
+            supports_json=supports_json,
+            accepts_images=accepts_images
+        )
+
+    def _make_messages(self, txt, system_prompt=None, context=[], images=[]):
+        messages = []
+        messages.append({'role': 'system', 'content': system_prompt if system_prompt is not None else ""})
+
+        for round in context:
+            if 'images' in round and round['images'] and len(round['images']) and self.accepts_images:
+                # Note that the "image_url" is actually a base64 string with data:image/png;base64,...
+                messages.append({'role': 'user', 'content': [{'type': 'text', 'text': round['user']}, *[{'type': 'image_url', 'image_url': {'url': x}} for x in round['images']]]})
+            else:
+                messages.append({'role': 'user', 'content': round['user']})
+            messages.append({'role': 'assistant', 'content': round['ai']})
+
+        if images is not None and self.accepts_images and len(images):
+            messages.append({'role': 'user', 'content': [{'type': 'text', 'text': txt}, *[{'type': 'image_url', 'image_url': {'url': x}} for x in images]]})
+        else:
+            messages.append({'role': 'user', 'content': txt})
+
+        return messages
+
+
+    def run(self, txt, system_prompt=None, context=[], temperature=.7, make_json=False, images=[]):
+
+        messages = self._make_messages(
+            txt=txt,
+            system_prompt=system_prompt,
+            context=context,
+            images=images
+        )
+
+        extra_kwargs = {}
+        if temperature is not None:
+            extra_kwargs['temperature'] = temperature
+
+        if make_json and self.supports_json:
+            extra_kwargs['response_format'] = {'type': 'json_object'}
+        
+        params = {
+            'model': self.model_code,
+            'messages': messages,
+            'temperature': temperature if temperature else .7,
+            'stream': False
+        }
+        url = f'{OPENAI_COMPATIBLE_URL}/v1/chat/completions'
+        response = requests.post(url, headers={'Authorization': f'Bearer {OPENAI_COMPATIBLE_KEY}'}, json=params, stream=False)
+        response.raise_for_status()  # Raise an error for bad responses
+        my_json = response.json()
+        return my_json['choices'][0]['message']['content']
+        
+
+    def stream(self, txt, system_prompt=None, context=[], temperature=None, images=[]):
+       
+        messages = self._make_messages(
+            txt=txt,
+            system_prompt=system_prompt,
+            context=context,
+            images=images
+        )
+
+        extra_kwargs = {}
+        if temperature is not None:
+            extra_kwargs['temperature'] = temperature
+
+        params = {
+            'model': self.model_code,
+            'messages': messages,
+            'temperature': temperature if temperature else .7,
+            'stream': True
+        }
+
+        url = f'{OPENAI_COMPATIBLE_URL}/v1/chat/completions'
+        response = requests.post(url, headers={'Authorization': f'Bearer {OPENAI_COMPATIBLE_KEY}'}, json=params, stream=True)
+        response.raise_for_status()  # Raise an error for bad responses
+
+        # Process the streaming response
+        for line in response.iter_lines():
+            if line:
+                data = line.decode('utf-8')
+                real_data = data[len('data: '):]
+                if real_data == '[DONE]':
+                    break
+                my_json = json.loads(real_data)
+                delta = my_json['choices'][0]['delta']
+                if 'content' in delta:
+                    yield delta['content']
 
 
 class GPT4(OpenAILM):
@@ -477,7 +564,6 @@ def gen_ollama_lms():
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         print(f"Could not retrieve ollama models at {OLLAMA_URL}. Maybe you should change the URL? See manual setup in the README.")
-        exit(1)
 
     # TODO: confirm that all the models are downloaded / available.
 
@@ -499,6 +585,35 @@ def gen_ollama_lms():
 ollama_models = {x.code: x for x in gen_ollama_lms()}
 
 
+# Unlike others, ollama model objects are made from environment variables.
+def gen_openai_compatible_lms():
+
+    if not OPENAI_COMPATIBLE_URL or not OPENAI_COMPATIBLE_LMS:
+        return []
+    
+    openai_compatible_lms = json.loads(OPENAI_COMPATIBLE_LMS)
+    if not len(openai_compatible_lms):
+        return []
+
+    # TODO: confirm that all the models are downloaded / available.
+    models = []
+    for model in openai_compatible_lms:
+        code = model['code']
+        models.append(OpenAICompatibleLM(
+            model_code=code,
+            code=f'{code}-oai-compatible',
+            name=code,
+            desc=f'{code} is running via an OpenAI Compatible API',
+            traits="API",
+            context_length=model['context_length'],
+            supports_json=True,
+            accepts_images=model['vision']
+        ))
+    return models
+
+openai_compatible_models = {x.code: x for x in gen_openai_compatible_lms()}
+
+
 LM_PROVIDERS = {
     'gpt-4': GPT4(),
     'gpt-4o-mini': GPT4oMini(),
@@ -506,8 +621,9 @@ LM_PROVIDERS = {
     'claude-3-opus': Claude3Opus(),
     'claude-3-5-sonnet': Claude35Sonnet(),
     'gpt-4o': GPT4o(),
-    # Add the generated ollama models
+    # Add the generated models
     **ollama_models,
+    **openai_compatible_models,
     # o1-preview and o1-mini don't yet support system prompts, images, and streaming - so they are disabled in user_config.
     'o1-preview': O1Preview(),
     'o1-mini': O1Mini()

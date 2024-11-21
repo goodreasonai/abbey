@@ -17,7 +17,7 @@ If Abbey is not by default configurable to your liking, and you're comfortable w
 ### Prerequisites
 
 - **Installs**: You must have `docker-compose` installed. See details [here](https://docs.docker.com/compose/install/).
-- **3rd Party Credentials**: AI functionality on Abbey relies on 3rd party integrations. If you're planning on using an API like the OpenAI API, you should have those credentials handy. *You must use at least one of Ollama and the OpenAI API* – this is due to the fact that you need at least one embedding function and at least one LLM. In order to enable different users, you must have a client ID and secret key for at least one OAuth2 provider; Abbey currently supports Google, Keycloak, and GitHub. You may also have API keys ready for Anthropic, Bing, and Mathpix; to send emails using Abbey, you must provide credentials for an SMTP server (like, your own email) or a Sendgrid API key.
+- **3rd Party Credentials**: AI functionality on Abbey relies on 3rd party integrations. If you're planning on using an API like the OpenAI API, you should have those credentials handy. *You must start Abbey with at least one language model and one embedding model*. In order to enable multi-user setups, you must use a separate OAuth2 provider and have a client ID and secret key ready; Abbey currently supports Google, Keycloak, and GitHub. You may also have API keys ready for Anthropic, Bing, and Mathpix. To send emails using Abbey, you must provide credentials for an SMTP server (like, your own email) or a Sendgrid API key.
 
 ### Setup Options
 
@@ -26,7 +26,7 @@ You may either run the `run.sh` bash script and follow directions to enter in yo
 1. Clone the repo and navigate inside it.
 2. Start the Docker daemon if necessary (i.e., by running Docker Desktop on Mac)
 
-3. Setting up with `run.sh`: Run the setup bash script, `run.sh`, using `./run.sh` on Mac or Linux, or using `bash run.sh` on Windows with Git Bash or some other way to run bash scripts. You may need to run the script with superuser privileges depending on your setup, like `sudo ./run.sh`. The script will prompt you for API keys and other credentials and automatically generate three environment variable files for the backend, frontend, and root directories. If you're using `run.sh` and don't have all your API keys handy, you can go in after and add the keys; see the manual setup guide below. Otherwise, you're done.
+3. Set up with `run.sh`: Run the setup bash script, `run.sh`, by using `./run.sh` on Mac or Linux. For Windows, `bash run.sh` works with Git Bash. You may need to run the script with superuser privileges depending on your setup, like `sudo ./run.sh`. The script will prompt you for API keys and other credentials and automatically generate three environment variable files for the backend, frontend, and root directories.
 
 or
 
@@ -73,6 +73,8 @@ source .env && MY_BUILD_ENV=prod docker-compose --profile email up
 
 ## Manual Setup and Configuration
 
+**Note: When changing frontend ENV variables, you must make sure to delete your old abbey_frontend-next volume so that the frontend is rebuilt!**
+
 Abbey requires three environment variable files to run properly: a backend `.env` file with path `backend/app/configs/.env`; a frontend `.env.local` file with the path `frontend/.env.local`; and a `.env` file located in the root of the project. These files contain your third party keys for accessing AI APIs, email servers, and other configurations. Some keys should match between the front and backend; some are only present on one of the two.
 
 Here is what the `backend/app/configs/.env` backend file looks like:
@@ -81,11 +83,19 @@ Here is what the `backend/app/configs/.env` backend file looks like:
 # The OpenAI API key is mandatory if you don't have any other embedding function setup (like an ollama one)
 OPENAI_API_KEY="sk-my-openai-key"
 
-# You can optionally setup Abbey to use Ollama, a local LLM inference server.
+# If you want to use an openai compatible inference service (that isn't OpenAI), you can use these variables
+# If your service is running on the same machine but not the same docker VM, you should use this URL: http://host.docker.internal:<your-port>
+OPENAI_COMPATIBLE_URL="https://your-compatible-api.com"
+OPENAI_COMPATIBLE_KEY="not-a-key"
+# For language models, you should also give the context length (in tokens) you want them to have and whether or not they support images as input (vision).
+# Embedding / language models are written in well-formed JSON; here are examples:
+OPENAI_COMPATIBLE_EMBEDS='[{"code": "text-embedding-3-small"}]'
+OPENAI_COMPATIBLE_LMS='[{"code": "gpt-4o", "context_length": 100000, "vision": true}]'
+
+# Ollama specifically is given extra attention and has different
 # If Ollama is running on the same machine as Abbey but not in the same docker VM, you should use this URL:
 OLLAMA_URL="http://host.docker.internal:11434"
-# You should specify which language models and embedding models from llama you want using JSON.
-# For language models, you should also give the context length (in tokens) you want them to have and whether or not they support images as input (vision).
+# You specify which language models and embedding models from ollama you want using JSON.
 OLLAMA_LMS='[{"code": "llama3.2", "context_length": 4096, "vision": true}, {...}, ...]'
 # These are embedding models.
 OLLAMA_EMBEDS='[{"code": "all-minilm"}, {...}, ...]'
@@ -188,6 +198,8 @@ IMAGE_DOMAINS="some-domain.com,some-domain-2.com"
 NEXT_PUBLIC_HIDE_COLLECTIONS=1
 ```
 
+**Note: When changing frontend ENV variables, you must make sure to delete your old abbey_frontend-next volume so that the frontend is rebuilt!**
+
 The `.env` file in the root has just one variable:
 
 ```
@@ -205,6 +217,8 @@ AI APIs (lm.py, ocr.py, tts.py, and embed.py)
 - Anthropic
 - ElevenLabs
 - Mathpix
+- Ollama
+- Other OpenAI Compatible APIs (like LocalAI, LMStudio, etc.)
 
 Search Engines (web.py)
 - Bing

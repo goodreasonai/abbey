@@ -3,10 +3,10 @@ from .secrets import (
     OPENAI_API_KEY, ANTHROPIC_API_KEY, ELEVEN_LABS_API_KEY, MATHPIX_API_APP, MATHPIX_API_KEY, BING_API_KEY, 
     AWS_SECRET_KEY, AWS_ACCESS_KEY, SENDGRID_API_KEY, SMTP_EMAIL, SMTP_PASSWORD, SMTP_PORT, SMTP_SERVER,
     CLERK_JWT_PEM, CLERK_SECRET_KEY, CUSTOM_AUTH_SECRET, CUSTOM_AUTH_DB_ENDPOINT, CUSTOM_AUTH_DB_USERNAME, CUSTOM_AUTH_DB_PASSWORD, CUSTOM_AUTH_DB_PORT, CUSTOM_AUTH_DB_NAME,
-    BING_API_KEY, OLLAMA_URL
+    BING_API_KEY, OLLAMA_URL, OPENAI_COMPATIBLE_URL
 )
-from ..integrations.lm import gen_ollama_lms
-from ..integrations.embed import gen_ollama_embeds
+from ..integrations.lm import gen_ollama_lms, gen_openai_compatible_lms
+from ..integrations.embed import gen_ollama_embeds, gen_openai_compatible_embeds
 import os
 import json
 
@@ -27,14 +27,16 @@ AVAILABLE_PROVIDERS = {
     'anthropic': True if ANTHROPIC_API_KEY else False,
     'eleven-labs': True if ELEVEN_LABS_API_KEY else False,
     'bing': True if BING_API_KEY else False,
-    'ollama': True if OLLAMA_URL else False
+    'ollama': True if OLLAMA_URL else False,
+    'openai-compatible': True if OPENAI_COMPATIBLE_URL else False
 }
 
 # Enabled models by provider profile
 AVAILABLE_LMS = {
     'openai': ['gpt-4o', 'gpt-4o-mini', 'gpt-4', 'gpt-4-turbo'],
     'anthropic': ['claude-3-5-sonnet', 'claude-3-opus'],
-    'ollama': [x.code for x in gen_ollama_lms()]
+    'ollama': [x.code for x in gen_ollama_lms()],
+    'openai-compatible': [x.code for x in gen_openai_compatible_lms()]
 }
 
 AVAILABLE_TTS = {
@@ -44,7 +46,8 @@ AVAILABLE_TTS = {
 
 AVAILABLE_EMBED = {
     'openai': ['openai-text-embedding-ada-002', 'openai-text-embedding-3-small'],
-    'ollama': [x.code for x in gen_ollama_embeds()]
+    'ollama': [x.code for x in gen_ollama_embeds()],
+    'openai-compatible': [x.code for x in gen_openai_compatible_embeds()]
 }
 
 AVAILABLE_TEMPLATES = ['document', 'folder', 'detached_chat', 'website', 'classroom', 'curriculum', 'quiz', 'text_editor', 'video', 'notebook', 'inf_quiz', 'section']  # could use the list in templates.py, but want to avoid imports here.
@@ -58,7 +61,7 @@ LONG_CONTEXT_CHAT_MODEL_RANKINGS = ['gpt-4o', 'claude-3-5-sonnet']  # The model 
 FAST_LONG_CONTEXT_MODEL_RANKINGS = ['gpt-4o-mini', 'claude-3-5-sonnet']  # The model used when speed is important and it also needs long-context
 ALT_LONG_CONTEXT_MODEL_RANKINGS = LONG_CONTEXT_CHAT_MODEL_RANKINGS[::-1]  # exists to provide some variability in situations where long context makes generations repetitive
 
-EMBEDDING_MODEL_RANKINGS = ['openai-text-embedding-ada-002', 'openai-text-embedding-3-small', *[x.code for x in gen_ollama_embeds()]]
+EMBEDDING_MODEL_RANKINGS = ['openai-text-embedding-ada-002', 'openai-text-embedding-3-small', *[x.code for x in gen_ollama_embeds()], *[x.code for x in gen_openai_compatible_embeds()]]
 
 def get_available(provider_map):
     return sum([y for x, y in provider_map.items() if AVAILABLE_PROVIDERS[x]], [])  # neat trick, no?
@@ -75,7 +78,7 @@ def get_highest_ranked_available(rankings, provider_map):
     raise Exception("No available model")
 
 # This extra ranking is done so that a user sees a consistent / sensible ordering of LM options
-LM_RANKINGS = ['gpt-4o', 'claude-3-5-sonnet', 'claude-3-opus', 'gpt-4', 'gpt-4-turbo', 'gpt-4o-mini', *[x.code for x in gen_ollama_lms()]]
+LM_RANKINGS = ['gpt-4o', 'claude-3-5-sonnet', 'claude-3-opus', 'gpt-4', 'gpt-4-turbo', 'gpt-4o-mini', *[x.code for x in gen_ollama_lms()], *[x.code for x in gen_openai_compatible_lms()]]
 LM_ORDER = [x for x in LM_RANKINGS if x in get_available(AVAILABLE_LMS)]  # Order that a user would see in settings or a dropdown
 
 #
