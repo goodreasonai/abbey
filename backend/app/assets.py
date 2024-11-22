@@ -1067,7 +1067,6 @@ def x_ray(user: User):
                 chunk: Chunk
                 tempf.write(chunk.txt)
                 tempf.write('\n')  # Optional: Separate chunks with newlines
-
             # Make sure to flush so all data is written to the disk
             tempf.flush()
 

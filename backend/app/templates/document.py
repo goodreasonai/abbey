@@ -19,10 +19,9 @@ import fitz
 from ..asset_actions import get_asset, replace_asset_resource, add_asset_resource
 from ..configs.str_constants import MAIN_FILE
 from ..prompts.prompt_fragments import get_basic_ai_identity, get_citation_prompt
+from ..integrations.file_loaders import DISALLOWED_DOC_EXTENTIONS
 
 bp = Blueprint('document', __name__, url_prefix="/document")
-
-DISALLOWED_DOC_EXTENTIONS = ['pages', 'key', 'mp4', 'mov', 'mpeg', 'flv', 'ico']
 
 @bp.route('/save-markdown', methods=('POST',))
 @cross_origin()

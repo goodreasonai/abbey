@@ -1,7 +1,14 @@
+# Would like to use auto file loader, but it likes to hide bugs!
 from unstructured.partition.xlsx import partition_xlsx
 from unstructured.partition.docx import partition_docx
+from unstructured.partition.doc import partition_doc
 from unstructured.partition.html import partition_html
-from unstructured.partition.auto import partition
+from unstructured.partition.csv import partition_csv
+from unstructured.partition.epub import partition_epub
+from unstructured.partition.odt import partition_odt
+from unstructured.partition.ppt import partition_ppt
+from unstructured.partition.pptx import partition_pptx
+from unstructured.partition.tsv import partition_tsv
 import fitz
 import json
 
@@ -128,14 +135,40 @@ class HTMLLoader(UnstructuredLoader):
     def _get_elements(self):
         return partition_html(filename=self.fname)
 
-"""
-# https://docs.unstructured.io/open-source/core-functionality/partitioning#partition
-Contains information on what it supports - also, I removed the image extensions in auto_supports to make sure it doesn't try local OCR
-"""
-AUTO_SUPPORTS = ['docx', 'doc', 'odt', 'pptx', 'ppt', 'xlsx', 'csv', 'tsv', 'eml', 'msg', 'md', 'rtf', 'epub', 'html', 'xml', 'txt']
-class AutoLoader(UnstructuredLoader):
+
+class EpubLoader(UnstructuredLoader):
     def _get_elements(self):
-        return partition(filename=self.fname)
+        return partition_epub(filename=self.fname)
+
+
+class CsvLoader(UnstructuredLoader):
+    def _get_elements(self):
+        return partition_csv(filename=self.fname)
+
+
+class OdtLoader(UnstructuredLoader):
+    def _get_elements(self):
+        return partition_odt(filename=self.fname)
+
+
+class DocLoader(UnstructuredLoader):
+    def _get_elements(self):
+        return partition_doc(filename=self.fname)
+
+
+class PptLoader(UnstructuredLoader):
+    def _get_elements(self):
+        return partition_ppt(filename=self.fname)
+
+
+class PptxLoader(UnstructuredLoader):
+    def _get_elements(self):
+        return partition_pptx(filename=self.fname)
+
+
+class TsvLoader(UnstructuredLoader):
+    def _get_elements(self):
+        return partition_tsv(filename=self.fname)
 
 
 # Divides by page, and then splits within each page.
@@ -194,9 +227,22 @@ class TextLoader(FileLoader):
             yield RawChunk(split, {})
 
 
+class MarkdownLoader(FileLoader):
+    def load_and_split(self, text_splitter):
+        content = ""
+        with open(self.fname, 'r') as file:
+            content = file.read()
+        splitsville = text_splitter.split_text(content, separators=['\n\n', '#', '##', '###', '\n', '.', ','])
+        for split in splitsville:
+            yield RawChunk(split, {})
+
+# NOTE: banned filetypes are stored again on the frontend, so changes here should be reflected there as well!
+DISALLOWED_DOC_EXTENTIONS = ['pages', 'rtf', 'epub', 'key', 'mp4', 'mov', 'mpeg', 'flv', 'ico']
 def get_loader(filetype, path):
     if filetype == 'docx':
         return DocxLoader(path)
+    if filetype == 'doc':
+        return DocLoader(path)
     elif filetype == 'xlsx': 
         return ExcelLoader(path)
     elif filetype in ['html', 'ahtml']:  # 'ahtml' is special "AbbeyHTML"
@@ -209,8 +255,22 @@ def get_loader(filetype, path):
         return AbbeyJsonLoader(path)
     elif filetype == 'txt':
         return TextLoader(path)
+    elif filetype == 'ppt':
+        return PptLoader(path)
+    elif filetype == 'pptx':
+        return PptxLoader(path)
+    elif filetype == 'md':
+        return MarkdownLoader(path)
+    elif filetype == 'odt':
+        return OdtLoader(path)
+    elif filetype == 'tsv':
+        return TsvLoader(path)
+    elif filetype == 'csv':
+        return CsvLoader(path)
     elif filetype in CODE_SUPPORTS:
         return CodeLoader(path)
-    elif filetype in AUTO_SUPPORTS:
-        return AutoLoader(path)
+    
+    # Note on missing file types: EPUB and RTF
+    # Both seemed to fail due to missing pandoc installation (might require modifying the dockerfile - would really like to see what it used to look like)
+
     return None

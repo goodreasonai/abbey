@@ -407,7 +407,7 @@ function EditPages({ file, editPagesCallback, startOpen=false }){
 }
 
 
-const BANNED_EXTENSIONS = ['pages', 'key', 'mpeg', 'mp4', 'mov', 'mp3']  // can probably move to config
+const BANNED_EXTENSIONS = ['pages', 'epub', 'rtf', 'key', 'mpeg', 'mp4', 'mov', 'mp3']  // can probably move to config
 const fileProblems = {
     'encrypted': {
         'getBadFileMessage': (fileInfo, containerElement) => {
@@ -427,7 +427,7 @@ const fileProblems = {
     },
     'extension': {
         'getBadFileMessage': (fileInfo) => {
-            return {'text': `.${getFileExtension(fileInfo)} files are not allowed.`, 'showEditPages': false}
+            return {'text': `.${getFileExtension(fileInfo)} files are unsupported right now.`, 'showEditPages': false}
         }
     },
     'oversized-pdf': {
