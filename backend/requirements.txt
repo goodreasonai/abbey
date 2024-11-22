@@ -8,6 +8,7 @@ pyjwt
 scikit-learn
 pymupdf
 boto3
+nltk==3.8.1  # the version unstructured could end up using is broken
 unstructured[csv,doc,docx,epub,md,msg,odt,org,ppt,pptx,rtf,rst,tsv,xlsx]  # All document types EXCEPT IMAGES AND PDF - to try and avoid OCR stuff that's built in
 psutil
 stripe
