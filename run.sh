@@ -18,6 +18,8 @@ SMTP_PASSWORD=""
 
 MYSQL_ROOT_PASSWORD=""
 
+USE_TTS="$FALSE_VALUE"
+
 USE_OPENAI=""
 OPENAI_KEY=""
 
@@ -242,6 +244,7 @@ configure_ai() {
     echo "Note that you will need to configure at least one language model and one embeddings model."
     if ask_yes_no "Would you like to configure the OpenAI API?"; then
         USE_OPENAI=$TRUE_VALUE
+        USE_TTS=$TRUE_VALUE
         OPENAI_KEY=$(ask_credential "OK, please provide an OpenAI API key")
     else
         USE_OPENAI=$FALSE_VALUE
@@ -335,6 +338,7 @@ configure_ai() {
 
     if ask_yes_no "Would you like to configure Eleven Labs for text-to-speech?"; then
         USE_ELEVEN_LABS=$TRUE_VALUE
+        USE_TTS=$TRUE_VALUE
         ELEVEN_LABS_KEY=$(ask_credential "OK, please provide an Eleven Labs API key")
     else
         USE_ELEVEN_LABS=$FALSE_VALUE
@@ -455,6 +459,10 @@ export_frontend_env() {
             echo "KEYCLOAK_REALM=\"$KEYCLOAK_REALM\""
             echo "KEYCLOAK_SECRET=\"$KEYCLOAK_CLIENT_SECRET\""
             echo "KEYCLOAK_PUBLIC_URL=\"$KEYCLOAK_HOST\""
+        fi
+        
+        if [ "$USE_TTS" = "$FALSE_VALUE" ]; then
+            echo "NEXT_PUBLIC_HIDE_TTS=1"
         fi
 
         echo "CUSTOM_AUTH_DB_HOST=mysql"  # Hard coded into the docker compose
