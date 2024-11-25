@@ -196,6 +196,12 @@ IMAGE_DOMAINS="some-domain.com,some-domain-2.com"
 
 # Unless you're trying to replicate the Abbey Collections system (see our hosted version), you should hide "Collections" from the user.
 NEXT_PUBLIC_HIDE_COLLECTIONS=1
+
+# If you have no text-to-speech models, this code makes sure that the frontend won't display options for TTS
+NEXT_PUBLIC_HIDE_TTS=1
+
+# If you don't want to use the default signed out home and instead just want to be sent to login
+NEXT_PUBLIC_HIDE_SIGNED_OUT_HOME_PAGE=1
 ```
 
 **Note: When changing frontend ENV variables, you must make sure to delete your old abbey_frontend-next volume so that the frontend is rebuilt!**
