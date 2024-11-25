@@ -24,7 +24,7 @@ import LoadingSkeleton from '../Loading/LoadingSkeleton';
 import observeRect from '@reach/observe-rect'
 import useKeyboardShortcut from '@/utils/keyboard';
 import ImageIcon from '../../../public/icons/ImageIcon.png'
-import { DISABLE_WEB } from '@/config/config';
+import { DISABLE_WEB, HIDE_TTS } from '@/config/config';
 
 export const defaultRoundState = {
     'ai': '',
@@ -782,7 +782,7 @@ export default function Chat({id,
                                     {!splitSummarySources?.length || !splitSummary ? (
                                         <SummaryToolbar
                                             manifestRow={manifestRow}
-                                            allowSpeech={allowSpeech}
+                                            allowSpeech={allowSpeech && !HIDE_TTS}
                                             setRoundStates={setRoundStates}
                                             invertColor={invertColor}
                                             showTitle={false}

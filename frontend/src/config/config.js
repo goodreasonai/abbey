@@ -46,13 +46,12 @@ export const UPGRADE_SUBSCRIPTION_LINK = "/settings"  // if a user has surpassed
 export const MAX_USER_SOURCES = 7  // SHOULD MATCH BACKEND
 export const MAX_PDF_PAGES = 250  // SHOULD MATCH BACKEND
 
-export const SHOW_SIGNED_OUT_HOME_PAGE = true  // if false, the root path (home page) will display the login page if the user is signed out, rather than the landing page.
-
+export const SHOW_SIGNED_OUT_HOME_PAGE = !(process.env.NEXT_PUBLIC_HIDE_SIGNED_OUT_HOME_PAGE === '1')  // if false, the root path (home page) will display the login page if the user is signed out, rather than the landing page.
 export const HIDE_COLLECTIONS = process.env.NEXT_PUBLIC_HIDE_COLLECTIONS === '1'  // if true, "Collections" will not show up in the nav bar, and it will be to the user as though Collections doesn't exist.
-
 export const DISABLE_OCR = process.env.NEXT_PUBLIC_DISABLE_OCR === '1'  // Should match backend. If true, the user is never prompted about OCR and is never given the option to retry with OCR
-
 export const DISABLE_WEB = process.env.NEXT_PUBLIC_DISABLE_WEB === '1'
+export const HIDE_TTS = process.env.NEXT_PUBLIC_HIDE_TTS === '1'
+
 
 // NOTE: Externally hosted image URLs can be configured in next.config.js!
 // NOTE: Templates (and which appear in certain places) can be configured in templates/template.js
