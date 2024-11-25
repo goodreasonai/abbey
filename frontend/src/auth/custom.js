@@ -75,9 +75,13 @@ export function CustomLogin({ redirectUrl }) {
     providers = providers.filter((x) => enabledProviders.includes(x.name))
 
     function makeProvider(item, i){
+        let url = `/api/auth/login/${item.name}`
+        if (redirectUrl){
+            url += `?returnUrl=${redirectUrl}`
+        }
         return (
             <div key={i}>
-                <a href={`/api/auth/login/${item.name}?returnUrl=${redirectUrl}`}>
+                <a href={url}>
                     <div className={styles.button}>
                         <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
                             {item.value}
