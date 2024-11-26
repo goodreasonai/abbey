@@ -15,6 +15,7 @@ from .configs.user_config import (
     SUBSCRIPTION_CODE_TO_MODEL_OPTIONS, DEFAULT_CHAT_MODEL,
     SUBSCRIPTION_CODE_TO_TEMPLATES, SUBSCRIPTION_CODE_TO_TTS_OPTIONS,
     SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS, DISABLE_OCR, LM_ORDER, DEFAULT_TTS_MODEL, 
+    get_available, AVAILABLE_LMS, AVAILABLE_TTS
 )
 from .pay import get_user_main_sub_code, Protocol, get_protocol_by_code, get_product, get_products
 import pytz
@@ -73,6 +74,10 @@ def get_user_chat_model_code(user: User, db=None):
     if results and len(results):
         model = results[0]['value']
     
+    # If the model selected isn't available (beacuse it's been removed), return the default model.
+    if model not in get_available(AVAILABLE_LMS):
+        model = DEFAULT_CHAT_MODEL
+
     return model
 
 
@@ -86,6 +91,10 @@ def get_user_tts_model_code(user: User, db=None):
     model = DEFAULT_TTS_MODEL
     if results and len(results):
         model = results[0]['value']
+
+    # If the model selected isn't available (beacuse it's been removed), return the default model.
+    if model not in get_available(AVAILABLE_TTS):
+        model = DEFAULT_TTS_MODEL 
     
     return model
 
