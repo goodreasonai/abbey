@@ -154,7 +154,7 @@ class ElevenLabs(TTS):
         }
         
         text_splitter = TextSplitter(
-            chunk_size = 512,  # in characters, needs to be less than 4096. Lower values allow us to abort faster if the user stops listening.
+            max_chunk_size = 512,  # in characters, needs to be less than 4096. Lower values allow us to abort faster if the user stops listening.
             chunk_overlap = 0,
             length_function = len
         )
