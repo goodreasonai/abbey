@@ -96,6 +96,7 @@ export default function Chat({id,
     const [userModelOptions, setUserModelOptions] = useState([])
     const [userModelLoadingState, setUserModelLoadingState] = useState(0)
     const [draggingFile, setDraggingFile] = useState(false)
+    const [badPracticeAutoFocus, setBadPracticeAutoFocus] = useState(1)
 
     const router = useRouter()
     const { getToken, isSignedIn } = Auth.useAuth();
@@ -167,7 +168,7 @@ export default function Chat({id,
         })
     }
 
-    async function askQuestion(qIndex) {
+    async function askQuestion(qIndex, fromExisting) {
         if (qLoading == qIndex || qAnswering == qIndex || !canEdit || !roundStates[qIndex].user){
             return;
         }
@@ -205,6 +206,9 @@ export default function Chat({id,
 
         if (onAsk){
             onAsk(data['question'].txt, qIndex)
+        }
+        if (fromExisting){
+            setBadPracticeAutoFocus(badPracticeAutoFocus + 1)
         }
         let token = await getToken()
         try {
@@ -446,7 +450,7 @@ export default function Chat({id,
                 key={i}
                 index={i}
                 item={item}
-                askQuestion={() => askQuestion(i)}
+                askQuestion={() => askQuestion(i, true)}
                 canEdit={canEdit}
                 isLast={i == roundStates.length - 1}
                 isLoading={qLoading == i}
@@ -917,7 +921,7 @@ export default function Chat({id,
                                                             submitNewChat();
                                                         }
                                                     }}
-                                                    autoFocus={autoFocus && id /* The && id makes it auto focus again when going from chat to chat directly */}
+                                                    autoFocus={autoFocus && id && badPracticeAutoFocus /* The && id makes it auto focus again when going from chat to chat directly */}
                                                 />
                                             </div>
                                             {/* The role and area-label is for backward compatibility with the testing framework */}

@@ -54,7 +54,7 @@ export default function Textarea({ className, value, setValue, onChange, autoFoc
             }
             myRef.current.addEventListener('paste', listener);
             return () => {
-                myRef.current.removeEventListener('paste', listener)
+                myRef.current?.removeEventListener('paste', listener)
             }
         }
     }, [myRef.current])
