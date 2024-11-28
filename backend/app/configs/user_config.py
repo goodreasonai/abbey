@@ -7,6 +7,7 @@ from .secrets import (
 )
 from ..integrations.lm import gen_ollama_lms, gen_openai_compatible_lms
 from ..integrations.embed import gen_ollama_embeds, gen_openai_compatible_embeds
+from ..integrations.tts import gen_openai_compatible_tts
 import os
 import json
 
@@ -41,7 +42,8 @@ AVAILABLE_LMS = {
 
 AVAILABLE_TTS = {
     'openai': ['openai_fable', 'openai_onyx'],
-    'eleven-labs': ['eleven_adam']
+    'eleven-labs': ['eleven_adam'],
+    'openai-compatible': [x.code for x in gen_openai_compatible_tts()]
 }
 
 AVAILABLE_EMBED = {

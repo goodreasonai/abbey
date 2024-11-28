@@ -88,9 +88,10 @@ OPENAI_API_KEY="sk-my-openai-key"
 OPENAI_COMPATIBLE_URL="https://your-compatible-api.com"
 OPENAI_COMPATIBLE_KEY="not-a-key"
 # For language models, you should also give the context length (in tokens) you want them to have and whether or not they support images as input (vision).
-# Embedding / language models are written in well-formed JSON; here are examples:
+# Embedding / language / text-to-speech models are written in well-formed JSON; here are examples:
 OPENAI_COMPATIBLE_EMBEDS='[{"code": "text-embedding-3-small"}]'
 OPENAI_COMPATIBLE_LMS='[{"code": "gpt-4o", "context_length": 100000, "vision": true}]'
+OPENAI_COMPATIBLE_TTS='[{"voice": "onyx"}]'
 
 # Ollama specifically is given extra attention and has a more featureful API at the moment.
 # If Ollama is running on the same machine as Abbey but not in the same docker VM, you should use this URL:

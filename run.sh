@@ -32,6 +32,7 @@ USE_OPENAI_COMPATIBLE=""
 OPENAI_COMPATIBLE_URL=""
 OPENAI_COMPATIBLE_LMS="[]"
 OPENAI_COMPATIBLE_EMBEDS="[]"
+OPENAI_COMPATIBLE_TTS="[]"
 OPENAI_COMPATIBLE_KEY=""
 
 USE_ANTHROPIC=""
@@ -317,6 +318,13 @@ configure_ai() {
             model_entry="{\"code\": \"$model_code\"}"
             OPENAI_COMPATIBLE_EMBEDS=$(add_model_to_json "$OPENAI_COMPATIBLE_EMBEDS" "$model_entry")
         done
+
+        # Collect TTS 
+        while ask_yes_no "Do you want to add an API text-to-speech model?"; do
+            model_code=$(ask_credential "Enter voice code (i.e., 'onyx')")
+            model_entry="{\"voice\": \"$model_code\"}"
+            OPENAI_COMPATIBLE_TTS=$(add_model_to_json "$OPENAI_COMPATIBLE_TTS" "$model_entry")
+        done
     else
         USE_OPENAI_COMPATIBLE=$FALSE_VALUE
     fi
@@ -418,6 +426,7 @@ export_backend_env() {
             echo "OPENAI_COMPATIBLE_URL='$OPENAI_COMPATIBLE_URL'"
             echo "OPENAI_COMPATIBLE_LMS='$OPENAI_COMPATIBLE_LMS'"
             echo "OPENAI_COMPATIBLE_EMBEDS='$OPENAI_COMPATIBLE_EMBEDS'"
+            echo "OPENAI_COMPATIBLE_TTS='$OPENAI_COMPATIBLE_TTS'"
             echo "OPENAI_COMPATIBLE_KEY='$OPENAI_COMPATIBLE_KEY'"
         fi
 

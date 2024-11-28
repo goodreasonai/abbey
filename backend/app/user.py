@@ -214,6 +214,8 @@ def get_user_tts_model_options_(user: User):
     codes = get_user_tts_options_codes(user)
     for tts in TTS_PROVIDERS.values():
         tts: TTS
+        if tts.code not in get_available(AVAILABLE_TTS):
+            continue
         if tts.code in codes:
             available.append(tts.to_json_obj())
         else:
