@@ -5,10 +5,9 @@ import Image from "next/image";
 import MyImage from "../..//MyImage/MyImage";
 import CircleCheckIcon from '../../../../public/icons/CircleCheckIcon.png'
 import { getVideoIdFromUrl } from "../../Video/VideoEmbed";
-import MarkdownViewer from "@/components/Markdown/MarkdownViewer";
 import ScrollingCardsWithTemplates from "@/components/visuals/ScrollingCardsWithTemplates";
-import { isDate } from "lodash";
 import PopOnScroll from "@/components/visuals/PopOnScroll";
+import { Auth } from "@/auth/auth";
 
 export default function Modular1({ groupManifest }) {
 
