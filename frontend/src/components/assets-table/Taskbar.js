@@ -191,7 +191,7 @@ export default function Taskbar({ item,
                             )} />
                         </div>
                     ) : (
-                        <Button onClick={doDeleteFunc} value={"Confirm"} id='TaskbarDeleteConfirm'/>
+                        <SyntheticButton onClick={doDeleteFunc} value={"Confirm"} id='TaskbarDeleteConfirm'/>
                     )
                 ) : (
                     <Tooltip content='Delete'>

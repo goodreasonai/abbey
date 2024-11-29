@@ -3,7 +3,7 @@ import styles from './Dropdown.module.css';
 
 
 // options = of the form [{'value': (...), 'onClick': (...)}, ...]
-export default function Dropdown({className, options, value, optionsStyle={}, rightAlign=false, initialButtonStyle={}, openCallback=() => {}, closeCallback=() => {}, closeOnSelect=true, direction="down", forceClose, setForceClose, ...props}) {
+export default function Dropdown({className, options, value, optionsStyle={}, rightAlign=false, initialButtonStyle={}, openCallback=() => {}, closeCallback=() => {}, closeOnSelect=true, direction="down", forceClose, setForceClose, noShadow=false, ...props}) {
     const [selected, setSelected] = useState(false);
     const dropdownRef = useRef(null); // Added this line to create a reference to the dropdown
     const dropdownOptionsContainerRef = useRef(null)
@@ -103,7 +103,7 @@ export default function Dropdown({className, options, value, optionsStyle={}, ri
 
     return (
         <div ref={dropdownRef} className={realClassName} {...props}>
-            <div onClick={() => setSelected(!selected)} className={styles.initialButton} style={initialButtonStyle}>
+            <div onClick={() => setSelected(!selected)} className={`${styles.initialButton} ${!noShadow ? styles.hasShadow : ''}`} style={initialButtonStyle}>
                 {value}
             </div>
             {

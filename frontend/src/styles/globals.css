@@ -70,6 +70,7 @@
     --darkmode-light-shadow: rgb(55, 55, 55);
 
     --dark-shadow: #b8b8b8;
+    --darkmode-dark-shadow: #151515;
 
     --dark-border: #666666;  /* Doesn't change in dark mode */
 
@@ -162,6 +163,7 @@ a {
     --passive-text: var(--darkmode-passive-text);    
 
     --light-shadow: var(--darkmode-light-shadow);
+    --dark-shadow: var(--darkmode-dark-shadow);
 
     --light-border: var(--darkmode-light-border);
     --lightest-border: var(--darkmode-lightest-border);

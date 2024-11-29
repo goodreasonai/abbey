@@ -1,5 +1,5 @@
 import DefaultPage from '@/components/DefaultPage';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { HOME_PAGE_HEADER, NAME  } from '@/config/config';
 import { PREMIER_TEMPLATES, SECONDARY_TEMPLATES, getTemplateByCode } from '@/templates/template';
@@ -8,12 +8,9 @@ import styles from './FaceliftHomePage.module.css'
 import MarkdownViewer from '../Markdown/MarkdownViewer';
 import CreateWrapper from '../Quick/CreateWrapper';
 import Tooltip from '../Tooltip/Tooltip';
-import CourseScreenshot from '../../../public/random/CourseScreenshot.webp'
-import Egypt from '../../../public/random/Egypt.webp'
 import BigLoading from '../Loading/BigLoading';
 import Loading from '../Loading/Loading';
 import { formatTimestampSmall } from '@/utils/time';
-import GradientEffect from '../GradientEffect/GradientEffect';
 import CurvedArrow from '../CurvedArrow/CurvedArrow';
 import shortenText from '@/utils/text';
 import FadeOnLoad from '../visuals/FadeOnLoad';

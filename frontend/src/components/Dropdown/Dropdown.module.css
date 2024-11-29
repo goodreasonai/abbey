@@ -3,6 +3,10 @@
     position: relative;
 }
 
+.hasShadow {
+    box-shadow: 1px 1px 3px var(--dark-shadow);
+}
+
 .dropdownOption {
     background-color: var(--dark-primary);
 
