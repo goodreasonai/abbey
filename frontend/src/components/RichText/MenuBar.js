@@ -364,6 +364,7 @@ export default function MenuBar({ showDelete=false, assetId=undefined, deleteCal
             'isActive': false,
             'value': (
                 <Dropdown
+                    noShadow={true}
                     initialButtonStyle={{'padding': '0px', 'backgroundColor': 'inherit'}}
                     optionsStyle={{'width': '50px', 'fontSize': '.8rem', 'backgroundColor': 'var(--light-primary)'}}
                     openCallback={() => {}}

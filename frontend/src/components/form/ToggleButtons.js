@@ -36,6 +36,7 @@ export default function ToggleButtons({ options, value, setValue, theme='default
         return (
             <SyntheticButton
                 key={i}
+                noShadow={true}
                 style={style}
                 value={(
                     <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
