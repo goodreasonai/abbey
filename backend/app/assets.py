@@ -134,7 +134,7 @@ def manifest(user: User):
     try:
         # The total is ignored by default, actually.
         results, total = search_assets(user, search=search, limit=limit,
-                                    offset=offset, only_templates=only_templates, include_purchased_groups=True,
+                                    offset=offset, only_templates=only_templates, include_purchased_groups=False,
                                     recent_activity=recent_activity, sub_manifest=sub_manifest,
                                     group_ids=[group_id] if group_id else [], my_uploads=my_uploads, isolated=isolated,
                                     folders_first=folders_first, include_groups=include_groups, include_group_ids=include_group_ids,
