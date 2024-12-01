@@ -827,7 +827,7 @@ export default function Chat({id,
                                 <div style={{'height': '100%', 'position': 'relative'}}>
                                     <div className={styles.blurTop} style={!topBlocksBlurred || tabState == 'notes' ? {'opacity': '0'} : {}} />
                                     <div className={styles.blurBottom} style={!bottomBlocksBlurred || tabState == 'notes' ? {'opacity': '0'} : {}} />
-                                    <div ref={roundsContainerRef} style={{'height': '100%', 'overflow': tabState != 'notes' ? 'scroll' : '', 'display': 'flex', 'justifyContent': 'center'}}>
+                                    <div ref={roundsContainerRef} style={{'height': '100%', 'overflow': tabState != 'notes' && !isExpanded ? 'scroll' : '', 'display': 'flex', 'justifyContent': 'center'}}>
                                         {tabDisplay ? (
                                             <div style={{...marginStyle, 'padding': '0px 1rem'}}>
                                                 {tabDisplay}
