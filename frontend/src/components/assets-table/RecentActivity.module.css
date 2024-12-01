@@ -19,7 +19,7 @@
 
     border: 1px solid var(--light-border);
     border-radius: var(--medium-border-radius);
-    overflow: scroll;
+    overflow: hidden;
 }
 
 @media (max-width: 800px) { /* Apply styles when the screen width is 800px or smaller */
@@ -95,7 +95,6 @@
 .resultDesc {
     text-align: left;
     filter: opacity(50%);
-    flex: 1;
     font-size: .9rem;
 }
 

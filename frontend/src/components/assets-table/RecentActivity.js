@@ -116,7 +116,6 @@ export default function RecentActivity({loadingSkeleton}){
                     <div className={`${styles.resultDesc} _clamped2`}>
                         {shortenedDesc}
                     </div>
-                    
                 </div>
             </Link>        
         )
