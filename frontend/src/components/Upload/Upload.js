@@ -397,7 +397,7 @@ export default function Upload({ assetId=null }){
                 <ControlledInputText
                     placeholder="Title (optional)"
                     id='CreateTitle'
-                    maxChar={50}
+                    maxChar={75}
                     value={generalFields['title'].value}
                     setValue={(x) => setGeneralFields({...generalFields, 'title': {...generalFields['title'], 'value': x}})} />
             </div>
