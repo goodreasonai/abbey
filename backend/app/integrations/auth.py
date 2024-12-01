@@ -141,7 +141,8 @@ class CustomAuth(Auth):
                     SELECT * FROM users
                 """
                 if len(emails):
-                    sql += f"\n WHERE `email` IN ({','.join([self.conn.escape_string(x) for x in emails])})"
+                    quoted_emails = [f"'{self.conn.escape_string(x)}'" for x in emails]
+                    sql += f"\n WHERE `email` IN ({','.join(quoted_emails)})"
                 if len(user_ids):
                     sql += f"\n WHERE `id` IN ({','.join([self.conn.escape_string(x) for x in user_ids])})"
                 curr.execute(sql)
