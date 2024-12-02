@@ -176,7 +176,6 @@ export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
         }
         if (!isAnswering && !isLoading){
             if (event){
-                console.log(event.target.text)
                 newVersion(event.target.value)
             }
             else {

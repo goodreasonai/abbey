@@ -149,7 +149,8 @@ class Template(ABC):
         curr.execute(sql, (asset_id,))
         res = curr.fetchone()
         if not res and ret_resp:
-            return MyResponse(False, reason=f"No files found for asset with id {asset_id}", status=404).to_json()
+            response_status = 404 if name == MAIN_FILE else 204
+            return MyResponse(False, reason=f"No files found for asset with id {asset_id}", status=response_status).to_json()
         elif not res:
             return None
 

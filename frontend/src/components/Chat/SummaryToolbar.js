@@ -135,7 +135,7 @@ export default function SummaryToolbar({ manifestRow, allowSpeech, setRoundState
             })
 
             // Means that there are no notes yet
-            if (response.status == 404){
+            if (response.status == 204){
                 setNotesLoadState(2)
                 return
             }

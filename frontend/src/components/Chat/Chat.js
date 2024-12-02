@@ -314,7 +314,9 @@ export default function Chat({id,
             if (myJson['response'] != 'success'){
                 throw Error("Response was not success")
             }
-            saveCallback(newRoundStates)
+            if (saveCallback) {
+                saveCallback(newRoundStates)
+            }
         }
         catch (e) {
             console.log(e)
