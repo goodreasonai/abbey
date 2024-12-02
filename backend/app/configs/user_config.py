@@ -3,7 +3,7 @@ from .secrets import (
     OPENAI_API_KEY, ANTHROPIC_API_KEY, ELEVEN_LABS_API_KEY, MATHPIX_API_APP, MATHPIX_API_KEY, BING_API_KEY, 
     AWS_SECRET_KEY, AWS_ACCESS_KEY, SENDGRID_API_KEY, SMTP_EMAIL, SMTP_PASSWORD, SMTP_PORT, SMTP_SERVER,
     CLERK_JWT_PEM, CLERK_SECRET_KEY, CUSTOM_AUTH_SECRET, CUSTOM_AUTH_DB_ENDPOINT, CUSTOM_AUTH_DB_USERNAME, CUSTOM_AUTH_DB_PASSWORD, CUSTOM_AUTH_DB_PORT, CUSTOM_AUTH_DB_NAME,
-    BING_API_KEY, OLLAMA_URL, OPENAI_COMPATIBLE_URL
+    BING_API_KEY, OLLAMA_URL, OPENAI_COMPATIBLE_URL, SEARXNG_URL
 )
 from ..integrations.lm import gen_ollama_lms, gen_openai_compatible_lms
 from ..integrations.embed import gen_ollama_embeds, gen_openai_compatible_embeds
@@ -27,9 +27,10 @@ AVAILABLE_PROVIDERS = {
     'openai': True if OPENAI_API_KEY else False,
     'anthropic': True if ANTHROPIC_API_KEY else False,
     'eleven-labs': True if ELEVEN_LABS_API_KEY else False,
-    'bing': True if BING_API_KEY else False,
     'ollama': True if OLLAMA_URL else False,
-    'openai-compatible': True if OPENAI_COMPATIBLE_URL else False
+    'openai-compatible': True if OPENAI_COMPATIBLE_URL else False,
+    'bing': True if BING_API_KEY else False,
+    'searxng': True if SEARXNG_URL else False
 }
 
 # Enabled models by provider profile
@@ -52,6 +53,11 @@ AVAILABLE_EMBED = {
     'openai-compatible': [x.code for x in gen_openai_compatible_embeds()]
 }
 
+AVAILABLE_SEARCH = {
+    'bing': ['bing'],
+    'searxng': ['searxng']
+}
+
 AVAILABLE_TEMPLATES = ['document', 'folder', 'detached_chat', 'website', 'classroom', 'curriculum', 'quiz', 'text_editor', 'video', 'notebook', 'inf_quiz', 'section']  # could use the list in templates.py, but want to avoid imports here.
 
 # real default chat model will be the one that's available
@@ -64,6 +70,8 @@ FAST_LONG_CONTEXT_MODEL_RANKINGS = ['gpt-4o-mini', 'claude-3-5-sonnet']  # The m
 ALT_LONG_CONTEXT_MODEL_RANKINGS = LONG_CONTEXT_CHAT_MODEL_RANKINGS[::-1]  # exists to provide some variability in situations where long context makes generations repetitive
 
 EMBEDDING_MODEL_RANKINGS = ['openai-text-embedding-ada-002', 'openai-text-embedding-3-small', *[x.code for x in gen_ollama_embeds()], *[x.code for x in gen_openai_compatible_embeds()]]
+
+SEARCH_RANKINGS = ['bing', 'searxng']
 
 def get_available(provider_map):
     return sum([y for x, y in provider_map.items() if AVAILABLE_PROVIDERS[x]], [])  # neat trick, no?
@@ -119,8 +127,9 @@ DEFAULT_OCR_OPTION = 'mathpix'  # codes match integrations/ocr.py
 DEFAULT_STORAGE_OPTION = "s3" if AWS_ACCESS_KEY and AWS_SECRET_KEY else "local"  # codes match integrations/file_storage.py
 
 # No alternatives to bing ATM
-DEFAULT_SEARCH_ENGINE = "bing"  # codes match integrations/web.py
-DEFAULT_IMAGE_SEARCH_ENGINE = "bing"  # searching for images
+_SUB_TO_SEARCH = os.environ.get('SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS')
+SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS = json.loads(_SUB_TO_SEARCH) if _SUB_TO_SEARCH else {DEFAULT_SUBSCRIPTION_CODE: get_available(AVAILABLE_SEARCH)}
+DEFAULT_SEARCH_ENGINE = get_highest_ranked_available(SEARCH_RANKINGS, AVAILABLE_SEARCH)
 
 DEFAULT_EMAIL_SERVICE = 'sendgrid' if SENDGRID_API_KEY else 'smtp'  # codes match integrations/email.py
 EMAIL_FROM_NAME = "Abbey"  # The author of auto-generated emails

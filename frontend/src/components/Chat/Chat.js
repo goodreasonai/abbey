@@ -84,7 +84,6 @@ export default function Chat({id,
     const [syntheticId, setSyntheticId] = useState(id)  // Used for dropdown split doc stuff in folders
     const [roundStates, setRoundStates] = useState([])
     const [suggestions, setSuggestions] = useState({})  // from index to array
-    const [selectedModel, setSelectedModel] = useState({})  // obj of information - does it accept images? etc.
     const [suggestLoadingState, setSuggestLoadingState] = useState({})  // not for suggestions at the end of quesitons, but for the one at the top
     const roundsContainerRef = useRef()
     const [userText, setUserText] = useState("")
@@ -93,8 +92,15 @@ export default function Chat({id,
     const [tabDisplay, setTabDisplay] = useState("")  // e.g. keypoints or summary display
     const [tabState, setTabState] = useState(undefined)
     const [retrieverIssue, setRetrieverIssue] = useState("")
+
+    const [selectedModel, setSelectedModel] = useState({})  // obj of information - does it accept images? etc.
     const [userModelOptions, setUserModelOptions] = useState([])
     const [userModelLoadingState, setUserModelLoadingState] = useState(0)
+
+    const [selectedSearchEngine, setSelectedSearchEngine] = useState({})  // obj of information - does it accept images? etc.
+    const [userSearchEngineOptions, setUserSearchEngineOptions] = useState([])
+    const [userSearchEngineLoadingState, setUserSearchEngineLoadingState] = useState(0)
+
     const [draggingFile, setDraggingFile] = useState(false)
     const [badPracticeAutoFocus, setBadPracticeAutoFocus] = useState(1)
 
@@ -482,6 +488,10 @@ export default function Chat({id,
                 userModelLoadingState={userModelLoadingState}
                 userModelOptions={userModelOptions}
                 setUserChatModel={setUserChatModel}
+                selectedSearchEngine={selectedSearchEngine}
+                userSearchEngineOptions={userSearchEngineOptions}
+                userSearchEngineLoadingState={userSearchEngineLoadingState}
+                setUserSearchEngine={setUserSearchEngine}
             />
         )
     }
@@ -635,6 +645,8 @@ export default function Chat({id,
         if (id && canEdit && isSignedIn === true){
             getUserModel()
             getUserModelOptions()
+            getUserSearchEngine()
+            getUserSearchEngineOptions()
         }
     }, [id, isSignedIn])
 
@@ -707,6 +719,81 @@ export default function Chat({id,
             const available = myJson['available'].map((item) => {return {...item, 'available': true}})
             const unavailable = myJson['unavailable'].map((item) => {return {...item, 'available': false}})
             setUserModelOptions([...available, ...unavailable])
+        }
+        catch (e) {
+            console.log(e)
+        }
+    }
+
+    async function setUserSearchEngine(model){
+        try {
+            setUserSearchEngineLoadingState(1)
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/user/select-search-engine'
+            const data = {
+                'model': model.code
+            }
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                    'Content-Type': 'application/json'
+                },
+                'method': 'POST',
+                'body': JSON.stringify(data)
+            })
+            const myJson = await response.json()
+            if (myJson['response'] != 'success'){
+                console.log(myJson)
+                throw Error("Response was not success")
+            }
+            setSelectedSearchEngine(myJson['model'])
+            setUserSearchEngineLoadingState(2)
+        }
+        catch (e) {
+            console.log(e)
+            setUserSearchEngineLoadingState(2)  // on fail, user will notice.
+        }
+    }
+
+    async function getUserSearchEngine(){
+        try {
+            setUserSearchEngineLoadingState(1)
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/user/search-engine'
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                },
+                'method': 'GET'
+            })
+
+            let myJson = await response.json()
+            let model = myJson['model']
+            setSelectedSearchEngine(model)
+            setUserSearchEngineLoadingState(2)
+        }
+        catch(e) {
+            console.log(e)
+            setUserSearchEngineLoadingState(3)
+        }
+    }
+
+    async function getUserSearchEngineOptions(){
+        try {
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/user/search-engines'
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                    'Content-Type': 'application/json'
+                },
+                'method': 'GET'
+            })
+            const myJson = await response.json()
+            if (myJson['response'] != 'success'){
+                console.log(myJson)
+                throw Error("Response was not success")
+            }
+            const available = myJson['available'].map((item) => {return {...item, 'available': true}})
+            const unavailable = myJson['unavailable'].map((item) => {return {...item, 'available': false}})
+            setUserSearchEngineOptions([...available, ...unavailable])
         }
         catch (e) {
             console.log(e)
@@ -899,10 +986,17 @@ export default function Chat({id,
                                                 toggleUseWeb={() => setBottomTextItem({...bottomTextItem, 'useWeb': !bottomTextItem?.useWeb})}
                                                 setImages={(x) => setBottomTextItem({...bottomTextItem, 'images': x})}
                                                 dropdownGoesUp={true}
+
                                                 selectedModel={selectedModel}
                                                 userModelOptions={userModelOptions}
                                                 userModelLoadingState={userModelLoadingState}
                                                 setUserChatModel={setUserChatModel}
+
+                                                selectedSearchEngine={selectedSearchEngine}
+                                                userSearchEngineOptions={userSearchEngineOptions}
+                                                userSearchEngineLoadingState={userSearchEngineLoadingState}
+                                                setUserSearchEngine={setUserSearchEngine}
+
                                                 suggestQuestion={suggestBottomQuestion}
                                                 suggestLoadingState={bottomSuggestLoadingState}
                                                 setRandomness={(x) => setBottomTextItem({...bottomTextItem, 'temperature': (x / 100)})}

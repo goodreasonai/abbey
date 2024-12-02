@@ -20,28 +20,32 @@ class SearchResult():
         return {'name': self.name, 'url': self.url}
 
 
-class ImageSearchResult(SearchResult):
-    def __init__(self, name, url) -> None:
-        super().__init__(name, url)
-
-
 class SearchEngine():
-    def __init__(self, code, supports_image_search) -> None:
+    def __init__(self, code, name, desc, traits) -> None:
         self.code = code
-        self.supports_image_search = supports_image_search
+        self.name = name
+        self.desc = desc
+        self.traits = traits
 
     def search(self, query):
         raise Exception(f"Search not implemented for search engine with code '{self.code}'")
     
-    def image_search(self, query, n=5):
-        raise Exception(f"Search not implemented for search engine with code '{self.code}'")
+    def to_json_obj(self):
+        return {
+            'code': self.code,
+            'name': self.name,
+            'desc': self.desc,
+            'traits': self.traits
+        }
 
 
 class Bing(SearchEngine):
     def __init__(self) -> None:
         super().__init__(
             code="bing",
-            supports_image_search=True
+            name="Bing",
+            desc="Searches over the entire web. Microsoft's search engine.",
+            traits="Web",
         )
     
     def search(self, query):
@@ -60,22 +64,24 @@ class Bing(SearchEngine):
         
         results = [SearchResult(x['name'], x['url']) for x in raw_results]
         return results
+
+
+class SearXNG(SearchEngine):
+    def __init__(self) -> None:
+        super().__init__(
+            code="searxng",
+            name="SearXNG",
+            desc="An open source meta search engine",
+            traits="Self-Hosted",
+        )
     
-    def image_search(self, query, n=5):
-        # Documentation: https://learn.microsoft.com/en-us/bing/search-apis/bing-image-search/reference/response-objects
-        endpoint = "https://api.bing.microsoft.com/v7.0/images/search"
-        mkt = 'en-US'
-        params = { 'q': query, 'mkt': mkt, 'count': n }
-        headers = {'Ocp-Apim-Subscription-Key': BING_API_KEY }
-        response = requests.get(endpoint, headers=headers, params=params)
-        response.raise_for_status()  # will throw an error if the request isn't good
-        my_json = response.json()
-        images = my_json['value']
-        results = [ImageSearchResult(x['name'], x['contentUrl']) for x in images]
-        return results
+    def search(self, query):
+        # TODO
+        return []
 
 
 SEARCH_PROVIDERS = {
-    'bing': Bing()
+    'bing': Bing(),
+    'searxng': SearXNG()
 }
 

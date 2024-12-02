@@ -52,7 +52,6 @@ export const DISABLE_OCR = process.env.NEXT_PUBLIC_DISABLE_OCR === '1'  // Shoul
 export const DISABLE_WEB = process.env.NEXT_PUBLIC_DISABLE_WEB === '1'
 export const HIDE_TTS = process.env.NEXT_PUBLIC_HIDE_TTS === '1'
 
-
 // NOTE: Externally hosted image URLs can be configured in next.config.js!
 // NOTE: Templates (and which appear in certain places) can be configured in templates/template.js
 

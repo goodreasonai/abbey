@@ -28,7 +28,7 @@ export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
                                     invertColor, setRandomness, suggestLoadingState, suggestQuestion,
                                     showFindMore, toggleUseWeb, index, onSourceButtonClick=undefined, setUserChatModel,
                                     setImages, selectedModel, extraButtons, goToPrevState, userModelLoadingState, userModelOptions,
-                                    newVersion, allowOCR, scrollToBottom, ...props }){
+                                    newVersion, allowOCR, scrollToBottom, selectedSearchEngine, userSearchEngineLoadingState, userSearchEngineOptions, setUserSearchEngine, ...props }){
 
     const { getToken } = Auth.useAuth()
     const [findMoreLoadState, setFindMoreLoadState] = useState(0)
@@ -210,6 +210,12 @@ export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
                                 userModelLoadingState={userModelLoadingState}
                                 setUserChatModel={setUserChatModel}
                                 userModelOptions={userModelOptions}
+
+                                selectedSearchEngine={selectedSearchEngine}
+                                userSearchEngineOptions={userSearchEngineOptions}
+                                userSearchEngineLoadingState={userSearchEngineLoadingState}
+                                setUserSearchEngine={setUserSearchEngine}
+
                                 canEdit={canEdit}
                                 item={item}
                                 isLoading={isLoading}

@@ -16,7 +16,7 @@ import { getModKey } from "@/utils/keyboard"
 import { DISABLE_WEB } from "@/config/config"
 
 
-export default function MessageToolbar({ detached, selectedModel, item, canEdit, isLoading, isAnswering, toggleUseWeb, suggestQuestion, suggestLoadingState, removeChat, setImages, setRandomness, toggleDetached, userModelLoadingState, userModelOptions, setUserChatModel, dropdownGoesUp, showUseWebTooltip }) {
+export default function MessageToolbar({ detached, selectedModel, selectedSearchEngine, item, canEdit, isLoading, isAnswering, toggleUseWeb, suggestQuestion, suggestLoadingState, removeChat, setImages, setRandomness, toggleDetached, userModelLoadingState, userModelOptions, setUserChatModel, userSearchEngineLoadingState, userSearchEngineOptions, setUserSearchEngine, dropdownGoesUp, showUseWebTooltip }) {
 
     const fileRef = useRef()
 
@@ -45,18 +45,41 @@ export default function MessageToolbar({ detached, selectedModel, item, canEdit,
     }
 
     let webSearchCheckbox = <FakeCheckbox value={item.useWeb ? true : false} checkedOpacity="1" iconSize={15} setValue={detached ? toggleUseWeb : ()=>{}} />
-    let webSearchArea = (
-        <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '5px'}}>
-            <div className={styles.detachButton}>
-                Use Web
+    let webSearchArea = ""
+    if (!selectedSearchEngine || !selectedSearchEngine.name){
+        webSearchArea = ""
+    }
+    else if (userSearchEngineLoadingState != 2 || !userSearchEngineOptions?.length){
+        webSearchArea = (
+            <Loading text="" size={15} />
+        )
+    }
+    if (userSearchEngineLoadingState == 2 && userSearchEngineOptions?.length){
+        webSearchArea = (
+            <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '5px'}}>
+                <div className={styles.detachButton}>
+                    {userSearchEngineOptions?.length === 1 ? ("Use Web") : (
+                        <LightDropdown
+                            style={{'fontSize': '.9rem'}}
+                            value={(selectedSearchEngine?.name)}
+                            optionsStyle={{'fontSize': '.9rem'}}
+                            options={userSearchEngineOptions.map((item) => {return {'value': item.name, 'onClick': ()=>{setUserSearchEngine(item)}, 'unavailable': !item.available}})}
+                            direction={dropdownGoesUp ? "up" : 'down'}
+                        />
+                    )}
+                </div>
+                {showUseWebTooltip ? (
+                    <Tooltip content={`${getModKey()} i`}>
+                        {webSearchCheckbox}
+                    </Tooltip>
+                ) : (webSearchCheckbox)}
             </div>
-            {showUseWebTooltip ? (
-                <Tooltip content={`${getModKey()} i`}>
-                    {webSearchCheckbox}
-                </Tooltip>
-            ) : (webSearchCheckbox)}
-        </div>
-    )
+        )
+    }
+    else if (userSearchEngineLoadingState == 3){
+        webSearchArea = ("")
+    }
+    
 
     let greenDot = (
         <div style={{'position': 'absolute', 'width': 10, 'height': 10, 'backgroundColor': 'var(--dark-primary)', 'borderRadius': 5, 'bottom': -3, 'left': -3, 'borderColor': 'var(--light-primary)', 'borderWidth': '1px', 'borderStyle': 'solid'}}></div>

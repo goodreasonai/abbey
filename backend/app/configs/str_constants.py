@@ -76,6 +76,7 @@ SUMMARY_APPLY_JOB = 'summary_apply'
 # Determine the chosen models of the user
 USER_CHAT_MODEL = 'chat-model'
 USER_TTS_MODEL = 'tts-model'
+USER_SEARCH_ENGINE = 'seach-engine'
 
 USER_TEXT_EDITOR_PROMPTS = 'user_te_prompts'  # saved text editor prompts
 USER_PRODUCT_CODE = 'product-code'  # product codes that the user has previously entered

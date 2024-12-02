@@ -20,11 +20,3 @@ def get_web_query_system_prompt(context, retrieval_response, user_time):
     prompt.append(conclusion)
     return "\n".join(prompt)
 
-
-# Doesn't assume user is asking question; instead, uses "text" context (i.e., video script)
-def get_web_image_query_system_prompt():
-    date_str = datetime.now().strftime("%Y-%m-%d")
-    prelude = f"Current Date: {date_str}\nYour task is to write a brief (about 1-4 words) image search engine query based on some text that the user will provide. You are searching for a relevant image. Don't use any advanced query features like quotes, operators, or sites."
-    conclusion = "Include ONLY THE SEARCH QUERY in your response; no yapping."
-    return "\n".join([prelude, conclusion])
-

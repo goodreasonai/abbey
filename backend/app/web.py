@@ -6,11 +6,10 @@ from .retriever import Chunk
 import re
 from urllib.parse import urljoin
 import sys
-from typing import List
-from .prompts.web_search_prompts import get_web_image_query_system_prompt
-from .integrations.lm import LM_PROVIDERS, LM
-from .integrations.web import SearchEngine, SearchResult, ImageSearchResult, SEARCH_PROVIDERS
-from .configs.user_config import FAST_CHAT_MODEL, DEFAULT_SEARCH_ENGINE
+from .integrations.web import SearchEngine, SearchResult, SEARCH_PROVIDERS
+from .configs.user_config import DEFAULT_SEARCH_ENGINE
+from .user import get_user_search_engine_code
+from .auth import User
 
 
 class WebChunk(Chunk):
@@ -175,8 +174,9 @@ def scrape_and_chunk(url, truncate_chars=3000, shrink_spaces=True) -> WebChunk:
         return None
 
 
-def get_web_chunks(search_query, max_page_chars=3000, max_n=5):
-    se: SearchEngine = SEARCH_PROVIDERS[DEFAULT_SEARCH_ENGINE]
+def get_web_chunks(user: User, search_query, max_page_chars=3000, max_n=5):
+    se_code = get_user_search_engine_code(user)
+    se: SearchEngine = SEARCH_PROVIDERS[se_code]
     results: list[SearchResult] = se.search(search_query)
     chunks = []
     with ThreadPoolExecutor(max_workers=10) as executor:
@@ -191,13 +191,3 @@ def get_web_chunks(search_query, max_page_chars=3000, max_n=5):
                 print('Exception in get_web_chunks: %r generated an exception: %s' % (url, exc))
     
     return chunks[:max_n]
-    
-
-def get_web_images_from_text(text, n=5) -> List[ImageSearchResult]:
-    system_prompt = get_web_image_query_system_prompt()
-    lm: LM = LM_PROVIDERS[FAST_CHAT_MODEL]
-    query = lm.run(text, system_prompt=system_prompt)
-    query = query.replace("\"", "")
-    se: SearchEngine = SEARCH_PROVIDERS[DEFAULT_SEARCH_ENGINE]
-    images = se.image_search(query, n=n)
-    return images

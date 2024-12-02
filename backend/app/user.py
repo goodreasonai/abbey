@@ -6,16 +6,17 @@ from flask import (
 from flask_cors import cross_origin
 from .integrations.lm import LM_PROVIDERS, LM
 from .integrations.tts import TTS, TTS_PROVIDERS
-from .configs.str_constants import USER_CHAT_MODEL, USER_TTS_MODEL, USER_PRODUCT_CODE, USER_PIN, USER_UPLOAD_COUNTER, USER_ALERT_ACTIVITY
+from .integrations.web import SearchEngine, SEARCH_PROVIDERS
+from .configs.str_constants import USER_CHAT_MODEL, USER_TTS_MODEL, USER_PRODUCT_CODE, USER_PIN, USER_UPLOAD_COUNTER, USER_ALERT_ACTIVITY, USER_SEARCH_ENGINE
 from .auth import User, token_required
 from .db import get_db, needs_db
 from .template_response import MyResponse
 from .configs.user_config import (
-    OVERRIDE_ALLOWED_TEMPLATES, DEFAULT_OCR_OPTION,
-    SUBSCRIPTION_CODE_TO_MODEL_OPTIONS, DEFAULT_CHAT_MODEL,
+    OVERRIDE_ALLOWED_TEMPLATES, DEFAULT_OCR_OPTION, SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS,
+    SUBSCRIPTION_CODE_TO_MODEL_OPTIONS, DEFAULT_CHAT_MODEL, DEFAULT_SEARCH_ENGINE,
     SUBSCRIPTION_CODE_TO_TEMPLATES, SUBSCRIPTION_CODE_TO_TTS_OPTIONS,
     SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS, DISABLE_OCR, LM_ORDER, DEFAULT_TTS_MODEL, 
-    get_available, AVAILABLE_LMS, AVAILABLE_TTS
+    get_available, AVAILABLE_LMS, AVAILABLE_TTS, AVAILABLE_SEARCH
 )
 from .pay import get_user_main_sub_code, Protocol, get_protocol_by_code, get_product, get_products
 import pytz
@@ -63,6 +64,13 @@ def get_user_tts_options_codes(user: User, db=None):
 
 
 @needs_db
+def get_user_search_options_codes(user: User, db=None):
+    code = get_user_main_sub_code(user, db=db)
+    lst = SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS[code]
+    return lst
+
+
+@needs_db
 def get_user_chat_model_code(user: User, db=None):
     
     if not user:
@@ -87,7 +95,7 @@ def get_user_tts_model_code(user: User, db=None):
     if not user:
         raise Exception("No user provided")
     
-    results = get_user_metadata(user, key=USER_TTS_MODEL)
+    results = get_user_metadata(user, key=USER_TTS_MODEL, db=db)
     model = DEFAULT_TTS_MODEL
     if results and len(results):
         model = results[0]['value']
@@ -95,6 +103,24 @@ def get_user_tts_model_code(user: User, db=None):
     # If the model selected isn't available (beacuse it's been removed), return the default model.
     if model not in get_available(AVAILABLE_TTS):
         model = DEFAULT_TTS_MODEL 
+    
+    return model
+
+
+@needs_db
+def get_user_search_engine_code(user: User, db=None):
+    
+    if not user:
+        raise Exception("No user provided")
+    
+    results = get_user_metadata(user, key=USER_SEARCH_ENGINE, db=db)
+    model = DEFAULT_SEARCH_ENGINE
+    if results and len(results):
+        model = results[0]['value']
+
+    # If the model selected isn't available (beacuse it's been removed), return the default model.
+    if model not in get_available(AVAILABLE_SEARCH):
+        model = DEFAULT_SEARCH_ENGINE 
     
     return model
 
@@ -113,6 +139,14 @@ def select_user_tts_model(user: User, code: str, db=None):
     if not user:
         raise Exception("No user provided")
     set_user_metadata(user, USER_TTS_MODEL, code, replace=True)
+
+
+# NOTE: Doesn't check to see if user has access to model (but endpoint does)
+@needs_db
+def select_user_search_engine(user: User, code: str, db=None):
+    if not user:
+        raise Exception("No user provided")
+    set_user_metadata(user, USER_SEARCH_ENGINE, code, replace=True)
 
 
 @needs_db
@@ -164,7 +198,6 @@ def get_recent_uploads(user: User, templates=[], limit=5, interval="3 DAY", db=N
     return res
 
 
-
 @bp.route('/asset-counts', methods=('GET',))
 @cross_origin()
 @token_required
@@ -174,7 +207,6 @@ def asset_counts(user: User):
     if limit == math.inf:
         limit = "inf"
     return MyResponse(True, {'results': get_user_assets_sum(user), 'limit': limit}).to_json()
-
 
 
 @bp.route('/templates', methods=('GET',))
@@ -224,6 +256,26 @@ def get_user_tts_model_options_(user: User):
     return MyResponse(True, {'available': available, 'unavailable': unavailable}).to_json()
 
 
+@bp.route('/search-engines', methods=('GET',))
+@cross_origin()
+@token_required
+def get_user_search_engine_options_(user: User):
+
+    available = []
+    unavailable = []
+
+    codes = get_user_search_options_codes(user)
+    for se in SEARCH_PROVIDERS.values():
+        se: SearchEngine
+        if se.code not in get_available(AVAILABLE_SEARCH):
+            continue
+        if se.code in codes:
+            available.append(se.to_json_obj())
+        else:
+            unavailable.append(se.to_json_obj())
+
+    return MyResponse(True, {'available': available, 'unavailable': unavailable}).to_json()
+
 
 @bp.route('/chat-model', methods=('GET',))
 @cross_origin()
@@ -243,6 +295,14 @@ def get_user_tts_options_(user: User):
     return MyResponse(True, {'model': model.to_json_obj()}).to_json()
 
 
+@bp.route('/search-engine', methods=('GET',))
+@cross_origin()
+@token_required
+def get_user_search_options_(user: User):
+    code = get_user_search_engine_code(user)
+    model: SearchEngine = SEARCH_PROVIDERS[code]
+    return MyResponse(True, {'model': model.to_json_obj()}).to_json()
+
 
 @bp.route('/select-chat-model', methods=('POST',))
 @cross_origin()
@@ -260,7 +320,6 @@ def select_user_chat_model_(user: User):
     return MyResponse(True, {'model': model.to_json_obj()}).to_json()
 
 
-
 @bp.route('/select-tts-model', methods=('POST',))
 @cross_origin()
 @token_required
@@ -273,6 +332,22 @@ def select_user_tts_model_(user: User):
     select_user_tts_model(user, code)
 
     model: TTS = TTS_PROVIDERS[code]
+    
+    return MyResponse(True, {'model': model.to_json_obj()}).to_json()
+
+
+@bp.route('/select-search-engine', methods=('POST',))
+@cross_origin()
+@token_required
+def select_user_search_engine_(user: User):
+    code = request.json.get('model')
+    codes = get_user_search_options_codes(user)
+    if code not in codes:
+        return MyResponse(False, status=403)
+    
+    select_user_search_engine(user, code)
+
+    model: SearchEngine = SEARCH_PROVIDERS[code]
     
     return MyResponse(True, {'model': model.to_json_obj()}).to_json()
 

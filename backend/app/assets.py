@@ -725,7 +725,7 @@ def chat(user: User):
                 n_web_chunks = 5
                 safety_margin = .25
                 web_chunk_max_char = max(1000, ntokens_to_nchars((int(model.context_length * safety_margin) - context_n_tokens) // n_web_chunks))
-                web_chunks = get_web_chunks(q['search_query'], max_page_chars=web_chunk_max_char, max_n=n_web_chunks)
+                web_chunks = get_web_chunks(user, ['search_query'], max_page_chars=web_chunk_max_char, max_n=n_web_chunks)
                 system_prompt = template_object.build_web_chat_system_prompt(q['txt'], web_chunks)
                 retrieval_sources_json = [x.to_json() for x in web_chunks]
                 retrieval_sources = [x.txt for x in web_chunks]
