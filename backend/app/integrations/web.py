@@ -1,4 +1,4 @@
-from ..configs.secrets import BING_API_KEY
+from ..configs.secrets import BING_API_KEY, SEARXNG_URL
 import requests
 import sys
 
@@ -27,7 +27,7 @@ class SearchEngine():
         self.desc = desc
         self.traits = traits
 
-    def search(self, query):
+    def search(self, query, max_n=10):
         raise Exception(f"Search not implemented for search engine with code '{self.code}'")
     
     def to_json_obj(self):
@@ -48,7 +48,7 @@ class Bing(SearchEngine):
             traits="Web",
         )
     
-    def search(self, query):
+    def search(self, query, max_n=10):
         endpoint = "https://api.bing.microsoft.com/v7.0/search"
         mkt = 'en-US'
         params = { 'q': query, 'mkt': mkt }
@@ -62,7 +62,7 @@ class Bing(SearchEngine):
             print(f"Could not get web pages from search engine. Here was the repsonse: {my_json}", file=sys.stderr)
             return []
         
-        results = [SearchResult(x['name'], x['url']) for x in raw_results]
+        results = [SearchResult(x['name'], x['url']) for i, x in enumerate(raw_results) if i < max_n]
         return results
 
 
@@ -74,10 +74,13 @@ class SearXNG(SearchEngine):
             desc="An open source meta search engine",
             traits="Self-Hosted",
         )
-    
-    def search(self, query):
-        # TODO
-        return []
+
+    def search(self, query, max_n=10):
+        params = {'q': query, 'format': 'json'}
+        response = requests.get(f"{SEARXNG_URL}/search", params=params)
+        my_json = response.json()
+        results = my_json['results']
+        return [SearchResult(x['title'], x['url']) for i, x in enumerate(results) if i < max_n]
 
 
 SEARCH_PROVIDERS = {
