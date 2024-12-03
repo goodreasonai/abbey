@@ -48,6 +48,9 @@ ELEVEN_LABS_KEY=""
 USE_WEB=""
 BING_KEY=""
 
+USE_SEARXNG=""
+SEARXNG_URL=""
+
 USE_GOOGLE_AUTH=""
 GOOGLE_AUTH_CLIENT_ID=""
 GOOGLE_AUTH_CLIENT_SECRET=""
@@ -364,6 +367,14 @@ configure_search_engine() {
     else
         USE_WEB=$FALSE_VALUE
     fi
+
+    if ask_yes_no "Would you like to connect a SearXNG instance (note: must have format json enabled)?"; then
+        USE_SEARXNG=$TRUE_VALUE
+        echo "If you're running SearXNG on the same machine as Abbey, it's probably available at http://host.docker.internal:8080. If you're running it on another machine, it might be https://example.com or something."
+        SEARXNG_URL=$(ask_credential "OK, please provide the URL")
+    else
+        USE_SEARXNG=$FALSE_VALUE
+    fi
 }
 
 # Needs to be run AFTER setup complete / affirmed (because it loads in environment variables which could mess with stuff)
@@ -414,6 +425,10 @@ export_backend_env() {
 
         if [ "$USE_WEB" = "$TRUE_VALUE" ]; then
             echo "BING_API_KEY=\"$BING_KEY\""
+        fi
+
+        if [ "$USE_SEARXNG" = "$TRUE_VALUE" ]; then
+            echo "SEARXNG_URL=\"$SEARXNG_URL\""
         fi
 
         if [ "$USE_OLLAMA" = "$TRUE_VALUE" ]; then
