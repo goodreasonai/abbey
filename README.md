@@ -116,6 +116,9 @@ ELEVEN_LABS_API_KEY="my-elevenlabs-api-key"
 BING_API_KEY="my-bing-api-key"
 ANTHROPIC_API_KEY = "my-anthropic-api-key"
 
+# An endpoint to enable search with SearXNG (host.docker used when SearXNG is being run in the same docker virtual machine as Abbey)
+SEARXNG_URL="http://host.docker.internal:8080"
+
 # Mathpix is used for OCR on PDFs - note that you need both an app name and key for that app
 MATHPIX_API_APP="my-mathpix-app"
 MATHPIX_API_KEY="my-mathpix-api-key"
@@ -229,6 +232,7 @@ AI APIs (lm.py, ocr.py, tts.py, and embed.py)
 
 Search Engines (web.py)
 - Bing
+- SearXNG
 
 File Storage (file_storage.py)
 - s3
