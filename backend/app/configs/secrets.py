@@ -63,6 +63,7 @@ ELEVEN_LABS_API_KEY = os.environ.get('ELEVEN_LABS_API_KEY')
 
 BING_API_KEY = os.environ.get('BING_API_KEY')
 SEARXNG_URL = os.environ.get('SEARXNG_URL')
+SEARXNG_OPTIONS = os.environ.get('SEARXNG_OPTIONS')
 
 PROXY_URL_HTTP = os.environ.get('PROXY_URL_HTTP')
 PROXY_URL_HTTPS = os.environ.get('PROXY_URL_HTTPS')

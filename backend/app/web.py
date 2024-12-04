@@ -170,6 +170,9 @@ def scrape_and_chunk(url, truncate_chars=3000, shrink_spaces=True) -> WebChunk:
         favicon = {'favicon': scrape_result['favicon']} if 'favicon' in scrape_result else {}
         chunk = WebChunk(0, f"{scrape_result['title']} ({url})", text, url, **image, **favicon)
         return chunk
+    elif scrape_result['success'] and scrape_result['ext'] == 'pdf':
+        # TODO
+        return None
     else:
         return None
 

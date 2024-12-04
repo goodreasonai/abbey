@@ -1,6 +1,7 @@
-from ..configs.secrets import BING_API_KEY, SEARXNG_URL
+from ..configs.secrets import BING_API_KEY, SEARXNG_URL, SEARXNG_OPTIONS
 import requests
 import sys
+import json
 
 """
 
@@ -67,24 +68,69 @@ class Bing(SearchEngine):
 
 
 class SearXNG(SearchEngine):
-    def __init__(self) -> None:
+    def __init__(self, engine_code="", name="", use_pdf=False) -> None:
+        self.engine_code = engine_code
+        self.use_pdf = use_pdf
+        code = "searxng" if not engine_code else f"searxng-{engine_code}"
+        real_name = "SearXNG"
+        if not name:
+            if engine_code:
+                real_name += f"-{engine_code}"
+        else:
+            real_name = name
+
         super().__init__(
-            code="searxng",
-            name="SearXNG",
+            code=code,
+            name=real_name,
             desc="An open source meta search engine",
             traits="Self-Hosted",
         )
 
     def search(self, query, max_n=10):
         params = {'q': query, 'format': 'json'}
+        if self.engine_code:
+            params['engines'] = self.engine_code
         response = requests.get(f"{SEARXNG_URL}/search", params=params)
         my_json = response.json()
         results = my_json['results']
-        return [SearchResult(x['title'], x['url']) for i, x in enumerate(results) if i < max_n]
+        result_objs = []
+        for i, res in enumerate(results):
+            if i >= max_n:
+                break
+            # Using the PDF url instead of the regularly URL can be useful for scholarly works
+            if self.use_pdf:
+                if 'pdf_url' in res and res['pdf_url']:
+                    result_objs.append(SearchResult(res['title'], res['pdf_url']))
+                else:
+                    result_objs.append(SearchResult(res['title'], res['url']))
+            else:
+                result_objs.append(SearchResult(res['title'], res['url']))
+        return result_objs
+
+
+def gen_searxng_engines():
+
+    if not SEARXNG_URL:
+        return []
+    
+    enabled = [SearXNG()]
+    
+    searxng_options = json.loads(SEARXNG_OPTIONS)
+    if not len(SEARXNG_OPTIONS):
+        return enabled
+
+    for engine in searxng_options:
+        name = engine['name'] if 'name' in engine else ""
+        use_pdf = engine['pdf'] if 'pdf' in engine else False
+        engine_code = engine['engine']
+        enabled.append(SearXNG(name=name, engine_code=engine_code, use_pdf=use_pdf))
+    return enabled
+
+searxng_engines = {x.code: x for x in gen_searxng_engines()}
 
 
 SEARCH_PROVIDERS = {
     'bing': Bing(),
-    'searxng': SearXNG()
+    **searxng_engines
 }
 

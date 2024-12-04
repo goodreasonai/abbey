@@ -8,6 +8,7 @@ from .secrets import (
 from ..integrations.lm import gen_ollama_lms, gen_openai_compatible_lms
 from ..integrations.embed import gen_ollama_embeds, gen_openai_compatible_embeds
 from ..integrations.tts import gen_openai_compatible_tts
+from ..integrations.web import gen_searxng_engines
 import os
 import json
 
@@ -55,7 +56,7 @@ AVAILABLE_EMBED = {
 
 AVAILABLE_SEARCH = {
     'bing': ['bing'],
-    'searxng': ['searxng']
+    'searxng': [x.code for x in gen_searxng_engines()],
 }
 
 AVAILABLE_TEMPLATES = ['document', 'folder', 'detached_chat', 'website', 'classroom', 'curriculum', 'quiz', 'text_editor', 'video', 'notebook', 'inf_quiz', 'section']  # could use the list in templates.py, but want to avoid imports here.
@@ -126,7 +127,6 @@ DEFAULT_OCR_OPTION = 'mathpix'  # codes match integrations/ocr.py
 
 DEFAULT_STORAGE_OPTION = "s3" if AWS_ACCESS_KEY and AWS_SECRET_KEY else "local"  # codes match integrations/file_storage.py
 
-# No alternatives to bing ATM
 _SUB_TO_SEARCH = os.environ.get('SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS')
 SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS = json.loads(_SUB_TO_SEARCH) if _SUB_TO_SEARCH else {DEFAULT_SUBSCRIPTION_CODE: get_available(AVAILABLE_SEARCH)}
 DEFAULT_SEARCH_ENGINE = get_highest_ranked_available(SEARCH_RANKINGS, AVAILABLE_SEARCH)
