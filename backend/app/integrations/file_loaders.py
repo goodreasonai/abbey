@@ -73,11 +73,13 @@ class TextSplitter():
 
             # Max-combine chunks in order
             for split in splitsville:
-                if not len(max_chunks):
+                if not split:  # blanks are not allowed
+                    continue
+                if not len(max_chunks):  # first split creates new chunk 
                     max_chunks.append(split)
-                elif self.length_function(max_chunks[len(max_chunks) - 1] + sep + split) < self.max_chunk_size:
+                elif self.length_function(max_chunks[len(max_chunks) - 1] + sep + split) < self.max_chunk_size:  # if we can add the current split to the previous without overflow, do it
                     max_chunks[len(max_chunks) - 1] += sep + split
-                else:
+                else:  # Otherwise, create a new chunk
                     max_chunks.append(split)
 
             # On any max_chunks that are not under max_chunk_size, split it again.
@@ -89,7 +91,6 @@ class TextSplitter():
                 else:
                     final_chunks.append(max_chunk)
             
-            final_chunks = [x for x in final_chunks if x]
             return final_chunks
         
         if self.length_function(txt) <= self.max_chunk_size:

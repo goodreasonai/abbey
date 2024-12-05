@@ -22,13 +22,9 @@ class OpenAIEmbed(Embed):
             code=code
         )
 
+    # Note: OpenAI will throw an error if any text to embed is blank.
     def embed(self, texts):
-        texts = [y.replace("\n", " ") for y in texts]
-        texts = [x for x in texts if x]
-        print(texts)
-        print("THOSE WERE TEXTS")
-        print(type(texts))
-        texts
+        texts = [y.replace("\n", " ") for y in texts]  # Remove line breaks and replace with spaces before embedding
         return [y.embedding for y in openai_client.embeddings.create(input=texts, model=self.openai_code).data]
 
 
