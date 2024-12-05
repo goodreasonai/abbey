@@ -62,7 +62,7 @@ def remove_ext(path):
     return "".join(path.split(".")[:-1])
 
 
-# A very rough estimate - TODO: replace with tiktoken
+# A very rough estimate
 def ntokens_to_nchars(toks):
     return toks * 4
 

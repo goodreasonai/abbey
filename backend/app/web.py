@@ -7,9 +7,12 @@ import re
 from urllib.parse import urljoin
 import sys
 from .integrations.web import SearchEngine, SearchResult, SEARCH_PROVIDERS
+from .integrations.file_loaders import get_loader, TextSplitter, RawChunk
 from .configs.user_config import DEFAULT_SEARCH_ENGINE
 from .user import get_user_search_engine_code
 from .auth import User
+from .utils import ntokens_to_nchars, get_token_estimate
+import tempfile
 
 
 class WebChunk(Chunk):
@@ -157,40 +160,71 @@ def scrape(url, use_html=None, just_text=False, reduce_whitespace=False):
     return {'success': True, **to_return}
 
 
-def scrape_and_chunk(url, truncate_chars=3000, shrink_spaces=True) -> WebChunk:
-    scrape_result = scrape(url, just_text=True, reduce_whitespace=shrink_spaces)
-    if scrape_result['success'] and scrape_result['ext'] == 'txt':
-        text = scrape_result['data']
-        # Instead of just simply truncating, we do the middle of the page, which is better (nav bar + footer ...)
-        opening_i = max((len(text) // 2) - truncate_chars // 2, 0)
-        ending_i = truncate_chars + opening_i
-        text = text[opening_i:ending_i]
+def get_web_chunks(user: User, search_query, available_context, max_n=5):
+    se_code = get_user_search_engine_code(user)
+    se: SearchEngine = SEARCH_PROVIDERS[se_code]
+    results: list[SearchResult] = se.search(search_query)
+    
+    # Scrape each site in parallel
+    scrape_responses = []
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_search_result = {executor.submit(scrape, result.url, just_text=True, reduce_whitespace=True): result for result in results}
+        for future in as_completed(future_to_search_result):
+            res = future_to_search_result[future]
+            try:
+                data = future.result()
+                if data:
+                    if 'title' not in data:
+                        data['title'] = res.name
+                    data['url'] = res.url
+                    scrape_responses.append(data)
+            except Exception as exc:
+                print('Exception in get_web_chunks: %r generated an exception: %s' % (res.url, exc))
+    
+    scrape_responses = scrape_responses[:max_n]
+    
+    if not len(scrape_responses):
+        return []
+    
+    per_source_max_tokens = available_context // len(scrape_responses)
+
+    # Process and divide each source
+    chunks = []
+    for scrape_result in scrape_responses:
+        text = ""
+        if scrape_result['success'] and scrape_result['ext'] == 'txt':
+            text = scrape_result['data']
+            # Instead of simply truncating, we do the middle of the page, which is better for websites (nav bar + footer ...)
+            # Uses len for speed
+            truncate_chars = ntokens_to_nchars(per_source_max_tokens)
+            opening_i = max((len(text) // 2) - truncate_chars // 2, 0)
+            ending_i = truncate_chars + opening_i
+            text = text[opening_i:ending_i]
+        elif scrape_result['success'] and scrape_result['ext'] == 'pdf':
+            pdf_data = scrape_result['data']
+            cum_toks = 0
+            try:
+                tmp = tempfile.NamedTemporaryFile(delete=False)
+                tmp.write(pdf_data)
+                loader = get_loader('pdf', tmp.name)
+                raw_chunks = loader.load_and_split(TextSplitter(max_chunk_size=ntokens_to_nchars(250), length_function=len))
+                for raw_chunk in raw_chunks:
+                    raw_chunk: RawChunk
+                    ntoks = get_token_estimate(raw_chunk.page_content)  # very accurate estimate
+                    if cum_toks + ntoks > per_source_max_tokens:
+                        break
+                    text += raw_chunk.page_content
+                    cum_toks += ntoks
+            finally:
+                tmp.close()
+        else:
+            continue
+        
+        url = scrape_result['url']
 
         image = {'image': scrape_result['image_url']} if 'image_url' in scrape_result else {}
         favicon = {'favicon': scrape_result['favicon']} if 'favicon' in scrape_result else {}
         chunk = WebChunk(0, f"{scrape_result['title']} ({url})", text, url, **image, **favicon)
-        return chunk
-    elif scrape_result['success'] and scrape_result['ext'] == 'pdf':
-        # TODO
-        return None
-    else:
-        return None
+        chunks.append(chunk)
 
-
-def get_web_chunks(user: User, search_query, max_page_chars=3000, max_n=5):
-    se_code = get_user_search_engine_code(user)
-    se: SearchEngine = SEARCH_PROVIDERS[se_code]
-    results: list[SearchResult] = se.search(search_query)
-    chunks = []
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(scrape_and_chunk, result.url, truncate_chars=max_page_chars): result.url for result in results}
-        for future in as_completed(future_to_url):
-            url = future_to_url[future]
-            try:
-                data = future.result()
-                if data:
-                    chunks.append(data)
-            except Exception as exc:
-                print('Exception in get_web_chunks: %r generated an exception: %s' % (url, exc))
-    
-    return chunks[:max_n]
+    return chunks
