@@ -24,6 +24,11 @@ class OpenAIEmbed(Embed):
 
     def embed(self, texts):
         texts = [y.replace("\n", " ") for y in texts]
+        texts = [x for x in texts if x]
+        print(texts)
+        print("THOSE WERE TEXTS")
+        print(type(texts))
+        texts
         return [y.embedding for y in openai_client.embeddings.create(input=texts, model=self.openai_code).data]
 
 

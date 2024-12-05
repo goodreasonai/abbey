@@ -89,9 +89,12 @@ class TextSplitter():
                 else:
                     final_chunks.append(max_chunk)
             
+            final_chunks = [x for x in final_chunks if x]
             return final_chunks
         
         if self.length_function(txt) <= self.max_chunk_size:
+            if not txt:
+                return []
             return [txt]
         
         return recursive_split(txt, separators)
