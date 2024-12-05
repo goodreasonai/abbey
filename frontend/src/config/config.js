@@ -9,7 +9,7 @@ import Babel from '../../public/random/babel.jpg'
 import Library from '../../public/random/Library.png'
 import RhodesExpanded from '../../public/random/RhodesExpanded.webp'
 
-export const FRONTEND_VERSION = '0.12.6'
+export const FRONTEND_VERSION = '0.12.7'
 
 /*
 

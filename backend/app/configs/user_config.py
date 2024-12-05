@@ -21,7 +21,7 @@ NOTE: Variables are organized by how likely a user would consider changing the v
 
 """
 
-BACKEND_VERSION = '0.12.6'  # Viewable when a user goes to the root "/" endpoint of the backend
+BACKEND_VERSION = '0.12.7'  # Viewable when a user goes to the root "/" endpoint of the backend
 
 AVAILABLE_PROVIDERS = {
     'openai': True if OPENAI_API_KEY else False,
