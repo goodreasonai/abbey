@@ -16,7 +16,7 @@ from .configs.user_config import (
     SUBSCRIPTION_CODE_TO_MODEL_OPTIONS, DEFAULT_CHAT_MODEL, DEFAULT_SEARCH_ENGINE,
     SUBSCRIPTION_CODE_TO_TEMPLATES, SUBSCRIPTION_CODE_TO_TTS_OPTIONS,
     SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS, DISABLE_OCR, LM_ORDER, DEFAULT_TTS_MODEL, 
-    get_available, AVAILABLE_LMS, AVAILABLE_TTS, AVAILABLE_SEARCH
+    get_available, AVAILABLE_LMS, AVAILABLE_TTS, AVAILABLE_SEARCH, DEFAULT_SUBSCRIPTION_CODE
 )
 from .pay import get_user_main_sub_code, Protocol, get_protocol_by_code, get_product, get_products
 import pytz
@@ -37,7 +37,10 @@ def get_user_templates(user: User, db=None):
         else:
             return OVERRIDE_ALLOWED_TEMPLATES
     prod: str = get_user_main_sub_code(user, db=db)
-    lst = SUBSCRIPTION_CODE_TO_TEMPLATES[prod]
+    if prod in SUBSCRIPTION_CODE_TO_TEMPLATES:
+        lst = SUBSCRIPTION_CODE_TO_TEMPLATES[prod]
+    else:
+        lst = SUBSCRIPTION_CODE_TO_TEMPLATES[DEFAULT_SUBSCRIPTION_CODE]
     return lst
 
 
@@ -52,21 +55,30 @@ def get_user_ocr_option(user: User, db=None):
 @needs_db
 def get_user_chat_model_options_codes(user: User, db=None):
     code = get_user_main_sub_code(user, db=db)
-    lst = SUBSCRIPTION_CODE_TO_MODEL_OPTIONS[code]
+    if code in SUBSCRIPTION_CODE_TO_MODEL_OPTIONS:
+        lst = SUBSCRIPTION_CODE_TO_MODEL_OPTIONS[code]
+    else:
+        lst = SUBSCRIPTION_CODE_TO_MODEL_OPTIONS[DEFAULT_SUBSCRIPTION_CODE]
     return lst
 
 
 @needs_db
 def get_user_tts_options_codes(user: User, db=None):
     code = get_user_main_sub_code(user, db=db)
-    lst = SUBSCRIPTION_CODE_TO_TTS_OPTIONS[code]
+    if code in SUBSCRIPTION_CODE_TO_TTS_OPTIONS:
+        lst = SUBSCRIPTION_CODE_TO_TTS_OPTIONS[code]
+    else:
+        lst = SUBSCRIPTION_CODE_TO_TTS_OPTIONS[DEFAULT_SUBSCRIPTION_CODE]
     return lst
 
 
 @needs_db
 def get_user_search_options_codes(user: User, db=None):
     code = get_user_main_sub_code(user, db=db)
-    lst = SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS[code]
+    if code in SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS:
+        lst = SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS[code]
+    else:
+        lst = SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS[DEFAULT_SUBSCRIPTION_CODE]
     return lst
 
 

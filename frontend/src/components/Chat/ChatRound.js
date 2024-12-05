@@ -25,7 +25,7 @@ import MinimizeIcon from '../../../public/icons/MinimizeIcon.png'
 export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
                                     isLoading, suggestQuestions, suggestions, isAnswering, detached, userTextEnter,
                                     removeChat, syntheticId, toggleDetached, roundStates, setRoundStates,
-                                    invertColor, setRandomness, suggestLoadingState, suggestQuestion,
+                                    invertColor, suggestLoadingState, suggestQuestion,
                                     showFindMore, toggleUseWeb, index, onSourceButtonClick=undefined, setUserChatModel,
                                     setImages, selectedModel, extraButtons, goToPrevState, userModelLoadingState, userModelOptions,
                                     newVersion, allowOCR, scrollToBottom, selectedSearchEngine, userSearchEngineLoadingState, userSearchEngineOptions, setUserSearchEngine, ...props }){
@@ -228,7 +228,6 @@ export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
                                 toggleDetached={toggleDetached}
                                 dropdownGoesUp={false}
                                 setImages={setImages}
-                                setRandomness={setRandomness}
                             />
                         ) : ""}
                         <div style={{'display': 'flex'}}>

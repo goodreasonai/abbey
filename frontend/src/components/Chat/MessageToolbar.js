@@ -16,7 +16,7 @@ import { getModKey } from "@/utils/keyboard"
 import { DISABLE_WEB } from "@/config/config"
 
 
-export default function MessageToolbar({ detached, selectedModel, selectedSearchEngine, item, canEdit, isLoading, isAnswering, toggleUseWeb, suggestQuestion, suggestLoadingState, removeChat, setImages, setRandomness, toggleDetached, userModelLoadingState, userModelOptions, setUserChatModel, userSearchEngineLoadingState, userSearchEngineOptions, setUserSearchEngine, dropdownGoesUp, showUseWebTooltip }) {
+export default function MessageToolbar({ detached, selectedModel, selectedSearchEngine, item, canEdit, isLoading, isAnswering, toggleUseWeb, suggestQuestion, suggestLoadingState, removeChat, setImages, toggleDetached, userModelLoadingState, userModelOptions, setUserChatModel, userSearchEngineLoadingState, userSearchEngineOptions, setUserSearchEngine, dropdownGoesUp, showUseWebTooltip }) {
 
     const fileRef = useRef()
 
@@ -124,23 +124,6 @@ export default function MessageToolbar({ detached, selectedModel, selectedSearch
     };
 
 
-    let randomnessArea = (
-        <div style={{'display': 'flex', 'alignItems': 'center', 'flexWrap': 'wrap', 'gap': '5px', 'alignItems': 'center'}}>
-            <div className={styles.detachButton}>
-                Randomness:
-            </div>
-            <div style={{'flex': '1', 'display': 'flex', 'alignItems': 'center'}}>
-                <div style={{'marginRight': '10px', 'maxWidth': '300px', 'minWidth': '100px', 'display': 'flex', 'alignItems': 'center'}}>
-                    <RangeSlider
-                        value={
-                            item.temperature !== undefined ? item.temperature * 100 : 50
-                        }
-                        onChange={(x) => setRandomness(x)
-                    }/>
-                </div>
-            </div>
-        </div>
-    )
     let suggestQuestionArea = (
         <div onClick={suggestQuestion}>
             {suggestLoadingState == 1 ? (
@@ -165,8 +148,8 @@ export default function MessageToolbar({ detached, selectedModel, selectedSearch
         </div>
     )
 
-    // In detached chat: show only randomness + web search
-    // If not detached chat: Show suggest + dropdown 
+    // In detached chat: show only web search
+    // If not detached chat: Show suggest + dropdown
     return (
         <div>
             {detached ? (
@@ -195,7 +178,6 @@ export default function MessageToolbar({ detached, selectedModel, selectedSearch
                         rightAlign={true}
                         closeOnSelect={false}
                         options={[
-                            {'value': randomnessArea},
                             ...(!DISABLE_WEB ? [{'value': webSearchArea, 'onClick': toggleUseWeb}] : []),
                             {'value': detachedArea, 'onClick': toggleDetached},
                         ]}

@@ -204,7 +204,7 @@ export default function Chat({id,
             'user_time': userTime,
             'batched': false,
             'streaming': true,
-            'temperature': roundStates[qIndex].temperature === undefined ? .5 : roundStates[qIndex].temperature,
+            'temperature': roundStates[qIndex].temperature === undefined ? .5 : roundStates[qIndex].temperature,  // no way currently to set temperature with the removal of randomness slider
             'detached': (roundStates[qIndex].detached || detached) ? true : false,
             'use_web': roundStates[qIndex].useWeb ? true : false,
             'exclude': exclude,
@@ -367,14 +367,6 @@ export default function Chat({id,
         });
     }
 
-    function setRandomness(x, i) {
-        setRoundStates((prev) => {
-            let cpy = JSON.parse(JSON.stringify(prev));
-            cpy[i].temperature = (x / 100);  // number b/w 0 and 1
-            return cpy
-        })
-    }
-
     function setImages(x, i) {
         setRoundStates((prev) => {
             let cpy = JSON.parse(JSON.stringify(prev));
@@ -469,7 +461,6 @@ export default function Chat({id,
                 userTextEnter={(x) => userTextEnter(x, i)}
                 removeChat={() => removeChat(i)}
                 showFindMore={showFindMore}
-                setRandomness={(x) => setRandomness(x, i)}
                 setImages={(x) => setImages(x, i)}
                 toggleDetached={() => toggleDetached(i)}
                 toggleUseWeb={() => toggleUseWeb(i)}
@@ -999,7 +990,6 @@ export default function Chat({id,
 
                                                 suggestQuestion={suggestBottomQuestion}
                                                 suggestLoadingState={bottomSuggestLoadingState}
-                                                setRandomness={(x) => setBottomTextItem({...bottomTextItem, 'temperature': (x / 100)})}
                                                 toggleDetached={() => setBottomTextItem({...bottomTextItem, 'detached': !bottomTextItem?.detached})}
                                             />
                                         </div>
