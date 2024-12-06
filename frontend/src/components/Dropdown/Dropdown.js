@@ -4,7 +4,7 @@ import ReactDOM from "react-dom";
 
 
 // options = of the form [{'value': (...), 'onClick': (...)}, ...]
-export default function Dropdown({className, options, value, optionsStyle={}, rightAlign=false, initialButtonStyle={}, openCallback=() => {}, closeCallback=() => {}, closeOnSelect=true, direction="down", forceClose, setForceClose, noShadow=false, ...props}) {
+export default function Dropdown({className, options, value, optionsStyle={}, rightAlign=false, initialButtonStyle={}, openCallback=() => {}, closeCallback=() => {}, closeOnSelect=true, direction="down", forceClose, setForceClose, stayOpen, noShadow=false, ...props}) {
     const [selected, setSelected] = useState(false);
     const dropdownRef = useRef(null); // Added this line to create a reference to the dropdown
     const dropdownOptionsContainerRef = useRef(null)
@@ -80,7 +80,9 @@ export default function Dropdown({className, options, value, optionsStyle={}, ri
     useEffect(() => {
         function handleClickOutside(event) {
             if (dropdownOptionsContainerRef.current && !dropdownOptionsContainerRef.current.contains(event.target) && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                dropDropdown()
+                if (!stayOpen){
+                    dropDropdown()
+                }
             }
         }
         if (selected){
@@ -93,7 +95,7 @@ export default function Dropdown({className, options, value, optionsStyle={}, ri
             };
         }
         
-    }, [dropdownRef, selected, dropdownOptionsContainerRef]);
+    }, [dropdownRef, selected, dropdownOptionsContainerRef, stayOpen]);
 
     useEffect(() => {
         if (!setForceClose){

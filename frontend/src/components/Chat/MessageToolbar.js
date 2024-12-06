@@ -7,7 +7,7 @@ import RangeSlider from "../form/RangeSlider"
 import Loading from "../Loading/Loading"
 import Tooltip from "../Tooltip/Tooltip"
 import Info from "../Info/Info"
-import { useRef } from "react"
+import { useRef, useState } from "react"
 import DiceIcon from '../../../public/icons/DiceIcon.png'
 import RemoveIcon from '../../../public/icons/RemoveIcon.png'
 import MenuIcon from '../../../public/icons/MenuIcon.png'
@@ -19,6 +19,7 @@ import { DISABLE_WEB } from "@/config/config"
 export default function MessageToolbar({ detached, selectedModel, selectedSearchEngine, item, canEdit, isLoading, isAnswering, toggleUseWeb, suggestQuestion, suggestLoadingState, removeChat, setImages, toggleDetached, userModelLoadingState, userModelOptions, setUserChatModel, userSearchEngineLoadingState, userSearchEngineOptions, setUserSearchEngine, dropdownGoesUp, showUseWebTooltip }) {
 
     const fileRef = useRef()
+    const [webDropdownIsOpen, setWebDropdownIsOpen] = useState(false)  // used to fix problems with dropdown inside dropdown
 
     let modelsDropdown = ""
     if (!selectedModel || !selectedModel.name){
@@ -44,7 +45,8 @@ export default function MessageToolbar({ detached, selectedModel, selectedSearch
         modelsDropdown = ("Can't use chat")
     }
 
-    let webSearchCheckbox = <FakeCheckbox value={item.useWeb ? true : false} checkedOpacity="1" iconSize={15} setValue={detached ? toggleUseWeb : ()=>{}} />
+    const useSimpleWebSelector = !(userSearchEngineOptions?.length > 1)
+    let webSearchCheckbox = <FakeCheckbox value={item.useWeb ? true : false} checkedOpacity="1" iconSize={15} setValue={!detached && useSimpleWebSelector ? ()=>{} : toggleUseWeb} />
     let webSearchArea = ""
     if (!selectedSearchEngine || !selectedSearchEngine.name){
         webSearchArea = ""
@@ -58,13 +60,16 @@ export default function MessageToolbar({ detached, selectedModel, selectedSearch
         webSearchArea = (
             <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '5px'}}>
                 <div className={styles.detachButton}>
-                    {userSearchEngineOptions?.length === 1 ? ("Use Web") : (
+                    {useSimpleWebSelector ? ("Use Web") : (
                         <LightDropdown
                             style={{'fontSize': '.9rem'}}
                             value={(selectedSearchEngine?.name)}
                             optionsStyle={{'fontSize': '.9rem'}}
                             options={userSearchEngineOptions.map((item) => {return {'value': item.name, 'onClick': ()=>{setUserSearchEngine(item)}, 'unavailable': !item.available}})}
                             direction={dropdownGoesUp ? "up" : 'down'}
+                            openCallback={() => setWebDropdownIsOpen(true)}
+                            closeCallback={() => setWebDropdownIsOpen(false)}
+                            rightAlign={!detached}
                         />
                     )}
                 </div>
@@ -175,10 +180,11 @@ export default function MessageToolbar({ detached, selectedModel, selectedSearch
                                 {item.useWeb || item.detached ? greenDot : ""}
                             </div>
                         }
+                        stayOpen={webDropdownIsOpen}
                         rightAlign={true}
                         closeOnSelect={false}
                         options={[
-                            ...(!DISABLE_WEB ? [{'value': webSearchArea, 'onClick': toggleUseWeb}] : []),
+                            ...(!DISABLE_WEB ? [{'value': webSearchArea, 'onClick': ()=>{useSimpleWebSelector && toggleUseWeb()}}] : []),
                             {'value': detachedArea, 'onClick': toggleDetached},
                         ]}
                         direction={dropdownGoesUp ? 'up' : 'down'}
