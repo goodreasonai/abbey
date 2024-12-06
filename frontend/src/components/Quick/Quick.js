@@ -304,10 +304,10 @@ export default function Quick({ ...props }) {
     return (
         <>
             {!isLoading || !selectedItem?.noShow ? (
-                <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center', 'fontSize': '.9rem'}}>
+                <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
                     <Dropdown
                         value={(
-                            <div style={{'display': 'flex', 'gap': '5px', 'alignItems': 'center'}}>
+                            <div style={{'display': 'flex', 'gap': '5px', 'alignItems': 'center', 'fontSize': '.9rem'}}>
                                 <div>
                                     Quick
                                 </div>
@@ -318,7 +318,7 @@ export default function Quick({ ...props }) {
                         )}
                         options={quickOptions}
                         closeOnSelect={true}
-                        optionsStyle={{'minWidth': '150px'}}
+                        optionsStyle={{'minWidth': '150px', 'fontSize': '.9rem'}}
                         rightAlign={true}
                         initialButtonStyle={{'padding': '5px', 'paddingLeft': '10px', 'paddingRight': '10px'}}
                     />

@@ -170,7 +170,7 @@ export default function MessageToolbar({ detached, selectedModel, selectedSearch
                     <Dropdown
                         initialButtonStyle={{'all': 'unset', 'display': 'flex', 'alignItems': 'center'}}
                         value={
-                            <div style={{'display': 'flex', 'alignItems': 'center', 'position': 'relative'}}>
+                            <div style={{'display': 'flex', 'alignItems': 'center', 'position': 'relative', 'cursor': 'pointer'}}>
                                 <MyImage src={MenuIcon} width={17} height={17} alt={"Menu"} />
                                 {item.useWeb || item.detached ? greenDot : ""}
                             </div>

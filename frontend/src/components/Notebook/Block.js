@@ -136,7 +136,7 @@ const Block = memo(({ item, i, isLast, isFirst, deleteBlock, moveBlock, reply, s
                             <Dropdown
                                 initialButtonStyle={{'all': 'unset', 'display': 'flex', 'alignItems': 'center'}}
                                 value={(
-                                    <div className={styles.blockOptions}>
+                                    <div className={styles.blockOptions} style={{'cursor': 'pointer'}}>
                                         <MyImage src={MoreNotSquareIcon} height={15} alt={"options"} />
                                     </div>
                                 )}

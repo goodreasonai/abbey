@@ -386,10 +386,10 @@ export default function Section({fullState, setFullState, userValue, setUserValu
                 value={(
                     <MyImage src={AddIcon} width={20} height={20} alt="Add" />
                 )}
-                initialButtonStyle={{'backgroundColor': 'unset', 'padding': '0px'}}
+                initialButtonStyle={{'backgroundColor': 'unset', 'padding': '0px', 'box-shadow': 'unset'}}
                 rightAlign={true}
                 title={"Insert"}
-                optionsStyle={{'width': '150px', 'backgroundColor': 'unset', 'padding': '2px', 'fontSize': '.9rem'}}
+                optionsStyle={{'width': '150px', 'fontSize': '.9rem'}}
                 options={[
                     {'value': 'Insert Above', 'onClick': ()=>{insert('above', node, nodes, setNodes, roots, setRoots)}},
                     {'value': 'Insert Below', 'onClick': ()=>{insert('below', node, nodes, setNodes, roots, setRoots)}},

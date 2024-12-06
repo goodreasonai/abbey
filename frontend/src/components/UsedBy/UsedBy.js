@@ -59,7 +59,9 @@ export default function UsedBy({ assetId, label="", ...props }) {
             options={options}
             initialButtonStyle={{'fontSize': '.8rem', 'paddingTop': '3px', 'paddingBottom': '3px'}}
             optionsStyle={{'minWidth': '200px'}}
-            {...props} />
+            rightAlign={true}
+            {...props}
+        />
     )
 
 }
