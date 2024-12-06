@@ -115,6 +115,9 @@ def gen_searxng_engines():
     
     enabled = [SearXNG()]
     
+    if not SEARXNG_OPTIONS:
+        return enabled
+    
     searxng_options = json.loads(SEARXNG_OPTIONS)
     if not len(SEARXNG_OPTIONS):
         return enabled

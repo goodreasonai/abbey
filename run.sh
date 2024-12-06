@@ -509,7 +509,9 @@ export_frontend_env() {
         fi
 
         if [ "$USE_WEB" = "$FALSE_VALUE" ]; then
-            echo "NEXT_PUBLIC_DISABLE_WEB=1"
+            if [ "$USE_SEARXNG" = "$FALSE_VALUE" ]; then
+                echo "NEXT_PUBLIC_DISABLE_WEB=1"
+            fi
         fi
 
         # While clerk is available in the config, there needs to be non blank (even if non functional) keys.
