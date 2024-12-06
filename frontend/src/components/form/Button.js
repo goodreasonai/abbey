@@ -1,6 +1,6 @@
 import styles from './Form.module.css'
 
-export default function Button({ value, type, className, onClick, disabled=false, ...props}){
+export default function Button({ value, type, className, onClick, disabled=false, noShadow=false, ...props}){
 
     // When making the button a submit button
     let realType = "button";
@@ -9,6 +9,9 @@ export default function Button({ value, type, className, onClick, disabled=false
     }
 
     let realClass = disabled ? `${styles.disabledButton} ${className}` : `${styles.button} ${className}`
+    if (!noShadow){
+        realClass += ` ${styles.hasShadow}`
+    }
 
     function realOnClick(e){
         if (disabled){

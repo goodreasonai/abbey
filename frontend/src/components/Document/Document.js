@@ -24,7 +24,7 @@ import EditIcon from '../../../public/icons/EditIcon.png'
 import CircleCheckIcon from '../../../public/icons/CircleCheckIcon.png'
 import Tooltip from "../Tooltip/Tooltip";
 import { useIsMobile } from "@/utils/mobile";
-import { DISABLE_OCR } from "@/config/config";
+import { DISABLE_OCR, HIDE_TTS } from "@/config/config";
 import DocToolbar, { defaultButtonOptions } from "./DocToolbar";
 import TwoPanel from "../TwoPanel/TwoPanel";
 import SmartHeightWrapper from "../SmartHeightWrapper/SmartHeightWrapper";
@@ -192,7 +192,7 @@ export default function Document({ manifestRow, objectSrc, mimetype, canEdit, sh
         'scan': {'disabled': mimetype != 'application/pdf'},
         'search': {'disabled': false},
         'quiz': {'disabled': !showQuiz},
-        'audio': {'disabled': !showRevise},
+        'audio': {'disabled': !showRevise || HIDE_TTS},
     }
 
     const showDocToolbar = !NO_DOC_TOP_MIMETYPES.includes(mimetype)

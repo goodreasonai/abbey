@@ -7,7 +7,7 @@ from .batch_and_stream_lm import stream_batched_lm, stream_progress_batched_lm
 from .prompts.retrieval_prompts import guess_answer_prompt, guess_answer_prompt_backup
 import json
 import sys
-from .integrations.lm import LM, LM_PROVIDERS
+from .integrations.lm import LM, LM_PROVIDERS, get_safe_retrieval_context_length
 from .integrations.file_loaders import get_loader, TextSplitter
 from .utils import make_json_serializable, ntokens_to_nchars, get_extension_from_path
 import tempfile
@@ -226,8 +226,8 @@ class Retriever():
 
 
     # Get as many chunks as possible given the size of the model
-    # Safety ratio = % of context window is ceiling for token estimate
-    def max_chunks(self, lm: LM, context="", safety_ratio=.75, use_ends=False):
+    # Safety ratio = % of context length that is the max tokens used
+    def max_chunks(self, lm: LM, context="", safe_context_length=None, use_ends=False):
         all_chunks = []
         chunk_lengths = []
         for chunk in self.get_chunks():
@@ -236,7 +236,7 @@ class Retriever():
             chunk_length = get_token_estimate(chunk.txt)
             chunk_lengths.append(chunk_length)
         n_tokens = sum(chunk_lengths)
-        len_limit = lm.context_length * safety_ratio
+        len_limit = safe_context_length if safe_context_length else get_safe_retrieval_context_length(lm)
         if n_tokens > len_limit:
             if use_ends:
                 # Use the beginning and end

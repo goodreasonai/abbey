@@ -1,14 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
 import styles from './Dropdown.module.css';
+import ReactDOM from "react-dom";
 
 
 // options = of the form [{'value': (...), 'onClick': (...)}, ...]
-export default function Dropdown({className, options, value, optionsStyle={}, rightAlign=false, initialButtonStyle={}, openCallback=() => {}, closeCallback=() => {}, closeOnSelect=true, direction="down", forceClose, setForceClose, ...props}) {
+export default function Dropdown({className, options, value, optionsStyle={}, rightAlign=false, initialButtonStyle={}, openCallback=() => {}, closeCallback=() => {}, closeOnSelect=true, direction="down", forceClose, setForceClose, stayOpen, noShadow=false, ...props}) {
     const [selected, setSelected] = useState(false);
     const dropdownRef = useRef(null); // Added this line to create a reference to the dropdown
     const dropdownOptionsContainerRef = useRef(null)
+    const initialButtonRef = useRef(null)
+
+    const [coords, setCoords] = useState({}); // takes current button coordinates
 
     const realClassName = className ? `${styles.dropdown} ${className}` : `${styles.dropdown}`;
+
+    function dropDropdown(){
+        setSelected(false)
+        setCoords({})
+    }
 
     useEffect(() => {
         if (selected){
@@ -18,6 +27,25 @@ export default function Dropdown({className, options, value, optionsStyle={}, ri
             closeCallback()
         }
     }, [selected])
+
+    // Keeps track of position while the dropdown is open
+    useEffect(() => {
+        const updatePosition = () => {
+            if (dropdownRef.current && selected) {
+                const rect = dropdownRef.current.getBoundingClientRect();
+                setCoords({ y: rect.top, x: rect.left, height: rect.height, width: rect.width });
+            }
+        };
+        const observer = new MutationObserver(updatePosition);
+        observer.observe(document.body, { childList: true, subtree: true });    
+        window.addEventListener('resize', updatePosition);
+        window.addEventListener('scroll', updatePosition);
+        return () => {
+          observer.disconnect();
+          window.removeEventListener('resize', updatePosition);
+          window.removeEventListener('scroll', updatePosition);
+        };
+    }, [selected, dropdownRef]);
 
     function makeOptions(item, i){
 
@@ -51,8 +79,10 @@ export default function Dropdown({className, options, value, optionsStyle={}, ri
     // This effect runs once on component mount and sets up the event listener for clicks
     useEffect(() => {
         function handleClickOutside(event) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setSelected(false);
+            if (dropdownOptionsContainerRef.current && !dropdownOptionsContainerRef.current.contains(event.target) && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                if (!stayOpen){
+                    dropDropdown()
+                }
             }
         }
         if (selected){
@@ -65,7 +95,7 @@ export default function Dropdown({className, options, value, optionsStyle={}, ri
             };
         }
         
-    }, [dropdownRef, selected]);
+    }, [dropdownRef, selected, dropdownOptionsContainerRef, stayOpen]);
 
     useEffect(() => {
         if (!setForceClose){
@@ -81,44 +111,48 @@ export default function Dropdown({className, options, value, optionsStyle={}, ri
             return
         }
         if (forceClose){
-            setSelected(false)
+            dropDropdown()
         }
     }, [forceClose, setSelected])
 
-    useEffect(() => {
-        if (!rightAlign && selected && dropdownOptionsContainerRef.current) {
-            const rect = dropdownOptionsContainerRef.current.getBoundingClientRect();
-            try {
-                if (rect.right > window.innerWidth) {
-                    dropdownOptionsContainerRef.current.style.right = '0px';
-                } else {
-                    dropdownOptionsContainerRef.current.style.right = '';
-                }
-            }
-            catch(e) {
-                // probably couldn't get window
-            }
+    function onClickDropdown(){
+        const rect = initialButtonRef.current.getBoundingClientRect();
+        if (selected){
+            dropDropdown()
         }
-    }, [selected]);
+        else {
+            setCoords({
+                x: rect.x,
+                y: rect.y,
+                height: rect.height,
+                width: rect.width
+            });
+            setSelected(true)
+        }
+    }
 
     return (
         <div ref={dropdownRef} className={realClassName} {...props}>
-            <div onClick={() => setSelected(!selected)} className={styles.initialButton} style={initialButtonStyle}>
+            <div ref={initialButtonRef} onClick={onClickDropdown} className={`${styles.initialButton} ${!noShadow ? styles.hasShadow : ''}`} style={{'cursor': 'pointer', ...initialButtonStyle}}>
                 {value}
             </div>
             {
-                selected ? (
+                selected && ReactDOM.createPortal(
                     <div
                         ref={dropdownOptionsContainerRef}
                         style={{
-                        'position': 'absolute',
-                            ...(rightAlign ? {'right': '0'} : {}),
-                            ...(direction == 'up' ? {'transform': 'translateY(-100%)', 'top': '0px'} : {}),
-                            ...optionsStyle}}
+                            'position': 'fixed',
+                            'top': direction === 'up' ? coords.y : coords.y + coords.height,
+                            'left': rightAlign ? coords.x + coords.width : coords.x,
+                            'transform': `translateY(${direction === 'up' ? '-100%' : '0%'}) translateX(${rightAlign ? '-100%' : '0px'})`,
+                            'borderRadius': 'var(--medium-border-radius)',
+                            'cursor': 'pointer',
+                            ...optionsStyle
+                        }}
                         className={`${styles.dropdownOptionsContainer}`}>
                         {selectables}
                     </div>
-                ) : ""
+                , document.body)
             }
         </div>
     );

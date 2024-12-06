@@ -18,6 +18,8 @@ SMTP_PASSWORD=""
 
 MYSQL_ROOT_PASSWORD=""
 
+USE_TTS="$FALSE_VALUE"
+
 USE_OPENAI=""
 OPENAI_KEY=""
 
@@ -30,6 +32,7 @@ USE_OPENAI_COMPATIBLE=""
 OPENAI_COMPATIBLE_URL=""
 OPENAI_COMPATIBLE_LMS="[]"
 OPENAI_COMPATIBLE_EMBEDS="[]"
+OPENAI_COMPATIBLE_TTS="[]"
 OPENAI_COMPATIBLE_KEY=""
 
 USE_ANTHROPIC=""
@@ -44,6 +47,9 @@ ELEVEN_LABS_KEY=""
 
 USE_WEB=""
 BING_KEY=""
+
+USE_SEARXNG=""
+SEARXNG_URL=""
 
 USE_GOOGLE_AUTH=""
 GOOGLE_AUTH_CLIENT_ID=""
@@ -242,6 +248,7 @@ configure_ai() {
     echo "Note that you will need to configure at least one language model and one embeddings model."
     if ask_yes_no "Would you like to configure the OpenAI API?"; then
         USE_OPENAI=$TRUE_VALUE
+        USE_TTS=$TRUE_VALUE
         OPENAI_KEY=$(ask_credential "OK, please provide an OpenAI API key")
     else
         USE_OPENAI=$FALSE_VALUE
@@ -314,6 +321,13 @@ configure_ai() {
             model_entry="{\"code\": \"$model_code\"}"
             OPENAI_COMPATIBLE_EMBEDS=$(add_model_to_json "$OPENAI_COMPATIBLE_EMBEDS" "$model_entry")
         done
+
+        # Collect TTS 
+        while ask_yes_no "Do you want to add an API text-to-speech model?"; do
+            model_code=$(ask_credential "Enter voice code (i.e., 'onyx')")
+            model_entry="{\"voice\": \"$model_code\"}"
+            OPENAI_COMPATIBLE_TTS=$(add_model_to_json "$OPENAI_COMPATIBLE_TTS" "$model_entry")
+        done
     else
         USE_OPENAI_COMPATIBLE=$FALSE_VALUE
     fi
@@ -335,6 +349,7 @@ configure_ai() {
 
     if ask_yes_no "Would you like to configure Eleven Labs for text-to-speech?"; then
         USE_ELEVEN_LABS=$TRUE_VALUE
+        USE_TTS=$TRUE_VALUE
         ELEVEN_LABS_KEY=$(ask_credential "OK, please provide an Eleven Labs API key")
     else
         USE_ELEVEN_LABS=$FALSE_VALUE
@@ -351,6 +366,14 @@ configure_search_engine() {
         BING_KEY=$(ask_credential "OK, please provide a Bing API key")
     else
         USE_WEB=$FALSE_VALUE
+    fi
+
+    if ask_yes_no "Would you like to connect a SearXNG instance (note: must have format json enabled)?"; then
+        USE_SEARXNG=$TRUE_VALUE
+        echo "If you're running SearXNG on the same machine as Abbey, it's probably available at http://host.docker.internal:8080. If you're running it on another machine, it might be https://example.com or something."
+        SEARXNG_URL=$(ask_credential "OK, please provide the URL")
+    else
+        USE_SEARXNG=$FALSE_VALUE
     fi
 }
 
@@ -404,6 +427,10 @@ export_backend_env() {
             echo "BING_API_KEY=\"$BING_KEY\""
         fi
 
+        if [ "$USE_SEARXNG" = "$TRUE_VALUE" ]; then
+            echo "SEARXNG_URL=\"$SEARXNG_URL\""
+        fi
+
         if [ "$USE_OLLAMA" = "$TRUE_VALUE" ]; then
             echo "OLLAMA_URL='$OLLAMA_URL'"
             echo "OLLAMA_LMS='$OLLAMA_LMS'"
@@ -414,6 +441,7 @@ export_backend_env() {
             echo "OPENAI_COMPATIBLE_URL='$OPENAI_COMPATIBLE_URL'"
             echo "OPENAI_COMPATIBLE_LMS='$OPENAI_COMPATIBLE_LMS'"
             echo "OPENAI_COMPATIBLE_EMBEDS='$OPENAI_COMPATIBLE_EMBEDS'"
+            echo "OPENAI_COMPATIBLE_TTS='$OPENAI_COMPATIBLE_TTS'"
             echo "OPENAI_COMPATIBLE_KEY='$OPENAI_COMPATIBLE_KEY'"
         fi
 
@@ -456,6 +484,10 @@ export_frontend_env() {
             echo "KEYCLOAK_SECRET=\"$KEYCLOAK_CLIENT_SECRET\""
             echo "KEYCLOAK_PUBLIC_URL=\"$KEYCLOAK_HOST\""
         fi
+        
+        if [ "$USE_TTS" = "$FALSE_VALUE" ]; then
+            echo "NEXT_PUBLIC_HIDE_TTS=1"
+        fi
 
         echo "CUSTOM_AUTH_DB_HOST=mysql"  # Hard coded into the docker compose
         echo "CUSTOM_AUTH_DB_USER=root"  # Perhaps not good practice?
@@ -477,7 +509,9 @@ export_frontend_env() {
         fi
 
         if [ "$USE_WEB" = "$FALSE_VALUE" ]; then
-            echo "NEXT_PUBLIC_DISABLE_WEB=1"
+            if [ "$USE_SEARXNG" = "$FALSE_VALUE" ]; then
+                echo "NEXT_PUBLIC_DISABLE_WEB=1"
+            fi
         fi
 
         # While clerk is available in the config, there needs to be non blank (even if non functional) keys.

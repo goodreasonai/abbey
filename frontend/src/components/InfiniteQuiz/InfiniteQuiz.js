@@ -577,7 +577,7 @@ export default function InfiniteQuiz({ manifestRow, canEdit, ...props}) {
                 <Dropdown
                     initialButtonStyle={{'all': 'unset', 'display': 'flex', 'alignItems': 'center'}}
                     value={
-                        <MyImage src={MenuIcon} width={25} height={25} alt={"Menu"}/>
+                        <MyImage style={{'cursor': 'pointer'}} src={MenuIcon} width={25} height={25} alt={"Menu"}/>
                     }
                     rightAlign={true}
                     closeOnSelect={true}

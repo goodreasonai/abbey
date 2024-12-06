@@ -5,6 +5,8 @@ from flask import (
     Blueprint,
     request,
 )
+import requests
+from bs4 import BeautifulSoup
 from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound
 from ..asset_actions import has_asset_title_been_updated, replace_asset_resource
 import re
@@ -41,8 +43,16 @@ def get_youtube_video_id(url):
 
 
 def get_youtube_video_title_and_author(url):
+    request_url = f"https://youtube.com/oembed?url={url}&format=json"
+    result = requests.get(request_url, proxies=get_proxies())
+    my_json = result.json()
+    return my_json['title'], my_json['author_name']
+
+    # The following used to work except pytube is having issues... literally a million issues filed in their repo about this not working. (11/30/24)
+    """
     yt = YouTube(url, proxies=get_proxies())
     return yt.title, yt.author
+    """
 
 
 # Returns string of video transcription

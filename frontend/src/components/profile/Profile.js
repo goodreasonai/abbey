@@ -13,7 +13,7 @@ import ImageIcon from '../../../public/icons/ImageIcon.png'
 import Tooltip from "../Tooltip/Tooltip"
 import CircleCheckIcon from '../../../public/icons/CircleCheckIcon.png'
 import { getImageByModelName } from "@/utils/models"
-import { ALLOW_SUBSCRIPTION } from "@/config/config"
+import { ALLOW_SUBSCRIPTION, HIDE_TTS } from "@/config/config"
 
 
 export default function Profile(){
@@ -243,7 +243,7 @@ export default function Profile(){
                         {userModelOptions.length ? userModelOptions.map(makeModelOption) : (<LoadingSkeleton numResults={4} type="grid" />)}
                     </div>
                 </div>
-                <TTSModels productCode={productCode} />
+                {HIDE_TTS ? "" : <TTSModels productCode={productCode} />}
                 <ThemeChanger/>
                 {ALLOW_SUBSCRIPTION ? <EnterCode showPreviouslyUsedCodes={true} /> : ""}
             </div>

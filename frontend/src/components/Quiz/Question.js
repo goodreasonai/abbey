@@ -5,10 +5,8 @@ import MyImage from "../MyImage/MyImage"
 import DeleteIcon from '../../../public/icons/DeleteIcon.png'
 import Dropdown from "../Dropdown/Dropdown"
 import ResponsiveTextarea from "../form/ResponsiveTextarea"
-import Button from "../form/Button"
 import ControlledInputText from "../form/ControlledInputText"
 import MCQResponse from "./MCQResponse"
-import SyntheticButton from "../form/SyntheticButton"
 import AddIcon from '../../../public/icons/AddIcon.png'
 import styles from './Quiz.module.css'
 import CollapsibleMenu from "../CollapsibleMenu/CollapsibleMenu"
@@ -17,7 +15,6 @@ import { Auth } from "@/auth/auth"
 import Loading from "../Loading/Loading"
 import MarkdownViewer from "../Markdown/MarkdownViewer"
 import { handleGeneralStreaming } from "@/utils/streaming"
-import LinkedSelectorItem from "../LinkedSelectorItem/LinkedSelectorItem"
 import shortenText from "@/utils/text"
 import Link from "next/link"
 
@@ -348,7 +345,7 @@ export default function Question({ item, i, amEditing, setAmEditing, quizState, 
                                             return {...prev, 'questions': oldQs}
                                         })
                                     }}
-                                ]} />
+                                ]} noShadow={true} />
                             </div>
                         ) : "" }
                         {

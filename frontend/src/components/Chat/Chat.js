@@ -24,7 +24,7 @@ import LoadingSkeleton from '../Loading/LoadingSkeleton';
 import observeRect from '@reach/observe-rect'
 import useKeyboardShortcut from '@/utils/keyboard';
 import ImageIcon from '../../../public/icons/ImageIcon.png'
-import { DISABLE_WEB } from '@/config/config';
+import { DISABLE_WEB, HIDE_TTS } from '@/config/config';
 
 export const defaultRoundState = {
     'ai': '',
@@ -84,7 +84,6 @@ export default function Chat({id,
     const [syntheticId, setSyntheticId] = useState(id)  // Used for dropdown split doc stuff in folders
     const [roundStates, setRoundStates] = useState([])
     const [suggestions, setSuggestions] = useState({})  // from index to array
-    const [selectedModel, setSelectedModel] = useState({})  // obj of information - does it accept images? etc.
     const [suggestLoadingState, setSuggestLoadingState] = useState({})  // not for suggestions at the end of quesitons, but for the one at the top
     const roundsContainerRef = useRef()
     const [userText, setUserText] = useState("")
@@ -93,9 +92,17 @@ export default function Chat({id,
     const [tabDisplay, setTabDisplay] = useState("")  // e.g. keypoints or summary display
     const [tabState, setTabState] = useState(undefined)
     const [retrieverIssue, setRetrieverIssue] = useState("")
+
+    const [selectedModel, setSelectedModel] = useState({})  // obj of information - does it accept images? etc.
     const [userModelOptions, setUserModelOptions] = useState([])
     const [userModelLoadingState, setUserModelLoadingState] = useState(0)
+
+    const [selectedSearchEngine, setSelectedSearchEngine] = useState({})  // obj of information - does it accept images? etc.
+    const [userSearchEngineOptions, setUserSearchEngineOptions] = useState([])
+    const [userSearchEngineLoadingState, setUserSearchEngineLoadingState] = useState(0)
+
     const [draggingFile, setDraggingFile] = useState(false)
+    const [badPracticeAutoFocus, setBadPracticeAutoFocus] = useState(1)
 
     const router = useRouter()
     const { getToken, isSignedIn } = Auth.useAuth();
@@ -167,7 +174,7 @@ export default function Chat({id,
         })
     }
 
-    async function askQuestion(qIndex) {
+    async function askQuestion(qIndex, fromExisting) {
         if (qLoading == qIndex || qAnswering == qIndex || !canEdit || !roundStates[qIndex].user){
             return;
         }
@@ -197,7 +204,7 @@ export default function Chat({id,
             'user_time': userTime,
             'batched': false,
             'streaming': true,
-            'temperature': roundStates[qIndex].temperature === undefined ? .5 : roundStates[qIndex].temperature,
+            'temperature': roundStates[qIndex].temperature === undefined ? .5 : roundStates[qIndex].temperature,  // no way currently to set temperature with the removal of randomness slider
             'detached': (roundStates[qIndex].detached || detached) ? true : false,
             'use_web': roundStates[qIndex].useWeb ? true : false,
             'exclude': exclude,
@@ -205,6 +212,9 @@ export default function Chat({id,
 
         if (onAsk){
             onAsk(data['question'].txt, qIndex)
+        }
+        if (fromExisting){
+            setBadPracticeAutoFocus(badPracticeAutoFocus + 1)
         }
         let token = await getToken()
         try {
@@ -310,7 +320,9 @@ export default function Chat({id,
             if (myJson['response'] != 'success'){
                 throw Error("Response was not success")
             }
-            saveCallback(newRoundStates)
+            if (saveCallback) {
+                saveCallback(newRoundStates)
+            }
         }
         catch (e) {
             console.log(e)
@@ -353,14 +365,6 @@ export default function Chat({id,
             }
             return cpy;
         });
-    }
-
-    function setRandomness(x, i) {
-        setRoundStates((prev) => {
-            let cpy = JSON.parse(JSON.stringify(prev));
-            cpy[i].temperature = (x / 100);  // number b/w 0 and 1
-            return cpy
-        })
     }
 
     function setImages(x, i) {
@@ -446,7 +450,7 @@ export default function Chat({id,
                 key={i}
                 index={i}
                 item={item}
-                askQuestion={() => askQuestion(i)}
+                askQuestion={() => askQuestion(i, true)}
                 canEdit={canEdit}
                 isLast={i == roundStates.length - 1}
                 isLoading={qLoading == i}
@@ -457,7 +461,6 @@ export default function Chat({id,
                 userTextEnter={(x) => userTextEnter(x, i)}
                 removeChat={() => removeChat(i)}
                 showFindMore={showFindMore}
-                setRandomness={(x) => setRandomness(x, i)}
                 setImages={(x) => setImages(x, i)}
                 toggleDetached={() => toggleDetached(i)}
                 toggleUseWeb={() => toggleUseWeb(i)}
@@ -476,6 +479,10 @@ export default function Chat({id,
                 userModelLoadingState={userModelLoadingState}
                 userModelOptions={userModelOptions}
                 setUserChatModel={setUserChatModel}
+                selectedSearchEngine={selectedSearchEngine}
+                userSearchEngineOptions={userSearchEngineOptions}
+                userSearchEngineLoadingState={userSearchEngineLoadingState}
+                setUserSearchEngine={setUserSearchEngine}
             />
         )
     }
@@ -629,6 +636,8 @@ export default function Chat({id,
         if (id && canEdit && isSignedIn === true){
             getUserModel()
             getUserModelOptions()
+            getUserSearchEngine()
+            getUserSearchEngineOptions()
         }
     }, [id, isSignedIn])
 
@@ -701,6 +710,81 @@ export default function Chat({id,
             const available = myJson['available'].map((item) => {return {...item, 'available': true}})
             const unavailable = myJson['unavailable'].map((item) => {return {...item, 'available': false}})
             setUserModelOptions([...available, ...unavailable])
+        }
+        catch (e) {
+            console.log(e)
+        }
+    }
+
+    async function setUserSearchEngine(model){
+        try {
+            setUserSearchEngineLoadingState(1)
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/user/select-search-engine'
+            const data = {
+                'model': model.code
+            }
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                    'Content-Type': 'application/json'
+                },
+                'method': 'POST',
+                'body': JSON.stringify(data)
+            })
+            const myJson = await response.json()
+            if (myJson['response'] != 'success'){
+                console.log(myJson)
+                throw Error("Response was not success")
+            }
+            setSelectedSearchEngine(myJson['model'])
+            setUserSearchEngineLoadingState(2)
+        }
+        catch (e) {
+            console.log(e)
+            setUserSearchEngineLoadingState(2)  // on fail, user will notice.
+        }
+    }
+
+    async function getUserSearchEngine(){
+        try {
+            setUserSearchEngineLoadingState(1)
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/user/search-engine'
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                },
+                'method': 'GET'
+            })
+
+            let myJson = await response.json()
+            let model = myJson['model']
+            setSelectedSearchEngine(model)
+            setUserSearchEngineLoadingState(2)
+        }
+        catch(e) {
+            console.log(e)
+            setUserSearchEngineLoadingState(3)
+        }
+    }
+
+    async function getUserSearchEngineOptions(){
+        try {
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/user/search-engines'
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                    'Content-Type': 'application/json'
+                },
+                'method': 'GET'
+            })
+            const myJson = await response.json()
+            if (myJson['response'] != 'success'){
+                console.log(myJson)
+                throw Error("Response was not success")
+            }
+            const available = myJson['available'].map((item) => {return {...item, 'available': true}})
+            const unavailable = myJson['unavailable'].map((item) => {return {...item, 'available': false}})
+            setUserSearchEngineOptions([...available, ...unavailable])
         }
         catch (e) {
             console.log(e)
@@ -782,7 +866,7 @@ export default function Chat({id,
                                     {!splitSummarySources?.length || !splitSummary ? (
                                         <SummaryToolbar
                                             manifestRow={manifestRow}
-                                            allowSpeech={allowSpeech}
+                                            allowSpeech={allowSpeech && !HIDE_TTS}
                                             setRoundStates={setRoundStates}
                                             invertColor={invertColor}
                                             showTitle={false}
@@ -823,7 +907,7 @@ export default function Chat({id,
                                 <div style={{'height': '100%', 'position': 'relative'}}>
                                     <div className={styles.blurTop} style={!topBlocksBlurred || tabState == 'notes' ? {'opacity': '0'} : {}} />
                                     <div className={styles.blurBottom} style={!bottomBlocksBlurred || tabState == 'notes' ? {'opacity': '0'} : {}} />
-                                    <div ref={roundsContainerRef} style={{'height': '100%', 'overflow': tabState != 'notes' ? 'scroll' : '', 'display': 'flex', 'justifyContent': 'center'}}>
+                                    <div ref={roundsContainerRef} style={{'height': '100%', 'overflow': tabState != 'notes' && !isExpanded ? 'scroll' : '', 'display': 'flex', 'justifyContent': 'center'}}>
                                         {tabDisplay ? (
                                             <div style={{...marginStyle, 'padding': '0px 1rem'}}>
                                                 {tabDisplay}
@@ -893,13 +977,19 @@ export default function Chat({id,
                                                 toggleUseWeb={() => setBottomTextItem({...bottomTextItem, 'useWeb': !bottomTextItem?.useWeb})}
                                                 setImages={(x) => setBottomTextItem({...bottomTextItem, 'images': x})}
                                                 dropdownGoesUp={true}
+
                                                 selectedModel={selectedModel}
                                                 userModelOptions={userModelOptions}
                                                 userModelLoadingState={userModelLoadingState}
                                                 setUserChatModel={setUserChatModel}
+
+                                                selectedSearchEngine={selectedSearchEngine}
+                                                userSearchEngineOptions={userSearchEngineOptions}
+                                                userSearchEngineLoadingState={userSearchEngineLoadingState}
+                                                setUserSearchEngine={setUserSearchEngine}
+
                                                 suggestQuestion={suggestBottomQuestion}
                                                 suggestLoadingState={bottomSuggestLoadingState}
-                                                setRandomness={(x) => setBottomTextItem({...bottomTextItem, 'temperature': (x / 100)})}
                                                 toggleDetached={() => setBottomTextItem({...bottomTextItem, 'detached': !bottomTextItem?.detached})}
                                             />
                                         </div>
@@ -917,7 +1007,7 @@ export default function Chat({id,
                                                             submitNewChat();
                                                         }
                                                     }}
-                                                    autoFocus={autoFocus && id /* The && id makes it auto focus again when going from chat to chat directly */}
+                                                    autoFocus={autoFocus && id && badPracticeAutoFocus /* The && id makes it auto focus again when going from chat to chat directly */}
                                                 />
                                             </div>
                                             {/* The role and area-label is for backward compatibility with the testing framework */}

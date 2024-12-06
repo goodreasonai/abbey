@@ -629,3 +629,44 @@ LM_PROVIDERS = {
     'o1-mini': O1Mini()
 }
 
+
+"""
+
+Percentage of context length that should be used for retrieval in various places in the code base.
+
+Not necessarily used in non chat retrieval contexts.
+
+Can / should be changed based on typical model behavior and speed.
+
+Sample outputs:
+- 5_000 -> 2_500
+- 10_000 -> 7_000
+- 32_000 -> 23_500
+- 100_000 -> 57_500
+- 200_000 -> 107_500
+
+"""
+def get_safe_retrieval_context_length(model: LM):
+    # Works like tax brackets
+    brackets = [
+        (5_000, .5),  # 50% of the first 5000 tokens
+        (10_000, .9),  # 90% of tokens 5000-10000
+        (32_000, .75),  # etc
+        (100_000, .5)
+    ]
+    cl_remaining = model.context_length
+    safety_cl = 0
+    prev = 0
+    for bracket in brackets:
+        overlap = min(cl_remaining, bracket[0] - prev)
+        contribution = overlap * bracket[1]
+        safety_cl += contribution
+        cl_remaining -= bracket[0] - prev
+        prev = bracket[0]
+        if cl_remaining <= 0:
+            break
+    
+    if cl_remaining > 0:
+        safety_cl += cl_remaining * brackets[-1][1]
+
+    return round(safety_cl)

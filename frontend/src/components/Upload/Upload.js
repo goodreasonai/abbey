@@ -78,7 +78,6 @@ export default function Upload({ assetId=null }){
     const tmpSpecificContainerRef = useRef()
     const stageContainerRef = useRef()
 
-    const [bottomScrollBlurred, setBottomScrollBlurred] = useState(false)
     const innerTmpSpecificRef = useRef()
 
     const { user } = Auth.useUser();
@@ -325,49 +324,6 @@ export default function Upload({ assetId=null }){
         return total
     }, [assetCounts])
 
-
-    // Handling the blur/shadowing in scrolling down template specific stuff
-    useEffect(() => {
-        const container = innerTmpSpecificRef.current;
-    
-        function handleScroll() {
-            if (container) {
-                const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 20;
-                setBottomScrollBlurred(!isAtBottom);
-            }
-        }
-    
-        function observeContainer() {
-            if (container) {
-                // Observe the container
-                resizeObserver.observe(container);
-    
-                // Observe all direct children of the container
-                Array.from(container.children).forEach(child => {
-                    resizeObserver.observe(child);
-                });
-            }
-        }
-    
-        const resizeObserver = new ResizeObserver(() => {
-            handleScroll();
-        });
-    
-        if (container) {
-            container.addEventListener('scroll', handleScroll);
-            observeContainer();
-            handleScroll();
-        }
-    
-        return () => {
-            if (container) {
-                container.removeEventListener('scroll', handleScroll);
-                resizeObserver.disconnect();
-            }
-        };
-    }, [innerTmpSpecificRef.current, stage]);
-    
-
     let errorDisplay = "";
     if (errorMessage && uploadState == 3){
         errorDisplay = (
@@ -397,7 +353,7 @@ export default function Upload({ assetId=null }){
                 <ControlledInputText
                     placeholder="Title (optional)"
                     id='CreateTitle'
-                    maxChar={50}
+                    maxChar={75}
                     value={generalFields['title'].value}
                     setValue={(x) => setGeneralFields({...generalFields, 'title': {...generalFields['title'], 'value': x}})} />
             </div>
@@ -478,7 +434,7 @@ export default function Upload({ assetId=null }){
                         </div>
                         <div ref={tmpSpecificContainerRef} className={styles.stage} style={{'left': '100%'}}>
                             <div style={{'flex': '1', 'position': 'relative', 'overflow': 'scroll'}}>
-                                <div ref={innerTmpSpecificRef} style={{'display': 'flex', 'flexDirection': 'column', 'gap': '1rem', 'padding': '20px', 'height': '100%', 'overflow': 'scroll'}}>
+                                <div ref={innerTmpSpecificRef} style={{'display': 'flex', 'flexDirection': 'column', 'gap': '1rem', 'padding': '20px', 'height': '100%'}}>
                                     {templateObj && templateObj.ExtraCreateElement ? (<templateObj.ExtraCreateElement />) : ""}
                                     {templateSpecificDisplay ? (
                                         <div style={{'width': '100%'}}>
@@ -488,7 +444,6 @@ export default function Upload({ assetId=null }){
                                     {chosenTemplate && !templateObj.constructor.hideGeneralFields ? textUploadFields : ("")}
                                     {chosenTemplate ? permissions : ("")}
                                 </div>
-                                <div className={bottomScrollBlurred ? styles.scrollBlur : styles.scrollBlankBlur}></div>
                             </div>
                             <div style={{'backgroundColor': 'var(--light-primary)', 'position': 'sticky', 'bottom': '0px', 'left': '0px', 'width': '100%', 'display': 'flex', 'justifyContent': 'center', 'gap': '10px', 'alignItems': 'center', 'padding': '10px', 'borderTop': '1px solid var(--light-border)', 'fontSize': '1.25rem'}}>
                                 {errorDisplay}

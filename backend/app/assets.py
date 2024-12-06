@@ -18,7 +18,7 @@ from .db import get_db
 from .template_response import MyResponse
 from .retriever import Chunk, Retriever
 from .batch_and_stream_lm import stream_multiplexed_batched_lm
-from .integrations.lm import LM_PROVIDERS, LM
+from .integrations.lm import LM_PROVIDERS, LM, get_safe_retrieval_context_length
 from .auth import User, token_optional, token_required, get_permissioning_string
 import json
 from .templates.templates import get_template_by_code, TEMPLATES
@@ -47,7 +47,7 @@ from .web import get_web_chunks
 from .prompts.web_search_prompts import get_web_query_system_prompt
 from .prompts.summary_prompts import get_quick_summary_prompt, get_key_points_user_prompt
 from .auth import get_users
-from .utils import quick_tok_estimate, ntokens_to_nchars
+from .utils import quick_tok_estimate
 from .integrations.auth import FullUser
 
 
@@ -134,7 +134,7 @@ def manifest(user: User):
     try:
         # The total is ignored by default, actually.
         results, total = search_assets(user, search=search, limit=limit,
-                                    offset=offset, only_templates=only_templates, include_purchased_groups=True,
+                                    offset=offset, only_templates=only_templates, include_purchased_groups=False,
                                     recent_activity=recent_activity, sub_manifest=sub_manifest,
                                     group_ids=[group_id] if group_id else [], my_uploads=my_uploads, isolated=isolated,
                                     folders_first=folders_first, include_groups=include_groups, include_group_ids=include_group_ids,
@@ -723,9 +723,7 @@ def chat(user: User):
             if use_web:
                 assert(q['search_query'])
                 n_web_chunks = 5
-                safety_margin = .25
-                web_chunk_max_char = max(1000, ntokens_to_nchars((int(model.context_length * safety_margin) - context_n_tokens) // n_web_chunks))
-                web_chunks = get_web_chunks(q['search_query'], max_page_chars=web_chunk_max_char, max_n=n_web_chunks)
+                web_chunks = get_web_chunks(user, q['search_query'], available_context=(get_safe_retrieval_context_length(model) - context_n_tokens), max_n=n_web_chunks)
                 system_prompt = template_object.build_web_chat_system_prompt(q['txt'], web_chunks)
                 retrieval_sources_json = [x.to_json() for x in web_chunks]
                 retrieval_sources = [x.txt for x in web_chunks]
@@ -744,7 +742,7 @@ def chat(user: User):
                 assert('txt' in q)  # Every question must have a txt
 
                 try:
-                    max_retrieval_response = retriever.max_chunks(model, q['txt'], safety_ratio=.25)
+                    max_retrieval_response = retriever.max_chunks(model, q['txt'], safe_context_length=(get_safe_retrieval_context_length(model) - context_n_tokens))
                 except RetrieverEmbeddingsError:
                     max_retrieval_response = []
 
@@ -1442,7 +1440,7 @@ def quick_summary(user: User):
     if not retriever:
         return MyResponse(False, reason="Couldn't make retriever").to_json()
     lm: LM = LM_PROVIDERS[FAST_LONG_CONTEXT_MODEL]
-    chunks = retriever.max_chunks(lm, safety_ratio=.25, use_ends=True)  # suitable chunks for long context
+    chunks = retriever.max_chunks(lm, safe_context_length=get_safe_retrieval_context_length(lm), use_ends=True)  # suitable chunks for long context
     
     tmp: Template = get_template_by_code(asset['template'])
     user_prompt = get_quick_summary_prompt()
@@ -1500,7 +1498,7 @@ def key_points(user: User):
         return MyResponse(False, reason="Couldn't make retriever").to_json()
 
     lm: LM = LM_PROVIDERS[FAST_LONG_CONTEXT_MODEL]
-    chunks = retriever.max_chunks(lm, safety_ratio=.25, use_ends=True)  # suitable chunks for long context
+    chunks = retriever.max_chunks(lm, safe_context_length=get_safe_retrieval_context_length(lm), use_ends=True)  # suitable chunks for long context
 
     tmp: Template = get_template_by_code(asset_row['template'])
     system_prompt = tmp.build_key_points_system_prompt(chunks)

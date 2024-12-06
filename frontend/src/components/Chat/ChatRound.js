@@ -25,10 +25,10 @@ import MinimizeIcon from '../../../public/icons/MinimizeIcon.png'
 export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
                                     isLoading, suggestQuestions, suggestions, isAnswering, detached, userTextEnter,
                                     removeChat, syntheticId, toggleDetached, roundStates, setRoundStates,
-                                    invertColor, setRandomness, suggestLoadingState, suggestQuestion,
+                                    invertColor, suggestLoadingState, suggestQuestion,
                                     showFindMore, toggleUseWeb, index, onSourceButtonClick=undefined, setUserChatModel,
                                     setImages, selectedModel, extraButtons, goToPrevState, userModelLoadingState, userModelOptions,
-                                    newVersion, allowOCR, scrollToBottom, ...props }){
+                                    newVersion, allowOCR, scrollToBottom, selectedSearchEngine, userSearchEngineLoadingState, userSearchEngineOptions, setUserSearchEngine, ...props }){
 
     const { getToken } = Auth.useAuth()
     const [findMoreLoadState, setFindMoreLoadState] = useState(0)
@@ -176,7 +176,6 @@ export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
         }
         if (!isAnswering && !isLoading){
             if (event){
-                console.log(event.target.text)
                 newVersion(event.target.value)
             }
             else {
@@ -211,6 +210,12 @@ export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
                                 userModelLoadingState={userModelLoadingState}
                                 setUserChatModel={setUserChatModel}
                                 userModelOptions={userModelOptions}
+
+                                selectedSearchEngine={selectedSearchEngine}
+                                userSearchEngineOptions={userSearchEngineOptions}
+                                userSearchEngineLoadingState={userSearchEngineLoadingState}
+                                setUserSearchEngine={setUserSearchEngine}
+
                                 canEdit={canEdit}
                                 item={item}
                                 isLoading={isLoading}
@@ -223,7 +228,6 @@ export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
                                 toggleDetached={toggleDetached}
                                 dropdownGoesUp={false}
                                 setImages={setImages}
-                                setRandomness={setRandomness}
                             />
                         ) : ""}
                         <div style={{'display': 'flex'}}>

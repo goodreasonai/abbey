@@ -42,7 +42,7 @@ Running Abbey with `./run.sh` is recommended; you may need to use `sudo ./run.sh
 
 1. docker config invalid: If it's telling you your docker compose is invalid, then you probably need to upgrade docker on your machine to something >= version 2. Abbey takes advantage of certain relatively new docker features like defaults for env variables and profiles. It's going to be easier just to upgrade docker in the long run - trust.
 
-2. Things look blank / don't load / requests to the backend don't seem to work quite right. First, navigate to the backend in the browser, like to `http://localhost:5000` or whatever URL you put in originally. It should give you a message like "A British tar is a soaring soul..." If you see that, then the backend is up and running but your backend URL config is wrong or incomplete. Remember to type it out completely like `http://localhost:5000`. **If you messed it up then changed it, it might still be wrong because it's saved in the frontend-next docker volume. Delete the frontend container, delete that volume, and then rebuild.** If you don't even get the "British tar" thing, then make sure that your backend service is actually running.
+2. Things look blank / don't load / requests to the backend don't seem to work quite right. First, navigate to the backend in the browser, like to `http://localhost:5000` or whatever URL you put in originally. It should give you a message like "A British tar is a soaring soul..." If you see that, then the backend is up and running but your backend URL config is wrong or incomplete. Remember to type it out completely like `http://localhost:5000`. **If you messed it up then changed it, it might still be wrong because it's saved in the frontend-next docker volume. Delete the frontend container, delete that volume, and then rebuild with ./run --build or docker-compose --build.** If you don't even get the "British tar" thing, then make sure that your backend service is actually running.
 
 3. Docker gets stuck downloading/intstalling/running an image. There is a possibility that you've run out of space on your machine. First, try running `docker system prune` to clean up any nasty stuff lying around in Docker that you've forgotten about. Then try clearing up space on your computer – perhaps enough for ~10gb on your machine. Then restart Docker and try again. If you still get issues – try uninstalling / reinstalling Docker.
 
@@ -88,9 +88,10 @@ OPENAI_API_KEY="sk-my-openai-key"
 OPENAI_COMPATIBLE_URL="https://your-compatible-api.com"
 OPENAI_COMPATIBLE_KEY="not-a-key"
 # For language models, you should also give the context length (in tokens) you want them to have and whether or not they support images as input (vision).
-# Embedding / language models are written in well-formed JSON; here are examples:
+# Embedding / language / text-to-speech models are written in well-formed JSON; here are examples:
 OPENAI_COMPATIBLE_EMBEDS='[{"code": "text-embedding-3-small"}]'
 OPENAI_COMPATIBLE_LMS='[{"code": "gpt-4o", "context_length": 100000, "vision": true}]'
+OPENAI_COMPATIBLE_TTS='[{"voice": "onyx"}]'
 
 # Ollama specifically is given extra attention and has a more featureful API at the moment.
 # If Ollama is running on the same machine as Abbey but not in the same docker VM, you should use this URL:
@@ -114,6 +115,9 @@ SENDGRID_EMAIL="my-sendgrid-email@us.ai"
 ELEVEN_LABS_API_KEY="my-elevenlabs-api-key"
 BING_API_KEY="my-bing-api-key"
 ANTHROPIC_API_KEY = "my-anthropic-api-key"
+
+# An endpoint to enable search with SearXNG (host.docker used when SearXNG is being run in the same docker virtual machine as Abbey)
+SEARXNG_URL="http://host.docker.internal:8080"
 
 # Mathpix is used for OCR on PDFs - note that you need both an app name and key for that app
 MATHPIX_API_APP="my-mathpix-app"
@@ -196,6 +200,12 @@ IMAGE_DOMAINS="some-domain.com,some-domain-2.com"
 
 # Unless you're trying to replicate the Abbey Collections system (see our hosted version), you should hide "Collections" from the user.
 NEXT_PUBLIC_HIDE_COLLECTIONS=1
+
+# If you have no text-to-speech models, this code makes sure that the frontend won't display options for TTS
+NEXT_PUBLIC_HIDE_TTS=1
+
+# If you don't want to use the default signed out home and instead just want to be sent to login
+NEXT_PUBLIC_HIDE_SIGNED_OUT_HOME_PAGE=1
 ```
 
 **Note: When changing frontend ENV variables, you must make sure to delete your old abbey_frontend-next volume so that the frontend is rebuilt!**
@@ -222,6 +232,7 @@ AI APIs (lm.py, ocr.py, tts.py, and embed.py)
 
 Search Engines (web.py)
 - Bing
+- SearXNG
 
 File Storage (file_storage.py)
 - s3

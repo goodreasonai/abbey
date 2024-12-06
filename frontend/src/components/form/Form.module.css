@@ -162,6 +162,10 @@
     cursor: default;
 }
 
+.hasShadow {
+    box-shadow: 1px 1px 4px var(--dark-shadow);
+}
+
 .syntheticButtonHighlight:hover {
     background-color: var(--dark-highlight);
     cursor: pointer;

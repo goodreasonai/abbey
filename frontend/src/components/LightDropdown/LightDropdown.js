@@ -2,20 +2,24 @@ import { useRef, useState, useEffect } from "react"
 import ReactDOM from "react-dom";
 import styles from './LightDropdown.module.css'
 
-export default function LightDropdown({ value, options, direction, optionsStyle, rightAlign=false, closeOnClick=true, ...props }) {
+export default function LightDropdown({ value, options, direction, optionsStyle, rightAlign=false, closeOnClick=true, openCallback, closeCallback, ...props }) {
 
     const [showDropdown, setShowDropdown] = useState(false)
     const [coords, setCoords] = useState({}); // takes current button coordinates
     const dropdownRef = useRef()
     const dropdownOptionsRef = useRef()
+    const initialButtonRef = useRef()
 
     function dropDropdown(){
         setShowDropdown(false)
         setCoords({})
+        if (closeCallback){
+            closeCallback()
+        }
     }
 
     function onClickDropdown(e){
-        const rect = e.target.getBoundingClientRect();
+        const rect = initialButtonRef.current.getBoundingClientRect();
         if (showDropdown){
             dropDropdown()
         }
@@ -23,9 +27,13 @@ export default function LightDropdown({ value, options, direction, optionsStyle,
             setCoords({
                 x: rect.x,
                 y: rect.y,
-                height: rect.height
+                height: rect.height,
+                width: rect.width
             });
             setShowDropdown(true)
+            if (openCallback){
+                openCallback()
+            }
         }
     }
 
@@ -65,22 +73,10 @@ export default function LightDropdown({ value, options, direction, optionsStyle,
         
     }, [dropdownOptionsRef, showDropdown, dropdownRef]);
 
-    useEffect(() => {
-        if (!rightAlign && showDropdown && dropdownOptionsRef.current) {
-            const rect = dropdownOptionsRef.current.getBoundingClientRect();
-            try {
-                // TODO
-            }
-            catch(e) {
-                console.log(e)
-                // probably couldn't get window
-            }
-        }
-    }, [showDropdown]);
 
     return (
         <div {...props} ref={dropdownRef}>
-            <div className={!showDropdown ? "_touchableOpacity" : "_clickable"} onClick={onClickDropdown}>
+            <div ref={initialButtonRef} className={!showDropdown ? "_touchableOpacity" : "_clickable"} onClick={onClickDropdown}>
                 {value}
             </div>
             {showDropdown && ReactDOM.createPortal(
@@ -88,13 +84,13 @@ export default function LightDropdown({ value, options, direction, optionsStyle,
                     style={{
                         'position': 'fixed',
                         'top': direction === 'up' ? coords.y : coords.y + coords.height,
-                        'left': coords.x,
-                        'transform': `translateY(${direction === 'up' ? '-100%' : '0%'})`,
+                        'left': rightAlign ? coords.x + coords.width : coords.x,
+                        'transform': `translateY(${direction === 'up' ? '-100%' : '0%'}) translateX(${rightAlign ? '-100%' : '0%'})`,
                         'backgroundColor': 'var(--light-primary)',
                         'border': '1px solid var(--light-border)',
                         'borderRadius': 'var(--medium-border-radius)',
                         'padding': '5px',
-                        'zIndex': 1
+                        'zIndex': 999
                     }}
                     ref={dropdownOptionsRef}
                 >

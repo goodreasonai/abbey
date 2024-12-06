@@ -51,6 +51,7 @@
     align-items: center;
     gap: 5px;
     background-color: var(--light-background);
+    background: linear-gradient(180deg, var(--light-background), var(--light-primary));
     padding: 2px 5px;
     border-radius: var(--small-border-radius);
     border: 1px solid var(--light-border);

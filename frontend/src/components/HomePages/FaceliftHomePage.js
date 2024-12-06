@@ -1,5 +1,5 @@
 import DefaultPage from '@/components/DefaultPage';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { HOME_PAGE_HEADER, NAME  } from '@/config/config';
 import { PREMIER_TEMPLATES, SECONDARY_TEMPLATES, getTemplateByCode } from '@/templates/template';
@@ -8,12 +8,9 @@ import styles from './FaceliftHomePage.module.css'
 import MarkdownViewer from '../Markdown/MarkdownViewer';
 import CreateWrapper from '../Quick/CreateWrapper';
 import Tooltip from '../Tooltip/Tooltip';
-import CourseScreenshot from '../../../public/random/CourseScreenshot.webp'
-import Egypt from '../../../public/random/Egypt.webp'
 import BigLoading from '../Loading/BigLoading';
 import Loading from '../Loading/Loading';
 import { formatTimestampSmall } from '@/utils/time';
-import GradientEffect from '../GradientEffect/GradientEffect';
 import CurvedArrow from '../CurvedArrow/CurvedArrow';
 import shortenText from '@/utils/text';
 import FadeOnLoad from '../visuals/FadeOnLoad';
@@ -34,7 +31,6 @@ export default function FaceliftHomePage({}) {
 
     const [recentsLoadingState, setRecentsLoadingState] = useState(0)
     const [recents, setRecents] = useState([])
-    const [purchases, setPurchases] = useState([])
     const [chosenArt, setChosenArt] = useState({})
     const [attentionItems, setAttentionItems] = useState([])
     const [createLoading, setCreateLoading] = useState("")
@@ -84,23 +80,6 @@ export default function FaceliftHomePage({}) {
         }
     }
 
-    async function getPurchases(){
-        try {
-            const url = process.env.NEXT_PUBLIC_BACKEND_URL + "/groups/purchases"
-            const response = await fetch(url, {
-                'headers': {
-                    'x-access-token': await getToken(),
-                },
-                'method': 'GET'
-            })
-            const myJson = await response.json()
-            setPurchases(myJson['results'])
-        }
-        catch(e) {
-            console.log(e)
-        }
-    }
-
     async function getImage(){
         try {
             const url = process.env.NEXT_PUBLIC_BACKEND_URL + `/feed/art-history`
@@ -124,7 +103,6 @@ export default function FaceliftHomePage({}) {
             getRecents()
             getNeedsAttention()
             getImage()
-            getPurchases()
         }
     }, [isSignedIn])
 
@@ -142,7 +120,6 @@ export default function FaceliftHomePage({}) {
     const showNotifications = attentionItems?.length
     const showRecentActivity = recents?.length
     const showGettingStarted = recents?.length < 3 && recentsLoadingState > 1
-    const showPurchases = purchases?.length
 
     return (
         <DefaultPage noMargin={true}>
@@ -226,31 +203,6 @@ export default function FaceliftHomePage({}) {
                                 </div>
                             </div>
                         </div>
-                        {showPurchases ? (
-                            <FadeOnLoad>
-                                <div style={{'width': '100%', 'display': 'flex', 'gap': '10px', 'alignItems': 'stretch', 'flexWrap': 'wrap'}}>
-                                    {purchases.map((item) => {
-                                        return (
-                                            <Link href={`/groups/${item.id}`} className={styles.purchaseItemLinkWrapper} key={item.id}>
-                                                <div className={styles.purchaseItem}>
-                                                    <div>
-                                                        <MyImage canSwitch={false} src={item.image} height={50} width={50} alt={item.title} />
-                                                    </div>
-                                                    <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '.5rem'}}>
-                                                        <div>
-                                                            {item.title}
-                                                        </div>
-                                                        <div className='_clamped3' style={{'color': 'var(--passive-text)', 'fontSize': '.9rem'}}>
-                                                            {item.preview_desc}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </Link>
-                                        )
-                                    })}
-                                </div>
-                            </FadeOnLoad>
-                        ) : ""}
                         {showNotifications ? (
                             <FadeOnLoad>
                                 <div style={{'width': '100%', 'display': 'flex', 'flexDirection': 'column', 'gap': '.5rem', 'justifyContent': 'center'}}>
