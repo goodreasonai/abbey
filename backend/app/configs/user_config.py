@@ -86,7 +86,7 @@ def get_highest_ranked_available(rankings, provider_map):
     if len(available):
         return available[0]
         
-    raise Exception("No available model")
+    return ""
 
 # This extra ranking is done so that a user sees a consistent / sensible ordering of LM options
 LM_RANKINGS = ['gpt-4o', 'claude-3-5-sonnet', 'claude-3-opus', 'gpt-4', 'gpt-4-turbo', 'gpt-4o-mini', *[x.code for x in gen_ollama_lms()], *[x.code for x in gen_openai_compatible_lms()]]

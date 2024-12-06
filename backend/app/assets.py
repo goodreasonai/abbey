@@ -47,7 +47,7 @@ from .web import get_web_chunks
 from .prompts.web_search_prompts import get_web_query_system_prompt
 from .prompts.summary_prompts import get_quick_summary_prompt, get_key_points_user_prompt
 from .auth import get_users
-from .utils import quick_tok_estimate, ntokens_to_nchars
+from .utils import quick_tok_estimate
 from .integrations.auth import FullUser
 
 
