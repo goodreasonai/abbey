@@ -294,7 +294,12 @@ function EditPages({ file, editPagesCallback, startOpen=false }){
             // Pages in pages array have to be within the bounds of the document
             const count = await countPdfPages(pdfDoc)
             if (Math.max(...pagesArray) >= count || pagesArray.length > MAX_PDF_PAGES) {
-                throw Error("Invalid page range")
+                if (pagesArray.length > MAX_PDF_PAGES){
+                    throw Error(`Too many pages (${pagesArray.length} > ${MAX_PDF_PAGES}) `)
+                }
+                else{
+                    throw Error(`Includes pages that don't exist (${Math.max(...pagesArray)} > ${count})`)
+                }
             }
             if (Math.min(...pagesArray) < 0 || pagesArray.length <= 0){
                 throw Error("Invalid page range")

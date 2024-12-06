@@ -73,7 +73,7 @@ export default function Result({ manifestRow, item, searchText, ...props }) {
                 {
                     befores.map((item, i) => {
                         return (
-                            <RichTextViewer viewerPadding='0px' content={item.txt} />
+                            <RichTextViewer viewerPaddingOption='none' content={item.txt} />
                         )
                     })
                 }
@@ -86,7 +86,7 @@ export default function Result({ manifestRow, item, searchText, ...props }) {
                 {
                     afters.map((item, i) => {
                         return (
-                            <RichTextViewer viewerPadding='0px' content={item.txt} />
+                            <RichTextViewer viewerPadding='none' content={item.txt} />
                         )
                     })
                 }
@@ -119,7 +119,7 @@ export default function Result({ manifestRow, item, searchText, ...props }) {
             </div>
             <div className={styles.searchResultText}>
                 {beforeElement}
-                <RichTextViewer viewerPadding='0px' boldWords={searchedWords} content={item.txt} />
+                <RichTextViewer viewerPadding='none' boldWords={searchedWords} content={item.txt} />
                 {afterElement}
             </div>
         </div>
