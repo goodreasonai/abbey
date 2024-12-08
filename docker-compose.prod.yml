@@ -2,23 +2,19 @@ services:
   backend:
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: backend/Dockerfile.prod
     ports:
       - "5000:5000"
     volumes:
       - ./backend:/app
-    environment:
-      - PYTHONUNBUFFERED=true
 
+  # When making any code changes, you must rebuild the frontend.
   frontend:
     build:
       context: .
-      dockerfile: frontend/Dockerfile
+      dockerfile: frontend/Dockerfile.prod
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/frontend-build
-      - /frontend-build/node_modules  # Any modifications to node_modules should be done from inside the container!
 
   mysql:
     image: mysql:8
@@ -34,8 +30,8 @@ services:
   celery:
     build:
       context: .
-      dockerfile: backend/Dockerfile
-    command: celery -A app.worker.celery worker --loglevel=INFO
+      dockerfile: backend/Dockerfile.prod
+    command: celery -A app.worker.celery worker
     volumes:
       - ./backend:/app
     depends_on:
@@ -43,14 +39,14 @@ services:
       - redis
 
   redis:
-      image: redis:latest
-      ports:
-        - "6379:6379"
+    image: redis:latest
+    ports:
+      - "6379:6379"
 
   db_pooler:
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: backend/Dockerfile.prod
     command: python3 -m app.db_pooler
     volumes:
       - ./backend:/app
@@ -61,7 +57,7 @@ services:
   emailer:
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: backend/Dockerfile.prod
     command: python3 -m app.email_process
     volumes:
       - ./backend:/app

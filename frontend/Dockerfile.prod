@@ -9,5 +9,8 @@ RUN npm ci --force
 # Now copy the rest of the code
 COPY frontend .
 
+# Build the Next.js app
+RUN npm run build
+
 EXPOSE 3000
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "start"]
