@@ -1,8 +1,8 @@
 import os
 from dotenv import load_dotenv
 
-
-load_dotenv()  # Load in environment variables
+DOTENV_PATH = '/etc/abbey/.env'
+load_dotenv(DOTENV_PATH)  # Load in environment variables
 
 SECRET_KEY = os.environ.get("SECRET_KEY")  # For flask
 

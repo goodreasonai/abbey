@@ -8,4 +8,3 @@ def get_settings():
         return config
 
 SETTINGS = get_settings()
-

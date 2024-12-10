@@ -8,6 +8,7 @@ services:
     volumes:
       - ./backend:/app
       - ./settings.yml:/etc/abbey/settings.yml:ro
+      - ./.env:/etc/abbey/.env
     environment:
       - PYTHONUNBUFFERED=true
 
@@ -42,6 +43,7 @@ services:
     volumes:
       - ./backend:/app
       - ./settings.yml:/etc/abbey/settings.yml:ro
+      - ./.env:/etc/abbey/.env
     depends_on:
       - backend
       - redis
@@ -59,6 +61,7 @@ services:
     volumes:
       - ./backend:/app
       - ./settings.yml:/etc/abbey/settings.yml:ro
+      - ./.env:/etc/abbey/.env
     depends_on:
       - redis
       - mysql
@@ -71,6 +74,7 @@ services:
     volumes:
       - ./backend:/app
       - ./settings.yml:/etc/abbey/settings.yml:ro
+      - ./.env:/etc/abbey/.env
     depends_on:
       - redis
       - mysql
