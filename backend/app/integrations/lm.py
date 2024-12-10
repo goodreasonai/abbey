@@ -1,9 +1,13 @@
 import warnings
-from ..configs.secrets import OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_URL, OLLAMA_LMS, OPENAI_COMPATIBLE_URL, OPENAI_COMPATIBLE_KEY, OPENAI_COMPATIBLE_LMS
+from ..configs.secrets import OPENAI_API_KEY, ANTHROPIC_API_KEY, OPENAI_COMPATIBLE_URL, OPENAI_COMPATIBLE_KEY, OPENAI_COMPATIBLE_LMS
+from ..configs.settings import SETTINGS
 from ..utils import extract_from_base64_url
 import os
 import requests
 import json
+
+OLLAMA_LMS = SETTINGS['ollama']['lms']
+OLLAMA_URL = SETTINGS['ollama']['url']
 
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY if OPENAI_API_KEY else ""
 from openai import OpenAI
@@ -553,7 +557,7 @@ def gen_ollama_lms():
     if not OLLAMA_URL or not OLLAMA_LMS:
         return []
     
-    ollama_lms = json.loads(OLLAMA_LMS)
+    ollama_lms = OLLAMA_LMS
     if not len(ollama_lms):
         return []
 

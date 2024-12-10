@@ -1,5 +1,8 @@
 import os
-from ..configs.secrets import OPENAI_API_KEY, OLLAMA_URL, OLLAMA_EMBEDS, OPENAI_COMPATIBLE_EMBEDS, OPENAI_COMPATIBLE_KEY, OPENAI_COMPATIBLE_URL
+from ..configs.secrets import OPENAI_API_KEY, OPENAI_COMPATIBLE_EMBEDS, OPENAI_COMPATIBLE_KEY, OPENAI_COMPATIBLE_URL
+from ..configs.settings import SETTINGS
+OLLAMA_URL = SETTINGS['ollama']['url']
+OLLAMA_EMBEDS = SETTINGS['ollama']['embeds']
 import requests
 import json
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY if OPENAI_API_KEY else ""
@@ -88,7 +91,7 @@ def gen_ollama_embeds():
     if not OLLAMA_URL or not OLLAMA_EMBEDS:
         return []
     
-    ollama_embeds = json.loads(OLLAMA_EMBEDS)
+    ollama_embeds = OLLAMA_EMBEDS
     if not len(ollama_embeds):
         return []
     models = []

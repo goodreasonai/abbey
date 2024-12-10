@@ -40,10 +40,6 @@ STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
 
 FRONTEND_URL = os.environ.get("FRONTEND_URL")  # used in Stripe integration.
 
-OLLAMA_URL = os.environ.get('OLLAMA_URL')
-OLLAMA_LMS = os.environ.get('OLLAMA_LMS')
-OLLAMA_EMBEDS = os.environ.get('OLLAMA_EMBEDS')
-
 OPENAI_COMPATIBLE_URL = os.environ.get('OPENAI_COMPATIBLE_URL')
 OPENAI_COMPATIBLE_KEY = os.environ.get('OPENAI_COMPATIBLE_KEY')
 OPENAI_COMPATIBLE_LMS = os.environ.get('OPENAI_COMPATIBLE_LMS')

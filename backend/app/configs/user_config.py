@@ -3,8 +3,9 @@ from .secrets import (
     OPENAI_API_KEY, ANTHROPIC_API_KEY, ELEVEN_LABS_API_KEY, MATHPIX_API_APP, MATHPIX_API_KEY, BING_API_KEY, 
     AWS_SECRET_KEY, AWS_ACCESS_KEY, SENDGRID_API_KEY, SMTP_EMAIL, SMTP_PASSWORD, SMTP_PORT, SMTP_SERVER,
     CLERK_JWT_PEM, CLERK_SECRET_KEY, CUSTOM_AUTH_SECRET, CUSTOM_AUTH_DB_ENDPOINT, CUSTOM_AUTH_DB_USERNAME, CUSTOM_AUTH_DB_PASSWORD, CUSTOM_AUTH_DB_PORT, CUSTOM_AUTH_DB_NAME,
-    BING_API_KEY, OLLAMA_URL, OPENAI_COMPATIBLE_URL, SEARXNG_URL
+    BING_API_KEY, OPENAI_COMPATIBLE_URL, SEARXNG_URL
 )
+from .settings import SETTINGS
 from ..integrations.lm import gen_ollama_lms, gen_openai_compatible_lms
 from ..integrations.embed import gen_ollama_embeds, gen_openai_compatible_embeds
 from ..integrations.tts import gen_openai_compatible_tts
@@ -28,7 +29,7 @@ AVAILABLE_PROVIDERS = {
     'openai': True if OPENAI_API_KEY else False,
     'anthropic': True if ANTHROPIC_API_KEY else False,
     'eleven-labs': True if ELEVEN_LABS_API_KEY else False,
-    'ollama': True if OLLAMA_URL else False,
+    'ollama': True if 'ollama' in SETTINGS else False,
     'openai-compatible': True if OPENAI_COMPATIBLE_URL else False,
     'bing': True if BING_API_KEY else False,
     'searxng': True if SEARXNG_URL else False
