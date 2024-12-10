@@ -4,7 +4,7 @@ from flask import (
     request,
 )
 from flask_cors import cross_origin
-from .integrations.lm import LM_PROVIDERS, LM
+from .integrations.lm import LM_PROVIDERS, LM, DEFAULT_CHAT_MODEL
 from .integrations.tts import TTS, TTS_PROVIDERS
 from .integrations.web import SearchEngine, SEARCH_PROVIDERS
 from .configs.str_constants import USER_CHAT_MODEL, USER_TTS_MODEL, USER_PRODUCT_CODE, USER_PIN, USER_UPLOAD_COUNTER, USER_ALERT_ACTIVITY, USER_SEARCH_ENGINE
@@ -13,10 +13,10 @@ from .db import get_db, needs_db
 from .template_response import MyResponse
 from .configs.user_config import (
     OVERRIDE_ALLOWED_TEMPLATES, DEFAULT_OCR_OPTION, SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS,
-    SUBSCRIPTION_CODE_TO_MODEL_OPTIONS, DEFAULT_CHAT_MODEL, DEFAULT_SEARCH_ENGINE,
+    SUBSCRIPTION_CODE_TO_MODEL_OPTIONS, DEFAULT_SEARCH_ENGINE,
     SUBSCRIPTION_CODE_TO_TEMPLATES, SUBSCRIPTION_CODE_TO_TTS_OPTIONS,
     SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS, DISABLE_OCR, LM_ORDER, DEFAULT_TTS_MODEL, 
-    get_available, AVAILABLE_LMS, AVAILABLE_TTS, AVAILABLE_SEARCH, DEFAULT_SUBSCRIPTION_CODE
+    get_available, AVAILABLE_TTS, AVAILABLE_SEARCH, DEFAULT_SUBSCRIPTION_CODE
 )
 from .pay import get_user_main_sub_code, Protocol, get_protocol_by_code, get_product, get_products
 import pytz
@@ -95,7 +95,7 @@ def get_user_chat_model_code(user: User, db=None):
         model = results[0]['value']
     
     # If the model selected isn't available (beacuse it's been removed), return the default model.
-    if model not in get_available(AVAILABLE_LMS):
+    if model not in LM_PROVIDERS:
         model = DEFAULT_CHAT_MODEL
 
     return model

@@ -6,10 +6,9 @@ import tempfile
 from flask import send_file
 import csv
 from .batch_and_stream_lm import stream_progress_batched_lm
-from .integrations.lm import LM_PROVIDERS
+from .integrations.lm import LM_PROVIDERS, FAST_CHAT_MODEL
 from .storage_interface import upload_asset_file
 from .configs.str_constants import *
-from .configs.user_config import FAST_CHAT_MODEL
 import os
 from .jobs import clear_job_storage, complete_job, get_job, get_job_storage, start_job, job_error_wrapper, update_job_progress, store_in_job
 

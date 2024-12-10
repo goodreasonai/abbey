@@ -13,7 +13,7 @@ from flask_cors import cross_origin
 from ..template_response import MyResponse
 from ..db import get_db, needs_db
 from ..batch_and_stream_lm import stream_batched_lm
-from ..integrations.lm import LM, LM_PROVIDERS
+from ..integrations.lm import LM, LM_PROVIDERS, LONG_CONTEXT_CHAT_MODEL, ALT_LONG_CONTEXT_MODEL, BALANCED_CHAT_MODEL, FAST_CHAT_MODEL, DEFAULT_CHAT_MODEL
 from ..prompts.quiz_prompts import (
     get_question_grader_system_prompt, get_question_grader_prompt,
     get_create_question_system_prompt_mcq, get_create_question_prompt_mcq,
@@ -30,7 +30,7 @@ import random
 from ..retriever import Retriever
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from ..configs.str_constants import RETRIEVAL_SOURCE, QUIZ_GRADE_ACTIVITY, MULTIPLE_CHOICE, SHORT_ANSWER
-from ..configs.user_config import LONG_CONTEXT_CHAT_MODEL, ALT_LONG_CONTEXT_MODEL, APP_NAME, BALANCED_CHAT_MODEL, FAST_CHAT_MODEL, DEFAULT_CHAT_MODEL
+from ..configs.user_config import APP_NAME
 from ..auth import get_permissioning_string
 from ..activity import make_log
 from ..auth import get_users

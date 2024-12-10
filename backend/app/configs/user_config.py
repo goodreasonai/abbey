@@ -6,7 +6,7 @@ from .secrets import (
     BING_API_KEY, OPENAI_COMPATIBLE_URL, SEARXNG_URL
 )
 from .settings import SETTINGS
-from ..integrations.lm import gen_ollama_lms, gen_openai_compatible_lms
+from ..integrations.lm import make_code_from_setting
 from ..integrations.embed import gen_ollama_embeds, gen_openai_compatible_embeds
 from ..integrations.tts import gen_openai_compatible_tts
 from ..integrations.web import gen_searxng_engines
@@ -35,14 +35,6 @@ AVAILABLE_PROVIDERS = {
     'searxng': True if SEARXNG_URL else False
 }
 
-# Enabled models by provider profile
-AVAILABLE_LMS = {
-    'openai': ['gpt-4o', 'gpt-4o-mini', 'gpt-4', 'gpt-4-turbo'],
-    'anthropic': ['claude-3-5-sonnet', 'claude-3-opus'],
-    'ollama': [x.code for x in gen_ollama_lms()],
-    'openai-compatible': [x.code for x in gen_openai_compatible_lms()]
-}
-
 AVAILABLE_TTS = {
     'openai': ['openai_fable', 'openai_onyx'],
     'eleven-labs': ['eleven_adam'],
@@ -61,15 +53,6 @@ AVAILABLE_SEARCH = {
 }
 
 AVAILABLE_TEMPLATES = ['document', 'folder', 'detached_chat', 'website', 'classroom', 'curriculum', 'quiz', 'text_editor', 'video', 'notebook', 'inf_quiz', 'section']  # could use the list in templates.py, but want to avoid imports here.
-
-# real default chat model will be the one that's available
-DEFAULT_CHAT_MODEL_RANKINGS = ['gpt-4o-mini', 'claude-3-5-sonnet']  # The chat model used when a user has none selected, and is the default used in other functions on a case-by-case basis.
-HIGH_PERFORMANCE_CHAT_MODEL_RANKINGS = ['gpt-4o', 'claude-3-5-sonnet']  # The model used when a function requires high performance (like generating a curriculum)
-BALANCED_CHAT_MODEL_RANKINGS = ['gpt-4o', 'claude-3-5-sonnet']  # The model used when a function requires medium smart and medium fast performance
-FAST_CHAT_MODEL_RANKINGS = ['gpt-4o-mini', 'claude-3-5-sonnet']  # The model used when speed is the most important factor
-LONG_CONTEXT_CHAT_MODEL_RANKINGS = ['gpt-4o', 'claude-3-5-sonnet']  # The model used when a function needs long-context (i.e., >50,000 tokens)
-FAST_LONG_CONTEXT_MODEL_RANKINGS = ['gpt-4o-mini', 'claude-3-5-sonnet']  # The model used when speed is important and it also needs long-context
-ALT_LONG_CONTEXT_MODEL_RANKINGS = LONG_CONTEXT_CHAT_MODEL_RANKINGS[::-1]  # exists to provide some variability in situations where long context makes generations repetitive
 
 EMBEDDING_MODEL_RANKINGS = ['openai-text-embedding-ada-002', 'openai-text-embedding-3-small', *[x.code for x in gen_ollama_embeds()], *[x.code for x in gen_openai_compatible_embeds()]]
 
@@ -90,35 +73,27 @@ def get_highest_ranked_available(rankings, provider_map):
     return ""
 
 # This extra ranking is done so that a user sees a consistent / sensible ordering of LM options
-LM_RANKINGS = ['gpt-4o', 'claude-3-5-sonnet', 'claude-3-opus', 'gpt-4', 'gpt-4-turbo', 'gpt-4o-mini', *[x.code for x in gen_ollama_lms()], *[x.code for x in gen_openai_compatible_lms()]]
-LM_ORDER = [x for x in LM_RANKINGS if x in get_available(AVAILABLE_LMS)]  # Order that a user would see in settings or a dropdown
-
-#
-#  Most Important Configuration Options
-#
+LM_ORDER = [make_code_from_setting(x) for x in SETTINGS['lms']['models']]  # Order that a user would see in settings or a dropdown
 
 APP_NAME = "Abbey"  # Used in certain prompts
 
-# Models and their codes are specified in integrations/lm.py
-DEFAULT_CHAT_MODEL = get_highest_ranked_available(DEFAULT_CHAT_MODEL_RANKINGS, AVAILABLE_LMS)
-HIGH_PERFORMANCE_CHAT_MODEL = get_highest_ranked_available(HIGH_PERFORMANCE_CHAT_MODEL_RANKINGS, AVAILABLE_LMS)
-BALANCED_CHAT_MODEL = get_highest_ranked_available(BALANCED_CHAT_MODEL_RANKINGS, AVAILABLE_LMS)
-FAST_CHAT_MODEL = get_highest_ranked_available(FAST_CHAT_MODEL_RANKINGS, AVAILABLE_LMS)
-LONG_CONTEXT_CHAT_MODEL = get_highest_ranked_available(LONG_CONTEXT_CHAT_MODEL_RANKINGS, AVAILABLE_LMS)
-FAST_LONG_CONTEXT_MODEL = get_highest_ranked_available(FAST_LONG_CONTEXT_MODEL_RANKINGS, AVAILABLE_LMS)
-ALT_LONG_CONTEXT_MODEL = get_highest_ranked_available(ALT_LONG_CONTEXT_MODEL_RANKINGS, AVAILABLE_LMS)
-
 DEFAULT_EMBEDDING_OPTION = get_highest_ranked_available(EMBEDDING_MODEL_RANKINGS, AVAILABLE_EMBED)
 
+#
+# Subscription stuff
+#
+
 DEFAULT_SUBSCRIPTION_CODE = 'free'  # For users that don't have any subscription entries in their user metadata
+
 # Options for user-selected chat models by subscription
-
-_SUB_TO_MODELS = os.environ.get('SUBSCRIPTION_CODE_TO_MODEL_OPTIONS')
-SUBSCRIPTION_CODE_TO_MODEL_OPTIONS = json.loads(_SUB_TO_MODELS) if _SUB_TO_MODELS else {DEFAULT_SUBSCRIPTION_CODE: get_available(AVAILABLE_LMS)}
-
-# The templates that are available to a user with a specific subscription tier
-_SUB_TO_TEMPLATES = os.environ.get('SUBSCRIPTION_CODE_TO_TEMPLATES')
-SUBSCRIPTION_CODE_TO_TEMPLATES = json.loads(_SUB_TO_TEMPLATES) if _SUB_TO_TEMPLATES else {DEFAULT_SUBSCRIPTION_CODE: AVAILABLE_TEMPLATES}
+SUBSCRIPTION_CODE_TO_MODEL_OPTIONS = {DEFAULT_SUBSCRIPTION_CODE: LM_ORDER, 'abbey-cathedral': LM_ORDER}
+SUBSCRIPTION_CODE_TO_TEMPLATES = {DEFAULT_SUBSCRIPTION_CODE: AVAILABLE_TEMPLATES, 'abbey-cathedral': AVAILABLE_TEMPLATES}
+SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS = {DEFAULT_SUBSCRIPTION_CODE: get_available(AVAILABLE_SEARCH), 'abbey-cathedral': get_available(AVAILABLE_SEARCH)}
+SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS = {DEFAULT_SUBSCRIPTION_CODE: math.inf, 'abbey-cathedral': math.inf}
+SUBSCRIPTION_CODE_TO_TTS_OPTIONS = {DEFAULT_SUBSCRIPTION_CODE: get_available(AVAILABLE_TTS), 'abbey-cathedral': get_available(AVAILABLE_TTS)}
+if 'subscriptions' in SETTINGS:
+    sub_code = SETTINGS['subscriptions']
+    # TODO
 
 # Options for optical-character-recognition by subscription tier
 # Note that the frontend does not currently exist to allow a user to actually select one, so everyone is on the default
@@ -128,8 +103,6 @@ DEFAULT_OCR_OPTION = 'mathpix'  # codes match integrations/ocr.py
 
 DEFAULT_STORAGE_OPTION = "s3" if AWS_ACCESS_KEY and AWS_SECRET_KEY else "local"  # codes match integrations/file_storage.py
 
-_SUB_TO_SEARCH = os.environ.get('SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS')
-SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS = json.loads(_SUB_TO_SEARCH) if _SUB_TO_SEARCH else {DEFAULT_SUBSCRIPTION_CODE: get_available(AVAILABLE_SEARCH)}
 DEFAULT_SEARCH_ENGINE = get_highest_ranked_available(SEARCH_RANKINGS, AVAILABLE_SEARCH)
 
 DEFAULT_EMAIL_SERVICE = 'sendgrid' if SENDGRID_API_KEY else 'smtp'  # codes match integrations/email.py
@@ -137,15 +110,6 @@ EMAIL_FROM_NAME = "Abbey"  # The author of auto-generated emails
 EMAIL_FROM_ADDRESS = os.environ.get('SENDGRID_EMAIL') if DEFAULT_EMAIL_SERVICE == 'sendgrid' else SMTP_EMAIL  # The address from which auto-generated emails are sent
 SENDGRID_UNSUB_GROUP = int(os.environ.get('SENDGRID_UNSUB_GROUP')) if os.environ.get('SENDGRID_UNSUB_GROUP') else ""
 DISABLE_EMAILS = not (SENDGRID_API_KEY or (SMTP_EMAIL and SMTP_PASSWORD and SMTP_PORT and SMTP_SERVER))
-
-# Total limit on assets created by subscription tier
-_SUB_TO_LIMIT = os.environ.get('SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS')
-SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS = json.loads(_SUB_TO_LIMIT) if _SUB_TO_LIMIT else {DEFAULT_SUBSCRIPTION_CODE: math.inf}
-SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS = {k: math.inf if v > 1000 else v for k, v in SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS.items()}  # converting high numbers to math.inf
-
-# Available text-to-speech models by subscription
-_SUB_TO_TTS = os.environ.get('SUBSCRIPTION_CODE_TO_TTS_OPTIONS')
-SUBSCRIPTION_CODE_TO_TTS_OPTIONS = json.loads(_SUB_TO_TTS) if _SUB_TO_TTS else {DEFAULT_SUBSCRIPTION_CODE: get_available(AVAILABLE_TTS)}
 
 DEFAULT_TTS_RANKINGS = ['openai_onyx', 'eleven_adam']
 DEFAULT_TTS_MODEL = ""

@@ -1,8 +1,6 @@
 import os
 from ..configs.secrets import OPENAI_API_KEY, OPENAI_COMPATIBLE_EMBEDS, OPENAI_COMPATIBLE_KEY, OPENAI_COMPATIBLE_URL
 from ..configs.settings import SETTINGS
-OLLAMA_URL = SETTINGS['ollama']['url']
-OLLAMA_EMBEDS = SETTINGS['ollama']['embeds']
 import requests
 import json
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY if OPENAI_API_KEY else ""
@@ -40,7 +38,8 @@ class OllamaEmbed(Embed):
 
     def embed(self, texts):
         texts = [y.replace("\n", " ") for y in texts]
-        url = f'{OLLAMA_URL}/api/embed'
+        ollama_url = SETTINGS['ollama']['url']
+        url = f'{ollama_url}/api/embed'
         data = {
             'model': self.ollama_code,
             'input': texts
@@ -88,6 +87,7 @@ class OpenAIEmbed3Small(OpenAIEmbed):
 
 
 def gen_ollama_embeds():
+    return []
     if not OLLAMA_URL or not OLLAMA_EMBEDS:
         return []
     

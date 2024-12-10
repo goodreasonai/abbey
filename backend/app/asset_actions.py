@@ -10,9 +10,9 @@ from .configs.secrets import DB_TYPE, FRONTEND_URL
 from .configs.str_constants import CHAT_CONTEXT, SUMMARY_APPLY_JOB, SUMMARY_PAIRWISE_JOB, HAS_EDITED_ASSET_TITLE, HAS_EDITED_ASSET_DESC, PROTECTED_METADATA_KEYS, RETRIEVAL_SOURCE, BOOK_ORDER
 from .jobs import complete_job, job_error_wrapper, start_job
 from .configs.str_constants import RETRIEVAL_SOURCE
-from .configs.user_config import ILLEGAL_SHARE_DOMAINS, MAX_CHAT_RETRIEVER_RESULTS, FAST_CHAT_MODEL
+from .configs.user_config import ILLEGAL_SHARE_DOMAINS, MAX_CHAT_RETRIEVER_RESULTS
 from .prompts.suggest_questions_prompts import get_suggest_questions_system_prompt, get_suggest_questions_prompt, get_suggest_questions_system_prompt_detached
-from .integrations.lm import LM_PROVIDERS, LM
+from .integrations.lm import LM_PROVIDERS, LM, FAST_CHAT_MODEL
 from .utils import is_valid_email
 from .prompts.summary_prompts import get_summary_apply_instructions, get_summary_reduce_instructions
 from .worker import task_apply, task_general

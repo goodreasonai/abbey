@@ -14,8 +14,7 @@ import json
 import random
 from ..asset_actions import get_asset, get_asset_metadata, get_asset_resources, get_sources, get_or_create_retriever, set_sources, has_asset_title_been_updated, mark_asset_title_as_updated
 from .quiz import generate_question, generate_questions_lc
-from ..integrations.lm import LM, LM_PROVIDERS
-from ..configs.user_config import FAST_CHAT_MODEL, BALANCED_CHAT_MODEL
+from ..integrations.lm import LM, LM_PROVIDERS, FAST_CHAT_MODEL, BALANCED_CHAT_MODEL
 from ..prompts.quiz_prompts import get_question_grader_system_prompt, get_question_grader_prompt, make_title_user_prompt, make_title_system_prompt
 from ..utils import deduplicate
 from ..configs.str_constants import MULTIPLE_CHOICE, SHORT_ANSWER, ASSET_STATE

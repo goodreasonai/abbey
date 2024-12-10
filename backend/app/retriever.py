@@ -7,7 +7,7 @@ from .batch_and_stream_lm import stream_batched_lm, stream_progress_batched_lm
 from .prompts.retrieval_prompts import guess_answer_prompt, guess_answer_prompt_backup
 import json
 import sys
-from .integrations.lm import LM, LM_PROVIDERS, get_safe_retrieval_context_length
+from .integrations.lm import LM, LM_PROVIDERS, get_safe_retrieval_context_length, FAST_CHAT_MODEL, DEFAULT_CHAT_MODEL
 from .integrations.file_loaders import get_loader, TextSplitter
 from .utils import make_json_serializable, ntokens_to_nchars, get_extension_from_path
 import tempfile
@@ -17,7 +17,7 @@ import os
 import pickle
 from .db import needs_special_db, get_db
 from .configs.str_constants import APPLIER_RESPONSE
-from .configs.user_config import FAST_CHAT_MODEL, DEFAULT_CHAT_MODEL, DEFAULT_EMBEDDING_OPTION
+from .configs.user_config import DEFAULT_EMBEDDING_OPTION
 from .utils import remove_ext
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import math

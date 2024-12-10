@@ -8,7 +8,7 @@ from flask_cors import cross_origin
 from ..auth import User, token_required
 from ..db import needs_db
 from ..template_response import MyResponse
-from ..integrations.lm import LM_PROVIDERS, LM
+from ..integrations.lm import LM_PROVIDERS, LM, LONG_CONTEXT_CHAT_MODEL
 from ..configs.str_constants import USER_TEXT_EDITOR_PROMPTS, DIVIDER_TEXT
 import json
 from .template import Template
@@ -17,7 +17,6 @@ from ..asset_actions import get_asset, get_sources, get_or_create_retriever, set
 from ..prompts.editor_prompts import get_editor_continue_system_prompt, get_editor_continue_chunks_preamble, get_editor_continue_chunks_text, get_editor_continue_conclusion, get_editor_continue_preamble, get_editor_outline_preamble, get_editor_outline_conclusion
 from ..retriever import Retriever
 from ..configs.str_constants import MAIN_FILE 
-from ..configs.user_config import LONG_CONTEXT_CHAT_MODEL
 from ..utils import get_token_estimate
 from ..user import get_user_metadata, set_user_metadata
 

@@ -10,10 +10,8 @@ from .exceptions import RetrieverEmbeddingsError, UserIsNoneError
 import sys
 from .jobs import get_job, search_for_jobs, start_job, get_job_resource, delete_job
 from .configs.str_constants import *
-from .configs.user_config import (
-    DEFAULT_CHAT_MODEL, RETRIEVER_JOB_TIMEOUT,
-    FAST_LONG_CONTEXT_MODEL, FAST_CHAT_MODEL, BALANCED_CHAT_MODEL
-)
+from .configs.user_config import RETRIEVER_JOB_TIMEOUT
+from .integrations.lm import DEFAULT_CHAT_MODEL, FAST_LONG_CONTEXT_MODEL, FAST_CHAT_MODEL, BALANCED_CHAT_MODEL
 from .db import get_db
 from .template_response import MyResponse
 from .retriever import Chunk, Retriever

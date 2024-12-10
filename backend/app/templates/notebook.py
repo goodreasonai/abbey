@@ -22,8 +22,8 @@ import sys
 from flask_socketio import Namespace, emit, join_room, leave_room, rooms
 import hashlib
 from ..utils import text_from_html, get_token_estimate, get_current_utc_time
-from ..integrations.lm import LM, LM_PROVIDERS
-from ..configs.user_config import FAST_CHAT_MODEL, APP_NAME
+from ..integrations.lm import LM, LM_PROVIDERS, FAST_CHAT_MODEL
+from ..configs.user_config import APP_NAME
 from ..prompts.prompt_fragments import get_basic_ai_identity, get_citation_prompt
 from ..utils import get_unique_id
 
