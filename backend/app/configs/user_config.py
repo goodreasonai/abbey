@@ -8,7 +8,6 @@ from .secrets import (
 from .settings import SETTINGS
 from ..integrations.lm import make_code_from_setting
 from ..integrations.tts import TTS_PROVIDERS
-from ..integrations.embed import gen_ollama_embeds, gen_openai_compatible_embeds
 from ..integrations.web import gen_searxng_engines
 import os
 import json
@@ -35,20 +34,12 @@ AVAILABLE_PROVIDERS = {
     'searxng': True if SEARXNG_URL else False
 }
 
-AVAILABLE_EMBED = {
-    'openai': ['openai-text-embedding-ada-002', 'openai-text-embedding-3-small'],
-    'ollama': [x.code for x in gen_ollama_embeds()],
-    'openai-compatible': [x.code for x in gen_openai_compatible_embeds()]
-}
-
 AVAILABLE_SEARCH = {
     'bing': ['bing'],
     'searxng': [x.code for x in gen_searxng_engines()],
 }
 
 AVAILABLE_TEMPLATES = ['document', 'folder', 'detached_chat', 'website', 'classroom', 'curriculum', 'quiz', 'text_editor', 'video', 'notebook', 'inf_quiz', 'section']  # could use the list in templates.py, but want to avoid imports here.
-
-EMBEDDING_MODEL_RANKINGS = ['openai-text-embedding-ada-002', 'openai-text-embedding-3-small', *[x.code for x in gen_ollama_embeds()], *[x.code for x in gen_openai_compatible_embeds()]]
 
 SEARCH_RANKINGS = ['bing', 'searxng']
 
@@ -70,8 +61,6 @@ def get_highest_ranked_available(rankings, provider_map):
 LM_ORDER = [make_code_from_setting(x) for x in SETTINGS['lms']['models']]  # Order that a user would see in settings or a dropdown
 
 APP_NAME = "Abbey"  # Used in certain prompts
-
-DEFAULT_EMBEDDING_OPTION = get_highest_ranked_available(EMBEDDING_MODEL_RANKINGS, AVAILABLE_EMBED)
 
 #
 # Subscription stuff

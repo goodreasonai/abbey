@@ -8,7 +8,8 @@ from openai import OpenAI
 openai_client = OpenAI() if OPENAI_API_KEY else None
 
 class Embed():
-    def __init__(self, code) -> None:
+    def __init__(self, model, code) -> None:
+        self.model = model
         self.code = code
 
     # Takes list of texts (strings) and returns an array of embeddings (i.e., list of lists)
@@ -17,31 +18,20 @@ class Embed():
 
 
 class OpenAIEmbed(Embed):
-    def __init__(self, openai_code, code) -> None:
-        self.openai_code = openai_code
-        super().__init__(
-            code=code
-        )
-
     # Note: OpenAI will throw an error if any text to embed is blank.
     def embed(self, texts):
         texts = [y.replace("\n", " ") for y in texts]  # Remove line breaks and replace with spaces before embedding
-        return [y.embedding for y in openai_client.embeddings.create(input=texts, model=self.openai_code).data]
+        return [y.embedding for y in openai_client.embeddings.create(input=texts, model=self.model).data]
 
 
 class OllamaEmbed(Embed):
-    def __init__(self, ollama_code, code) -> None:
-        self.ollama_code = ollama_code
-        super().__init__(
-            code=code
-        )
 
     def embed(self, texts):
         texts = [y.replace("\n", " ") for y in texts]
         ollama_url = SETTINGS['ollama']['url']
         url = f'{ollama_url}/api/embed'
         data = {
-            'model': self.ollama_code,
+            'model': self.model,
             'input': texts
         }
         response = requests.post(url, json=data)
@@ -51,17 +41,12 @@ class OllamaEmbed(Embed):
 
 
 class OpenAICompatibleEmbed(Embed):
-    def __init__(self, model_code, code) -> None:
-        self.model_code = model_code
-        super().__init__(
-            code=code
-        )
 
     def embed(self, texts):
         texts = [y.replace("\n", " ") for y in texts]
         url = f'{OPENAI_COMPATIBLE_URL}/v1/embeddings'
         data = {
-            'model': self.model_code,
+            'model': self.model,
             'input': texts
         }
         response = requests.post(url, headers={'Authorization': f'Bearer {OPENAI_COMPATIBLE_KEY}'}, json=data)
@@ -70,65 +55,57 @@ class OpenAICompatibleEmbed(Embed):
         return [y['embedding'] for y in my_json['data']]
 
 
-class OpenAIAda2(OpenAIEmbed):
-    def __init__(self):
-        super().__init__(
-            openai_code="text-embedding-ada-002",
-            code="openai-text-embedding-ada-002"
-        )
-
-
-class OpenAIEmbed3Small(OpenAIEmbed):
-    def __init__(self):
-        super().__init__(
-            openai_code="text-embedding-3-small",
-            code="openai-text-embedding-3-small"
-        )
-
-
-def gen_ollama_embeds():
-    return []
-    if not OLLAMA_URL or not OLLAMA_EMBEDS:
-        return []
-    
-    ollama_embeds = OLLAMA_EMBEDS
-    if not len(ollama_embeds):
-        return []
-    models = []
-    for model in ollama_embeds:
-        code = model['code']
-        models.append(OllamaEmbed(
-            ollama_code=code,
-            code=f'{code}-ollama',
-        ))
-    return models
-
-ollama_embeds = {x.code: x for x in gen_ollama_embeds()}
-
-
-def gen_openai_compatible_embeds():
-    if not OPENAI_COMPATIBLE_URL or not OPENAI_COMPATIBLE_EMBEDS:
-        return []
-    
-    openai_compatible_embeds = json.loads(OPENAI_COMPATIBLE_EMBEDS)
-    if not len(openai_compatible_embeds):
-        return []
-    models = []
-    for model in openai_compatible_embeds:
-        code = model['code']
-        models.append(OpenAICompatibleEmbed(
-            model_code=code,
-            code=f'{code}-openai-compatible',
-        ))
-    return models
-
-openai_compatible_embeds = {x.code: x for x in gen_openai_compatible_embeds()}
-
-
-EMBED_PROVIDERS = {
-    'openai-text-embedding-ada-002': OpenAIAda2(),
-    'openai-text-embedding-3-small': OpenAIEmbed3Small(),
-    **ollama_embeds,
-    **openai_compatible_embeds
+PROVIDER_TO_EMBED = {
+    'ollama': OllamaEmbed,
+    'openai': OpenAIEmbed,
+    'openai_compatible': OpenAICompatibleEmbed
 }
 
+
+# Creates a universal code based on the settings entry
+# Used both in generate defaults and user_config to give a predictable ordering of models to the user.
+def make_code_from_setting(embed):
+    model = embed['model']
+    provider = embed['provider']
+    return embed['code'] if 'code' in embed else model + f"-{provider}"
+
+
+"""
+Settings look like:
+
+embeds:
+  - provider: openai  # required
+    model: "text-embedding-ada-002"  # required
+    code: "ada-2"  # optional
+
+"""
+def generate_embeds():
+    to_return = {}
+    embeds = SETTINGS['embeds']['models']
+    for embed in embeds:
+        if 'disabled' in embed and embed['disabled']:
+            continue
+        provider = embed['provider']
+        provider_class = PROVIDER_TO_EMBED[provider]
+        model = embed['model']
+        code = make_code_from_setting(embed)
+        obj = provider_class(
+            model=model,
+            code=code,
+        )
+        to_return[code] = obj
+    return to_return
+
+
+EMBED_PROVIDERS = generate_embeds()
+
+def generate_default():
+    default = SETTINGS['embeds']['default'] if 'default' in SETTINGS['embeds'] else ""
+    if default:
+        return default
+
+    embeds = SETTINGS['embeds']['models']
+    first_available = make_code_from_setting(embeds[0])
+    return first_available
+
+DEFAULT_EMBEDDING_OPTION = generate_default()

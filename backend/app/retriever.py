@@ -17,7 +17,6 @@ import os
 import pickle
 from .db import needs_special_db, get_db
 from .configs.str_constants import APPLIER_RESPONSE
-from .configs.user_config import DEFAULT_EMBEDDING_OPTION
 from .utils import remove_ext
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import math
@@ -26,7 +25,7 @@ import random
 from .prompts.auto_label_prompts import get_auto_desc_system_prompt
 from .utils import get_token_estimate, convert_heic_to_jpg
 from .integrations.ocr import OCR_PROVIDERS, OCR
-from .integrations.embed import EMBED_PROVIDERS, Embed
+from .integrations.embed import EMBED_PROVIDERS, Embed, DEFAULT_EMBEDDING_OPTION
 import time
 
 
