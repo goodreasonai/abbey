@@ -10,8 +10,8 @@ from .db import needs_db
 from .template_response import MyResponse
 from .exceptions import EmailFailed
 import json
-from .configs.user_config import MAX_EMAIL_LIMIT, MAX_EMAIL_WAIT, DEFAULT_EMAIL_SERVICE, EMAIL_FROM_ADDRESS, EMAIL_FROM_NAME, DISABLE_EMAILS
-from .integrations.email import EMAIL_PROVIDERS, Email
+from .configs.user_config import MAX_EMAIL_LIMIT, MAX_EMAIL_WAIT
+from .integrations.email import EMAIL_PROVIDERS, Email, DEFAULT_EMAIL_SERVICE
 
 
 bp = Blueprint('email', __name__, url_prefix="/email")
@@ -19,8 +19,8 @@ bp = Blueprint('email', __name__, url_prefix="/email")
 
 # recipients = ex. ["bobby@propane.net", ...]
 # user is none if a user action did not trigger the sent email. Otherwise, a check is performed to prevent spam.
-def send_email(recipients: list, subject: str, email_body: str, from_email=EMAIL_FROM_ADDRESS, from_name=EMAIL_FROM_NAME, user: User=None):  # should probably never change the from email.
-    if DISABLE_EMAILS:
+def send_email(recipients: list, subject: str, email_body: str, user: User=None):
+    if not DEFAULT_EMAIL_SERVICE:
         return True
     
     if len(recipients) > MAX_EMAIL_LIMIT:
@@ -31,7 +31,7 @@ def send_email(recipients: list, subject: str, email_body: str, from_email=EMAIL
             raise EmailFailed(message=f"User is doing this too much")
 
     email: Email = EMAIL_PROVIDERS[DEFAULT_EMAIL_SERVICE]
-    email.send_email(recipients, subject, email_body, from_email=from_email, from_name=from_name)
+    email.send_email(recipients, subject, email_body)
     
     return True
 

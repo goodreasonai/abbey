@@ -6,11 +6,10 @@ import json
 from .auth import get_permissioning_string
 from .db import get_db, needs_db, with_lock, needs_special_db, ProxyDB, PooledCursor
 from .retriever import consistency_check, Retriever
-from .configs.secrets import DB_TYPE, FRONTEND_URL
-from .configs.str_constants import CHAT_CONTEXT, SUMMARY_APPLY_JOB, SUMMARY_PAIRWISE_JOB, HAS_EDITED_ASSET_TITLE, HAS_EDITED_ASSET_DESC, PROTECTED_METADATA_KEYS, RETRIEVAL_SOURCE, BOOK_ORDER
+from .configs.secrets import DB_TYPE
+from .configs.str_constants import CHAT_CONTEXT, SUMMARY_APPLY_JOB, SUMMARY_PAIRWISE_JOB, HAS_EDITED_ASSET_TITLE, HAS_EDITED_ASSET_DESC, PROTECTED_METADATA_KEYS, RETRIEVAL_SOURCE, BOOK_ORDER, RETRIEVAL_SOURCE
 from .jobs import complete_job, job_error_wrapper, start_job
-from .configs.str_constants import RETRIEVAL_SOURCE
-from .configs.user_config import ILLEGAL_SHARE_DOMAINS, MAX_CHAT_RETRIEVER_RESULTS
+from .configs.user_config import ILLEGAL_SHARE_DOMAINS, MAX_CHAT_RETRIEVER_RESULTS, FRONTEND_URL
 from .prompts.suggest_questions_prompts import get_suggest_questions_system_prompt, get_suggest_questions_prompt, get_suggest_questions_system_prompt_detached
 from .integrations.lm import LM_PROVIDERS, LM, FAST_CHAT_MODEL
 from .utils import is_valid_email

@@ -1,7 +1,5 @@
 import math
 from .secrets import (
-    MATHPIX_API_APP, MATHPIX_API_KEY, 
-    AWS_SECRET_KEY, AWS_ACCESS_KEY, SENDGRID_API_KEY, SMTP_EMAIL, SMTP_PASSWORD, SMTP_PORT, SMTP_SERVER,
     CLERK_JWT_PEM, CLERK_SECRET_KEY, CUSTOM_AUTH_SECRET, CUSTOM_AUTH_DB_ENDPOINT, CUSTOM_AUTH_DB_USERNAME,
     CUSTOM_AUTH_DB_PASSWORD, CUSTOM_AUTH_DB_PORT, CUSTOM_AUTH_DB_NAME,
 )
@@ -36,12 +34,8 @@ if 'subscriptions' in SETTINGS:
     sub_code = SETTINGS['subscriptions']
     # TODO
 
-
-DEFAULT_EMAIL_SERVICE = 'sendgrid' if SENDGRID_API_KEY else 'smtp'  # codes match integrations/email.py
-EMAIL_FROM_NAME = "Abbey"  # The author of auto-generated emails
-EMAIL_FROM_ADDRESS = os.environ.get('SENDGRID_EMAIL') if DEFAULT_EMAIL_SERVICE == 'sendgrid' else SMTP_EMAIL  # The address from which auto-generated emails are sent
-SENDGRID_UNSUB_GROUP = int(os.environ.get('SENDGRID_UNSUB_GROUP')) if os.environ.get('SENDGRID_UNSUB_GROUP') else ""
-DISABLE_EMAILS = not (SENDGRID_API_KEY or (SMTP_EMAIL and SMTP_PASSWORD and SMTP_PORT and SMTP_SERVER))
+DEFAULT_FRONTEND_URL = "http://localhost:3000"
+FRONTEND_URL = SETTINGS['services']['frontend']['public_url'] if ('services' in SETTINGS and 'frontend' in SETTINGS['services'] and 'public_url' in SETTINGS['services']['frontend']) else DEFAULT_FRONTEND_URL
 
 AUTH_SYSTEM = "clerk" if CLERK_SECRET_KEY and CLERK_JWT_PEM else "custom"
 CUSTOM_AUTH_USE_DATABASE = True if (CUSTOM_AUTH_SECRET and CUSTOM_AUTH_DB_ENDPOINT and CUSTOM_AUTH_DB_USERNAME and CUSTOM_AUTH_DB_PASSWORD and CUSTOM_AUTH_DB_PORT and CUSTOM_AUTH_DB_NAME) else False
