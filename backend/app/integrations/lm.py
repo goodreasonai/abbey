@@ -387,7 +387,7 @@ PROVIDER_TO_LM = {
     'ollama': Ollama,
     'openai': OpenAILM,
     'anthropic': Anthropic,
-    'openai-compatible': OpenAICompatibleLM
+    'openai_compatible': OpenAICompatibleLM
 }
 
 
@@ -403,15 +403,15 @@ def make_code_from_setting(lm):
 Settings look like:
 
 lms:
-  provider: openai  # required
-  model: "gpt-4o"  # required
-  context_length: 100000  # optional (defaults to 4096)
-  name: "GPT-4o"  # optional
-  supports_json: true  # optional
-  accepts_images: true  # optional
-  desc: "One of the best models ever!"  # optional
-  code: "gpt-4o"  # optional
-  disabled: false  # optional
+  - provider: openai  # required
+    model: "gpt-4o"  # required
+    context_length: 100000  # optional (defaults to 4096)
+    name: "GPT-4o"  # optional
+    supports_json: true  # optional
+    accepts_images: true  # optional
+    desc: "One of the best models ever!"  # optional
+    code: "gpt-4o"  # optional
+    disabled: false  # optional
 
 """
 def generate_lms():
@@ -448,7 +448,7 @@ def generate_lms():
 LM_PROVIDERS = generate_lms()
 
 def generate_defaults():
-    defaults = SETTINGS['lms']['defaults']
+    defaults = SETTINGS['lms']['defaults'] if 'defaults' in SETTINGS['lms'] else {}
     to_return = {}
 
     lms = SETTINGS['lms']['models']

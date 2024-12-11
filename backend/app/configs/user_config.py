@@ -7,8 +7,8 @@ from .secrets import (
 )
 from .settings import SETTINGS
 from ..integrations.lm import make_code_from_setting
+from ..integrations.tts import TTS_PROVIDERS
 from ..integrations.embed import gen_ollama_embeds, gen_openai_compatible_embeds
-from ..integrations.tts import gen_openai_compatible_tts
 from ..integrations.web import gen_searxng_engines
 import os
 import json
@@ -33,12 +33,6 @@ AVAILABLE_PROVIDERS = {
     'openai-compatible': True if OPENAI_COMPATIBLE_URL else False,
     'bing': True if BING_API_KEY else False,
     'searxng': True if SEARXNG_URL else False
-}
-
-AVAILABLE_TTS = {
-    'openai': ['openai_fable', 'openai_onyx'],
-    'eleven-labs': ['eleven_adam'],
-    'openai-compatible': [x.code for x in gen_openai_compatible_tts()]
 }
 
 AVAILABLE_EMBED = {
@@ -90,7 +84,7 @@ SUBSCRIPTION_CODE_TO_MODEL_OPTIONS = {DEFAULT_SUBSCRIPTION_CODE: LM_ORDER, 'abbe
 SUBSCRIPTION_CODE_TO_TEMPLATES = {DEFAULT_SUBSCRIPTION_CODE: AVAILABLE_TEMPLATES, 'abbey-cathedral': AVAILABLE_TEMPLATES}
 SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS = {DEFAULT_SUBSCRIPTION_CODE: get_available(AVAILABLE_SEARCH), 'abbey-cathedral': get_available(AVAILABLE_SEARCH)}
 SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS = {DEFAULT_SUBSCRIPTION_CODE: math.inf, 'abbey-cathedral': math.inf}
-SUBSCRIPTION_CODE_TO_TTS_OPTIONS = {DEFAULT_SUBSCRIPTION_CODE: get_available(AVAILABLE_TTS), 'abbey-cathedral': get_available(AVAILABLE_TTS)}
+SUBSCRIPTION_CODE_TO_TTS_OPTIONS = {DEFAULT_SUBSCRIPTION_CODE: [x.code for x in TTS_PROVIDERS.values()], 'abbey-cathedral': [x.code for x in TTS_PROVIDERS.values()]}
 if 'subscriptions' in SETTINGS:
     sub_code = SETTINGS['subscriptions']
     # TODO
@@ -110,11 +104,6 @@ EMAIL_FROM_NAME = "Abbey"  # The author of auto-generated emails
 EMAIL_FROM_ADDRESS = os.environ.get('SENDGRID_EMAIL') if DEFAULT_EMAIL_SERVICE == 'sendgrid' else SMTP_EMAIL  # The address from which auto-generated emails are sent
 SENDGRID_UNSUB_GROUP = int(os.environ.get('SENDGRID_UNSUB_GROUP')) if os.environ.get('SENDGRID_UNSUB_GROUP') else ""
 DISABLE_EMAILS = not (SENDGRID_API_KEY or (SMTP_EMAIL and SMTP_PASSWORD and SMTP_PORT and SMTP_SERVER))
-
-DEFAULT_TTS_RANKINGS = ['openai_onyx', 'eleven_adam']
-DEFAULT_TTS_MODEL = ""
-if len(get_available(AVAILABLE_TTS)):
-    DEFAULT_TTS_MODEL = get_highest_ranked_available(DEFAULT_TTS_RANKINGS, AVAILABLE_TTS)  # text-to-speech model used when a user has none selected
 
 AUTH_SYSTEM = "clerk" if CLERK_SECRET_KEY and CLERK_JWT_PEM else "custom"
 CUSTOM_AUTH_USE_DATABASE = True if (CUSTOM_AUTH_SECRET and CUSTOM_AUTH_DB_ENDPOINT and CUSTOM_AUTH_DB_USERNAME and CUSTOM_AUTH_DB_PASSWORD and CUSTOM_AUTH_DB_PORT and CUSTOM_AUTH_DB_NAME) else False
