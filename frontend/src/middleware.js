@@ -3,14 +3,6 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { tokenName } from './auth/custom';
 
 
-// Clerk middleware
-const isProtectedRoute = createRouteMatcher(['/settings', "/create", "/library", "/bug"]);
-const clerkMiddlewareWrapper = clerkMiddleware((auth, req) => {
-    // Restrict dashboard routes to signed in users
-    if (isProtectedRoute(req)) auth().protect();
-});
-
-
 function customAuthMiddleware(req) {
     const protectedRoutes = ['/settings', '/create', '/library', '/bug'];
     const url = req.nextUrl.clone();
@@ -31,8 +23,14 @@ function customAuthMiddleware(req) {
 
 // Conditional export based on the environment variable
 function getDefaultExport(){
-    const authSystem = process.env.NEXT_PUBLIC_AUTH_SYSTEM 
+    const authSystem = process.env.NEXT_PUBLIC_AUTH_SYSTEM
     if (authSystem === 'clerk'){
+        // Clerk middleware
+        const isProtectedRoute = createRouteMatcher(['/settings', "/create", "/library", "/bug"]);
+        const clerkMiddlewareWrapper = clerkMiddleware((auth, req) => {
+            // Restrict dashboard routes to signed in users
+            if (isProtectedRoute(req)) auth().protect();
+        });
         return clerkMiddlewareWrapper
     }
     else if (authSystem === 'custom'){

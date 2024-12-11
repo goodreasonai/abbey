@@ -24,7 +24,7 @@ try {
         public_backend_url = settings.services?.backend?.public_url
     }
     if (settings.services?.frontend?.public_url){
-        public_frontend_url = settings.services?.backend?.public_url
+        public_frontend_url = settings.services?.frontend?.public_url
     }
     if (settings.services?.backend?.internal_url){
         internal_backend_url = settings.services?.backend?.internal_url
@@ -37,6 +37,42 @@ try {
     // "system" is blank then we're using custom auth
     if (!settings['auth']?.system || settings['auth'].system == 'custom'){
         addEnv('NEXT_PUBLIC_AUTH_SYSTEM', 'custom')
+        if (env['CUSTOM_AUTH_SECRET']){
+            addEnv('JWT_SECRET', env['CUSTOM_AUTH_SECRET'])
+            if (env['REFRESH_TOKEN_SECRET']){
+                addEnv('REFRESH_TOKEN_SECRET', env['REFRESH_TOKEN_SECRET'])
+            }
+            else {
+                addEnv('REFRESH_TOKEN_SECRET', env['CUSTOM_AUTH_SECRET'])
+            }
+        }
+        else {
+            addEnv('JWT_SECRET', 'not-a-secret')  // Matched on backend (see there if you want to change it)
+            addEnv('REFRESH_TOKEN_SECRET', 'not-a-secret')
+        }
+        // Add any appropriate provider keys
+        if (settings.auth.providers?.length){
+            for (const provider of settings.auth.providers){
+                if (provider == 'google'){
+                    addEnv('NEXT_PUBLIC_ENABLE_GOOGLE_AUTH', 1)
+                    addEnv('GOOGLE_CLIENT_ID', env['GOOGLE_CLIENT_ID'])
+                    addEnv('GOOGLE_SECRET', env['GOOGLE_SECRET'])
+                }
+                else if (provider == 'github'){
+                    addEnv('NEXT_PUBLIC_ENABLE_GITHUB_AUTH', 1)
+                    addEnv('GITHUB_CLIENT_ID', env['GITHUB_CLIENT_ID'])
+                    addEnv('GITHUB_SECRET', env['GITHUB_SECRET'])
+                }
+                else if (provider == 'keycloak'){
+                    addEnv('NEXT_PUBLIC_ENABLE_KEYCLOAK_AUTH', 1)
+                    addEnv('KEYCLOAK_PUBLIC_URL', env['KEYCLOAK_PUBLIC_URL'])
+                    addEnv('KEYCLOAK_INTERNAL_URL', env['KEYCLOAK_INTERNAL_URL'])
+                    addEnv('KEYCLOAK_REALM', env['KEYCLOAK_REALM'])
+                    addEnv('KEYCLOAK_SECRET', env['KEYCLOAK_SECRET'])
+                    addEnv('KEYCLOAK_CLIENT_ID', env['KEYCLOAK_CLIENT_ID'])
+                }
+            }
+        }
     }
     else {
         addEnv('NEXT_PUBLIC_AUTH_SYSTEM', 'clerk')
@@ -47,13 +83,8 @@ try {
 
     // TTS
     // Looks for any non disabled option (from the root) that has a non empty "tts" list
-    for (const key of Object.keys(settings)) {
-        if (settings[key]['disabled'] !== true) {
-            if (!settings[key]['tts']?.length){
-                addEnv('NEXT_PUBLIC_HIDE_TTS', 1)
-                break
-            }
-        }
+    if (!settings.tts?.voices?.length){
+        addEnv('NEXT_PUBLIC_HIDE_TTS', 1)
     }
 
     // Collections - by default disabled

@@ -309,7 +309,7 @@ if (process.env.NEXT_PUBLIC_KEYCLOAK_AUTH === '1'){
         'secret': process.env.KEYCLOAK_SECRET,
         'realm': process.env.KEYCLOAK_REALM,
         'publicUrl': process.env.KEYCLOAK_PUBLIC_URL,
-        'privateUrl': process.env.KEYCLOAK_PRIVATE_URL,
+        'privateUrl': process.env.KEYCLOAK_INTERNAL_URL,
         'scopes': ['openid', 'profile', 'email'] 
     })
 }

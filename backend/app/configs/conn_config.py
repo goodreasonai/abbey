@@ -20,7 +20,7 @@ if 'auth' in SETTINGS and 'providers' in SETTINGS['auth'] and len(SETTINGS['auth
     if not secrets.CUSTOM_AUTH_SECRET:
         raise Exception("In order to use auth providers, you must set a CUSTOM_AUTH_SECRET in your .env file.")
 
-CUSTOM_AUTH_SECRET = secrets.CUSTOM_AUTH_SECRET or 'not-a-secret'
+CUSTOM_AUTH_SECRET = secrets.CUSTOM_AUTH_SECRET or 'not-a-secret'  # Matched on frontend
 
 CUSTOM_AUTH_DB_ENDPOINT = secrets.CUSTOM_AUTH_DB_PASSWORD or DB_ENDPOINT
 CUSTOM_AUTH_DB_USERNAME = secrets.CUSTOM_AUTH_DB_USERNAME or DB_USERNAME
