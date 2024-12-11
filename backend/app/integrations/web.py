@@ -90,7 +90,6 @@ class SearXNG(SearchEngine):
         return result_objs
 
 
-
 PROVIDER_TO_WEB = {
     'bing': Bing,
     'searxng': SearXNG,
@@ -105,11 +104,12 @@ def make_code_from_setting(eng):
 Settings look like:
 
 web:
-  - provider: searxng  # required
-    engine: "google"  # optional
-    name: "Google"  # optional
-    desc: "One of the best search engines ever!"  # optional
-    traits: "General"  # optional
+  engines:
+    - provider: searxng  # required
+        engine: "google"  # optional
+        name: "Google"  # optional
+        desc: "One of the best search engines ever!"  # optional
+        traits: "General"  # optional
 
 """
 def generate_engines():

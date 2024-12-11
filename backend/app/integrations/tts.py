@@ -179,15 +179,16 @@ def make_code_from_setting(tts):
 """
 Settings look like:
 
-voices:
-  - provider: openai  # required
-    voice: "onyx"  # required
-    model: "tts-1"
-    name: "Onyx"  # optional
-    desc: "One of the best models ever!"  # optional
-    code: "openai_onyx"  # optional
-    sample_url: "https://public-audio-samples.s3.amazonaws.com/onyx.wav"
-    disabled: false  # optional
+tts:
+  voices:
+    - provider: openai  # required
+      voice: "onyx"  # required
+      model: "tts-1"
+      name: "Onyx"  # optional
+      desc: "One of the best models ever!"  # optional
+      code: "openai_onyx"  # optional
+      sample_url: "https://public-audio-samples.s3.amazonaws.com/onyx.wav"
+      disabled: false  # optional
 
 """
 def generate_tts():

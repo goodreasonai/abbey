@@ -1,5 +1,4 @@
-from .configs.user_config import DEFAULT_STORAGE_OPTION
-from .integrations.file_storage import FileStorage, FS_PROVIDERS
+from .integrations.file_storage import FileStorage, FS_PROVIDERS, DEFAULT_STORAGE_OPTION
 import requests
 from datetime import datetime
 

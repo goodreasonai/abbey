@@ -74,9 +74,10 @@ def make_code_from_setting(embed):
 Settings look like:
 
 embeds:
-  - provider: openai  # required
-    model: "text-embedding-ada-002"  # required
-    code: "ada-2"  # optional
+  models:
+    - provider: openai  # required
+      model: "text-embedding-ada-002"  # required
+      code: "ada-2"  # optional
 
 """
 def generate_embeds():

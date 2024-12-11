@@ -1,7 +1,8 @@
 import os
 import shutil
 import boto3
-from ..configs.secrets import S3_BUCKET_NAME, AWS_ACCESS_KEY, AWS_SECRET_KEY
+from ..configs.secrets import AWS_ACCESS_KEY, AWS_SECRET_KEY
+from ..configs.settings import SETTINGS
 from ..utils import get_unique_id
 import sys
 
@@ -26,10 +27,8 @@ class FileStorage():
 
 
 class S3(FileStorage):
-    def __init__(self) -> None:
-        super().__init__(code='s3')
-
     def upload_file(self, suggested_path_list, temp_path, ext, use_data=None):
+        S3_BUCKET_NAME = SETTINGS['s3']['bucket']
         session = boto3.session.Session()
         s3 = session.client('s3', aws_access_key_id=AWS_ACCESS_KEY, aws_secret_access_key=AWS_SECRET_KEY)
         s3_id = get_unique_id()
@@ -82,9 +81,7 @@ class S3(FileStorage):
 
 
 class LocalStorage(FileStorage):
-    def __init__(self) -> None:
-        super().__init__(code='local')
-        
+
     def upload_file(self, suggested_path_list, temp_path, ext, use_data=None):
         from .. import LOCAL_STORAGE_PATH  # Avoiding global variable bugs
         
@@ -140,16 +137,64 @@ class LocalStorage(FileStorage):
 # Basically, it's a hacky way to pretend as though some random text (like, a Workspace note) is actually a stored file when it is in fact stored in the database.
 # Note that you cannot upload things to synthetic storage (it wouldn't go anywhere!)
 class SyntheticStorage(FileStorage):
-    def __init__(self) -> None:
-        super().__init__('synthetic')
 
     def download_file(self, tempfile_path, remote_path):
         with open(tempfile_path, 'w') as fhand:
             fhand.write(remote_path)  # See that the "path" is actually the data itself.
 
 
-FS_PROVIDERS = {
-    'local': LocalStorage(),
-    's3': S3(),
-    'synthetic': SyntheticStorage()
+PROVIDER_TO_FS = {
+    's3': S3
 }
+
+def make_code_from_setting(fs):
+    return fs['code'] if 'code' in fs else fs['provider']
+
+"""
+Settings look like:
+
+storage:
+  locations:
+    - provider: s3
+
+"""
+def generate_fs():
+    if 'storage' not in SETTINGS:
+        return {}
+    if 'locations' not in SETTINGS['storage'] or not len(SETTINGS['storage']['locations']):
+        return {}
+    
+    to_return = {}
+    options = SETTINGS['storage']['locations']
+    for option in options:
+        if 'disabled' in option and option['disabled']:
+            continue
+        provider = option['provider']
+        provider_class = PROVIDER_TO_FS[provider]
+        code = make_code_from_setting(option)
+        obj = provider_class(
+            code=code
+        )
+        to_return[code] = obj
+    return to_return
+
+
+FS_PROVIDERS = {
+    **generate_fs(),
+    'local': LocalStorage(code='local'),
+    'synthetic': SyntheticStorage(code='synthetic')
+}
+
+def generate_default():
+    first_option: FileStorage = [x for x in FS_PROVIDERS.values()][0]  # Is local if there's nothing specified
+    if 'storage' not in SETTINGS:
+        return first_option.code
+    if 'locations' not in SETTINGS['storage'] or not len(SETTINGS['storage']['locations']):
+        return first_option.code
+
+    if 'default' in SETTINGS['storage']:
+        return SETTINGS['storage']['default']
+
+    return first_option.code  # Since there was something specified but no default, the first option is no longer local but something else.
+
+DEFAULT_STORAGE_OPTION = generate_default()

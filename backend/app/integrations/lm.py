@@ -403,15 +403,16 @@ def make_code_from_setting(lm):
 Settings look like:
 
 lms:
-  - provider: openai  # required
-    model: "gpt-4o"  # required
-    context_length: 100000  # optional (defaults to 4096)
-    name: "GPT-4o"  # optional
-    supports_json: true  # optional
-    accepts_images: true  # optional
-    desc: "One of the best models ever!"  # optional
-    code: "gpt-4o"  # optional
-    disabled: false  # optional
+  models:
+    - provider: openai  # required
+      model: "gpt-4o"  # required
+      context_length: 100000  # optional (defaults to 4096)
+      name: "GPT-4o"  # optional
+      supports_json: true  # optional
+      accepts_images: true  # optional
+      desc: "One of the best models ever!"  # optional
+      code: "gpt-4o"  # optional
+      disabled: false  # optional
 
 """
 def generate_lms():
