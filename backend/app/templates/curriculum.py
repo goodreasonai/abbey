@@ -26,7 +26,7 @@ from ..configs.str_constants import CURR_START_ACTIVITY, CURR_COMPLETE_ACTIVITY,
 from .template import EmailRules
 from ..db import needs_db, ProxyDB
 from ..auth import get_users
-from ..configs.secrets import FRONTEND_URL
+from ..configs.user_config import FRONTEND_URL
 from ..configs.user_config import APP_NAME
 import random
 

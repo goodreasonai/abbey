@@ -9,8 +9,8 @@ import stripe
 from flask_cors import cross_origin
 from .db import get_db, needs_db, with_lock
 from .auth import User, token_required, token_optional
-from .configs.secrets import FRONTEND_URL, DB_TYPE
-from .configs.user_config import DEFAULT_SUBSCRIPTION_CODE, SUBSCRIPTION_CODE_TO_MODEL_OPTIONS, DEFAULT_PRODUCT_ID
+from .configs.conn_config import DB_TYPE
+from .configs.user_config import FRONTEND_URL, DEFAULT_SUBSCRIPTION_CODE, SUBSCRIPTION_CODE_TO_MODEL_OPTIONS, DEFAULT_PRODUCT_ID
 from .template_response import MyResponse
 from .configs.str_constants import USER_CHECKOUT_SESSION, USER_SUBSCRIPTION
 from .groups import add_group_permission_by_product_id

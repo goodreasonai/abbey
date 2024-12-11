@@ -21,14 +21,27 @@ APP_NAME = "Abbey"  # Used in certain prompts
 DEFAULT_SUBSCRIPTION_CODE = 'free'  # For users that don't have any subscription entries in their user metadata
 
 # Options for user-selected chat models by subscription
-SUBSCRIPTION_CODE_TO_MODEL_OPTIONS = {DEFAULT_SUBSCRIPTION_CODE: LM_ORDER, 'abbey-cathedral': LM_ORDER}
-SUBSCRIPTION_CODE_TO_TEMPLATES = {DEFAULT_SUBSCRIPTION_CODE: AVAILABLE_TEMPLATES, 'abbey-cathedral': AVAILABLE_TEMPLATES}
-SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS = {DEFAULT_SUBSCRIPTION_CODE: [x.code for x in SEARCH_PROVIDERS.values()], 'abbey-cathedral': [x.code for x in SEARCH_PROVIDERS.values()]}
-SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS = {DEFAULT_SUBSCRIPTION_CODE: math.inf, 'abbey-cathedral': math.inf}
-SUBSCRIPTION_CODE_TO_TTS_OPTIONS = {DEFAULT_SUBSCRIPTION_CODE: [x.code for x in TTS_PROVIDERS.values()], 'abbey-cathedral': [x.code for x in TTS_PROVIDERS.values()]}
+SUBSCRIPTION_CODE_TO_MODEL_OPTIONS = {DEFAULT_SUBSCRIPTION_CODE: LM_ORDER}
+SUBSCRIPTION_CODE_TO_TEMPLATES = {DEFAULT_SUBSCRIPTION_CODE: AVAILABLE_TEMPLATES}
+SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS = {DEFAULT_SUBSCRIPTION_CODE: [x.code for x in SEARCH_PROVIDERS.values()]}
+SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS = {DEFAULT_SUBSCRIPTION_CODE: math.inf}
+SUBSCRIPTION_CODE_TO_TTS_OPTIONS = {DEFAULT_SUBSCRIPTION_CODE: [x.code for x in TTS_PROVIDERS.values()]}
+_available_product_id = ""
 if 'subscriptions' in SETTINGS:
-    sub_code = SETTINGS['subscriptions']
-    # TODO
+    subs = SETTINGS['subscriptions']
+    for key in subs:
+        SUBSCRIPTION_CODE_TO_MODEL_OPTIONS[key] = subs[key]['lms']
+        if 'templates' in subs[key]:  # optional
+            SUBSCRIPTION_CODE_TO_TEMPLATES[key] = subs[key]['templates']
+        else:
+           SUBSCRIPTION_CODE_TO_TEMPLATES[key] = AVAILABLE_TEMPLATES
+        SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS[key] = subs[key]['limit']
+        SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS[key] = subs[key]['limit']
+        SUBSCRIPTION_CODE_TO_TTS_OPTIONS[key] = subs[key]['tts']
+        if 'product_id' in subs[key]:
+            _available_product_id = subs[key]['product_id']
+
+DEFAULT_PRODUCT_ID = _available_product_id
 
 DEFAULT_FRONTEND_URL = "http://localhost:3000"
 FRONTEND_URL = SETTINGS['services']['frontend']['public_url'] if ('services' in SETTINGS and 'frontend' in SETTINGS['services'] and 'public_url' in SETTINGS['services']['frontend']) else DEFAULT_FRONTEND_URL
@@ -55,8 +68,6 @@ ILLEGAL_SHARE_DOMAINS = [
 
 MAX_EMAIL_LIMIT = 500  # The max number of recipients in a single email.
 MAX_EMAIL_WAIT = 10  # The number of seconds that needs to go by after a previous email to send a user-action generated email
-
-DEFAULT_PRODUCT_ID = os.environ.get('DEFAULT_PRODUCT_ID')
 
 # Controls whether actual permissioning applies or everyone is allowed to see everything
 PERMISSIONING = "real"  # "real" | "demo"

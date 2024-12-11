@@ -38,8 +38,6 @@ MATHPIX_API_APP = os.environ.get("MATHPIX_API_APP")
 STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY")
 STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
 
-FRONTEND_URL = os.environ.get("FRONTEND_URL")  # used in Stripe integration.
-
 OPENAI_COMPATIBLE_URL = os.environ.get('OPENAI_COMPATIBLE_URL')
 OPENAI_COMPATIBLE_KEY = os.environ.get('OPENAI_COMPATIBLE_KEY')
 OPENAI_COMPATIBLE_LMS = os.environ.get('OPENAI_COMPATIBLE_LMS')
@@ -58,8 +56,6 @@ SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD')
 ELEVEN_LABS_API_KEY = os.environ.get('ELEVEN_LABS_API_KEY')
 
 BING_API_KEY = os.environ.get('BING_API_KEY')
-SEARXNG_URL = os.environ.get('SEARXNG_URL')
-SEARXNG_OPTIONS = os.environ.get('SEARXNG_OPTIONS')
 
 PROXY_URL_HTTP = os.environ.get('PROXY_URL_HTTP')
 PROXY_URL_HTTPS = os.environ.get('PROXY_URL_HTTPS')

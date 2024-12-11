@@ -108,6 +108,11 @@ try {
         addEnv('NEXT_PUBLIC_HIDE_SIGNED_OUT_HOME_PAGE', 1)
     }
 
+    // Subscriptions
+    if (settings.subscriptions){
+        addEnv('NEXT_PUBLIC_ENABLE_SUBSCRIPTION', 1)
+    }
+
     fs.writeFileSync(path.join(__dirname, '../../.env.local'), envContent);
     console.log('Environment variables generated successfully');
 } catch (e) {

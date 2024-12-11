@@ -17,7 +17,7 @@ from ..asset_actions import get_asset, get_asset_metadata, get_assets, set_sourc
 from ..template_response import MyResponse
 from ..activity import get_aggregated_activity
 from ..asset_actions import propagate_joint_permissions
-from ..configs.secrets import FRONTEND_URL
+from ..configs.user_config import FRONTEND_URL
 from ..email import send_email
 from datetime import datetime
 from ..integrations.auth import FullUser
