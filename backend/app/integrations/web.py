@@ -1,4 +1,5 @@
-from ..configs.secrets import BING_API_KEY, SEARXNG_URL, SEARXNG_OPTIONS
+from ..configs.secrets import BING_API_KEY
+from ..configs.settings import SETTINGS
 import requests
 import sys
 import json
@@ -22,32 +23,29 @@ class SearchResult():
 
 
 class SearchEngine():
-    def __init__(self, code, name, desc, traits) -> None:
+    def __init__(self, engine, code, name, desc, traits, use_pdf) -> None:
+        self.engine = engine
         self.code = code
         self.name = name
         self.desc = desc
         self.traits = traits
+        self.use_pdf = use_pdf
 
     def search(self, query, max_n=10):
         raise Exception(f"Search not implemented for search engine with code '{self.code}'")
     
     def to_json_obj(self):
         return {
+            'engine': self.engine,
             'code': self.code,
             'name': self.name,
             'desc': self.desc,
-            'traits': self.traits
+            'traits': self.traits,
+            'use_pdf': self.use_pdf
         }
 
 
 class Bing(SearchEngine):
-    def __init__(self) -> None:
-        super().__init__(
-            code="bing",
-            name="Bing",
-            desc="Searches over the entire web. Microsoft's search engine.",
-            traits="Web",
-        )
     
     def search(self, query, max_n=10):
         endpoint = "https://api.bing.microsoft.com/v7.0/search"
@@ -68,29 +66,13 @@ class Bing(SearchEngine):
 
 
 class SearXNG(SearchEngine):
-    def __init__(self, engine_code="", name="", use_pdf=False) -> None:
-        self.engine_code = engine_code
-        self.use_pdf = use_pdf
-        code = "searxng" if not engine_code else f"searxng-{engine_code}"
-        real_name = "SearXNG"
-        if not name:
-            if engine_code:
-                real_name += f"-{engine_code}"
-        else:
-            real_name = name
-
-        super().__init__(
-            code=code,
-            name=real_name,
-            desc="An open source meta search engine",
-            traits="Self-Hosted",
-        )
 
     def search(self, query, max_n=10):
         params = {'q': query, 'format': 'json'}
-        if self.engine_code:
-            params['engines'] = self.engine_code
-        response = requests.get(f"{SEARXNG_URL}/search", params=params)
+        url = SETTINGS['searxng']['url']
+        if self.engine:
+            params['engines'] = self.engine
+        response = requests.get(f"{url}/search", params=params)
         my_json = response.json()
         results = my_json['results']
         result_objs = []
@@ -108,32 +90,72 @@ class SearXNG(SearchEngine):
         return result_objs
 
 
-def gen_searxng_engines():
 
-    if not SEARXNG_URL:
-        return []
-    
-    enabled = [SearXNG()]
-    
-    if not SEARXNG_OPTIONS:
-        return enabled
-    
-    searxng_options = json.loads(SEARXNG_OPTIONS)
-    if not len(SEARXNG_OPTIONS):
-        return enabled
-
-    for engine in searxng_options:
-        name = engine['name'] if 'name' in engine else ""
-        use_pdf = engine['pdf'] if 'pdf' in engine else False
-        engine_code = engine['engine']
-        enabled.append(SearXNG(name=name, engine_code=engine_code, use_pdf=use_pdf))
-    return enabled
-
-searxng_engines = {x.code: x for x in gen_searxng_engines()}
-
-
-SEARCH_PROVIDERS = {
-    'bing': Bing(),
-    **searxng_engines
+PROVIDER_TO_WEB = {
+    'bing': Bing,
+    'searxng': SearXNG,
 }
 
+def make_code_from_setting(eng):
+    engine = eng['engine'] if 'engine' in eng else None
+    provider = eng['provider']
+    return eng['code'] if 'code' in eng else (f"{engine}-{provider}" if engine else provider)
+
+"""
+Settings look like:
+
+web:
+  - provider: searxng  # required
+    engine: "google"  # optional
+    name: "Google"  # optional
+    desc: "One of the best search engines ever!"  # optional
+    traits: "General"  # optional
+
+"""
+def generate_engines():
+    if 'web' not in SETTINGS:
+        return {}
+    if 'engines' not in SETTINGS['web'] or not len(SETTINGS['web']['engines']):
+        return {}
+    
+    to_return = {}
+    options = SETTINGS['web']['engines']
+    for option in options:
+        if 'disabled' in option and option['disabled']:
+            continue
+        provider = option['provider']
+        provider_class = PROVIDER_TO_WEB[provider]
+        engine = option['engine'] if 'engine' in option else None
+        code = make_code_from_setting(option)
+        name = option['name'] if 'name' in option else (engine if engine else provider)
+        traits = option['traits'] if 'traits' in option else provider
+        desc = option['desc'] if 'desc' in option else (f"The search engine {engine} is provided by {provider}." if engine else "")
+        use_pdf = option['use_pdf'] if 'use_pdf' in option else False
+        obj = provider_class(
+            engine=engine,
+            code=code,
+            name=name,
+            desc=desc,
+            traits=traits,
+            use_pdf=use_pdf
+        )
+        to_return[code] = obj
+    return to_return
+
+
+SEARCH_PROVIDERS = generate_engines()
+
+def generate_default():
+    if 'web' not in SETTINGS:
+        return ""
+    if 'engines' not in SETTINGS['web'] or not len(SETTINGS['web']['engines']):
+        return ""
+
+    engines = SETTINGS['web']['engines']
+
+    if 'default' in SETTINGS['web']:
+        return SETTINGS['web']['default']
+
+    return make_code_from_setting(engines[0])  # first available 
+
+DEFAULT_SEARCH_ENGINE = generate_default()

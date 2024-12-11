@@ -3,7 +3,7 @@ import os
 import requests
 import sys
 from ..configs.settings import SETTINGS
-from ..configs.secrets import ELEVEN_LABS_API_KEY, OPENAI_API_KEY, OPENAI_COMPATIBLE_URL, OPENAI_COMPATIBLE_KEY, OPENAI_COMPATIBLE_TTS
+from ..configs.secrets import ELEVEN_LABS_API_KEY, OPENAI_API_KEY, OPENAI_COMPATIBLE_KEY
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY if OPENAI_API_KEY else ""
 from openai import OpenAI
 openai_client = OpenAI() if OPENAI_API_KEY else None
@@ -110,7 +110,7 @@ class OpenAITTS(OpenAICompatibleBaseTTS):
 class OpenAICompatibleTTS(OpenAICompatibleBaseTTS):
     def __init__(self, voice, model, code, name, desc, traits, sample_url) -> None:
         super().__init__(
-            url=OPENAI_COMPATIBLE_URL,
+            url=SETTINGS['openai_compatible']['url'],
             key=OPENAI_COMPATIBLE_KEY,
             voice=voice,
             model=model,
@@ -208,7 +208,7 @@ def generate_tts():
         code = make_code_from_setting(option)
         name = option['name'] if 'name' in option else voice
         traits = option['traits'] if 'traits' in option else provider
-        desc = option['desc'] if 'desc' in option else f"The model {option} provided by {provider} has a context length of {context_length}."
+        desc = option['desc'] if 'desc' in option else f"This voice uses the model {model} and is provided by {provider}."
         sample_url = option['sample_url'] if 'sample_url' in option else ""
         obj = provider_class(
             voice=voice,

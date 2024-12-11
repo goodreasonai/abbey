@@ -8,7 +8,6 @@ from urllib.parse import urljoin
 import sys
 from .integrations.web import SearchEngine, SearchResult, SEARCH_PROVIDERS
 from .integrations.file_loaders import get_loader, TextSplitter, RawChunk
-from .configs.user_config import DEFAULT_SEARCH_ENGINE
 from .user import get_user_search_engine_code
 from .auth import User
 from .utils import ntokens_to_nchars, get_token_estimate

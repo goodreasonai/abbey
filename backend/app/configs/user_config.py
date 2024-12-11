@@ -1,61 +1,19 @@
 import math
 from .secrets import (
-    OPENAI_API_KEY, ANTHROPIC_API_KEY, ELEVEN_LABS_API_KEY, MATHPIX_API_APP, MATHPIX_API_KEY, BING_API_KEY, 
+    MATHPIX_API_APP, MATHPIX_API_KEY, 
     AWS_SECRET_KEY, AWS_ACCESS_KEY, SENDGRID_API_KEY, SMTP_EMAIL, SMTP_PASSWORD, SMTP_PORT, SMTP_SERVER,
-    CLERK_JWT_PEM, CLERK_SECRET_KEY, CUSTOM_AUTH_SECRET, CUSTOM_AUTH_DB_ENDPOINT, CUSTOM_AUTH_DB_USERNAME, CUSTOM_AUTH_DB_PASSWORD, CUSTOM_AUTH_DB_PORT, CUSTOM_AUTH_DB_NAME,
-    BING_API_KEY, OPENAI_COMPATIBLE_URL, SEARXNG_URL
+    CLERK_JWT_PEM, CLERK_SECRET_KEY, CUSTOM_AUTH_SECRET, CUSTOM_AUTH_DB_ENDPOINT, CUSTOM_AUTH_DB_USERNAME,
+    CUSTOM_AUTH_DB_PASSWORD, CUSTOM_AUTH_DB_PORT, CUSTOM_AUTH_DB_NAME,
 )
 from .settings import SETTINGS
 from ..integrations.lm import make_code_from_setting
 from ..integrations.tts import TTS_PROVIDERS
-from ..integrations.web import gen_searxng_engines
+from ..integrations.web import SEARCH_PROVIDERS
 import os
-import json
-
-"""
-
-User Configuration
-
-NOTE: None of the values in here are meant to be secret. Secrets are stored in environment variables, which are loaded in secrets.py.
-NOTE: These may or may not have to match the frontend config. Take a look there.
-NOTE: Variables are organized by how likely a user would consider changing the variable (most to mid to least important).
-
-"""
 
 BACKEND_VERSION = '0.12.7'  # Viewable when a user goes to the root "/" endpoint of the backend
 
-AVAILABLE_PROVIDERS = {
-    'openai': True if OPENAI_API_KEY else False,
-    'anthropic': True if ANTHROPIC_API_KEY else False,
-    'eleven-labs': True if ELEVEN_LABS_API_KEY else False,
-    'ollama': True if 'ollama' in SETTINGS else False,
-    'openai-compatible': True if OPENAI_COMPATIBLE_URL else False,
-    'bing': True if BING_API_KEY else False,
-    'searxng': True if SEARXNG_URL else False
-}
-
-AVAILABLE_SEARCH = {
-    'bing': ['bing'],
-    'searxng': [x.code for x in gen_searxng_engines()],
-}
-
 AVAILABLE_TEMPLATES = ['document', 'folder', 'detached_chat', 'website', 'classroom', 'curriculum', 'quiz', 'text_editor', 'video', 'notebook', 'inf_quiz', 'section']  # could use the list in templates.py, but want to avoid imports here.
-
-SEARCH_RANKINGS = ['bing', 'searxng']
-
-def get_available(provider_map):
-    return sum([y for x, y in provider_map.items() if AVAILABLE_PROVIDERS[x]], [])  # neat trick, no?
-
-def get_highest_ranked_available(rankings, provider_map):
-    all_available = get_available(provider_map)
-    for model in rankings:
-        if model in all_available:
-            return model
-    available = get_available(provider_map)
-    if len(available):
-        return available[0]
-        
-    return ""
 
 # This extra ranking is done so that a user sees a consistent / sensible ordering of LM options
 LM_ORDER = [make_code_from_setting(x) for x in SETTINGS['lms']['models']]  # Order that a user would see in settings or a dropdown
@@ -71,7 +29,7 @@ DEFAULT_SUBSCRIPTION_CODE = 'free'  # For users that don't have any subscription
 # Options for user-selected chat models by subscription
 SUBSCRIPTION_CODE_TO_MODEL_OPTIONS = {DEFAULT_SUBSCRIPTION_CODE: LM_ORDER, 'abbey-cathedral': LM_ORDER}
 SUBSCRIPTION_CODE_TO_TEMPLATES = {DEFAULT_SUBSCRIPTION_CODE: AVAILABLE_TEMPLATES, 'abbey-cathedral': AVAILABLE_TEMPLATES}
-SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS = {DEFAULT_SUBSCRIPTION_CODE: get_available(AVAILABLE_SEARCH), 'abbey-cathedral': get_available(AVAILABLE_SEARCH)}
+SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS = {DEFAULT_SUBSCRIPTION_CODE: [x.code for x in SEARCH_PROVIDERS.values()], 'abbey-cathedral': [x.code for x in SEARCH_PROVIDERS.values()]}
 SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS = {DEFAULT_SUBSCRIPTION_CODE: math.inf, 'abbey-cathedral': math.inf}
 SUBSCRIPTION_CODE_TO_TTS_OPTIONS = {DEFAULT_SUBSCRIPTION_CODE: [x.code for x in TTS_PROVIDERS.values()], 'abbey-cathedral': [x.code for x in TTS_PROVIDERS.values()]}
 if 'subscriptions' in SETTINGS:
@@ -85,8 +43,6 @@ DISABLE_OCR = not (MATHPIX_API_APP and MATHPIX_API_KEY)  # If true, OCR is disab
 DEFAULT_OCR_OPTION = 'mathpix'  # codes match integrations/ocr.py
 
 DEFAULT_STORAGE_OPTION = "s3" if AWS_ACCESS_KEY and AWS_SECRET_KEY else "local"  # codes match integrations/file_storage.py
-
-DEFAULT_SEARCH_ENGINE = get_highest_ranked_available(SEARCH_RANKINGS, AVAILABLE_SEARCH)
 
 DEFAULT_EMAIL_SERVICE = 'sendgrid' if SENDGRID_API_KEY else 'smtp'  # codes match integrations/email.py
 EMAIL_FROM_NAME = "Abbey"  # The author of auto-generated emails

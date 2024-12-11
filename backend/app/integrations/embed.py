@@ -1,8 +1,7 @@
 import os
-from ..configs.secrets import OPENAI_API_KEY, OPENAI_COMPATIBLE_EMBEDS, OPENAI_COMPATIBLE_KEY, OPENAI_COMPATIBLE_URL
+from ..configs.secrets import OPENAI_API_KEY, OPENAI_COMPATIBLE_KEY
 from ..configs.settings import SETTINGS
 import requests
-import json
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY if OPENAI_API_KEY else ""
 from openai import OpenAI
 openai_client = OpenAI() if OPENAI_API_KEY else None
@@ -44,7 +43,8 @@ class OpenAICompatibleEmbed(Embed):
 
     def embed(self, texts):
         texts = [y.replace("\n", " ") for y in texts]
-        url = f'{OPENAI_COMPATIBLE_URL}/v1/embeddings'
+        api_url = SETTINGS['openai_compatible']['url']
+        url = f'{api_url}/v1/embeddings'
         data = {
             'model': self.model,
             'input': texts
