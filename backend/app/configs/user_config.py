@@ -36,11 +36,6 @@ if 'subscriptions' in SETTINGS:
     sub_code = SETTINGS['subscriptions']
     # TODO
 
-# Options for optical-character-recognition by subscription tier
-# Note that the frontend does not currently exist to allow a user to actually select one, so everyone is on the default
-# However, in the future this could be user selected – once there are more options available.
-DISABLE_OCR = not (MATHPIX_API_APP and MATHPIX_API_KEY)  # If true, OCR is disabled, which means that DisabledOCR ('disabled') is used for all users (and it accepts nothing, does nothing).
-DEFAULT_OCR_OPTION = 'mathpix'  # codes match integrations/ocr.py
 
 DEFAULT_EMAIL_SERVICE = 'sendgrid' if SENDGRID_API_KEY else 'smtp'  # codes match integrations/email.py
 EMAIL_FROM_NAME = "Abbey"  # The author of auto-generated emails

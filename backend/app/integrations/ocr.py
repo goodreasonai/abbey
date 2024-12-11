@@ -1,6 +1,7 @@
 import requests
 import time
 from ..configs.secrets import MATHPIX_API_KEY, MATHPIX_API_APP
+from ..configs.settings import SETTINGS
 from ..utils import remove_ext
 import json
 import os
@@ -22,10 +23,10 @@ class OCR():
 
 
 class MathpixOCR(OCR):
-    def __init__(self) -> None:
+    def __init__(self, code) -> None:
         self.img_formats = ["png", "jpeg", "jpg", "jpe", "bmp", "dib", "jp2", "webp", "pbm", "pgm", "ppm", "pxm", ".pnm", "pfm", "sr", "ras", "tiff", "tif", "exr", "hdr", "pic"]
         super().__init__(
-            code='mathpix',
+            code=code,
             accept_formats = ["pdf", *self.img_formats]
         )
 
@@ -174,9 +175,9 @@ class MathpixOCR(OCR):
 
 
 class DisabledOCR(OCR):
-    def __init__(self) -> None:
+    def __init__(self, code) -> None:
         super().__init__(
-            code='disabled',
+            code=code,
             accept_formats = []
         )
 
@@ -184,7 +185,57 @@ class DisabledOCR(OCR):
         return src_name
 
 
-OCR_PROVIDERS = {
-    'mathpix': MathpixOCR(),
-    'disabled': DisabledOCR()
+PROVIDER_TO_OCR = {
+    'mathpix': MathpixOCR
 }
+
+def make_code_from_setting(ocr):
+    return ocr['code'] if 'code' in ocr else ocr['provider']
+
+"""
+Settings look like:
+
+ocr:
+  models:
+    - provider: mathpix
+
+"""
+def generate_ocr():
+    if 'ocr' not in SETTINGS:
+        return {}
+    if 'models' not in SETTINGS['ocr'] or not len(SETTINGS['ocr']['models']):
+        return {}
+    
+    to_return = {}
+    options = SETTINGS['ocr']['models']
+    for option in options:
+        if 'disabled' in option and option['disabled']:
+            continue
+        provider = option['provider']
+        provider_class = PROVIDER_TO_OCR[provider]
+        code = make_code_from_setting(option)
+        obj = provider_class(
+            code=code
+        )
+        to_return[code] = obj
+    return to_return
+
+
+OCR_PROVIDERS = {
+    **generate_ocr(),
+    'disabled': DisabledOCR('disabled'),
+}
+
+def generate_default():
+    first_option: OCR = [x for x in OCR_PROVIDERS.values()][0]  # Is disabled if there's nothing specified
+    if 'ocr' not in SETTINGS:
+        return first_option.code
+    if 'models' not in SETTINGS['ocr'] or not len(SETTINGS['ocr']['models']):
+        return first_option.code
+
+    if 'default' in SETTINGS['ocr']:
+        return SETTINGS['ocr']['default']
+
+    return first_option.code  # Since there was something specified but no default, the first option is no longer local but something else.
+
+DEFAULT_OCR_OPTION = generate_default()

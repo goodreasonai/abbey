@@ -7,15 +7,16 @@ from flask_cors import cross_origin
 from .integrations.lm import LM_PROVIDERS, LM, DEFAULT_CHAT_MODEL
 from .integrations.tts import TTS, TTS_PROVIDERS, DEFAULT_TTS_MODEL
 from .integrations.web import SearchEngine, SEARCH_PROVIDERS, DEFAULT_SEARCH_ENGINE
+from .integrations.ocr import DEFAULT_OCR_OPTION
 from .configs.str_constants import USER_CHAT_MODEL, USER_TTS_MODEL, USER_PRODUCT_CODE, USER_PIN, USER_UPLOAD_COUNTER, USER_ALERT_ACTIVITY, USER_SEARCH_ENGINE
 from .auth import User, token_required
 from .db import get_db, needs_db
 from .template_response import MyResponse
 from .configs.user_config import (
-    OVERRIDE_ALLOWED_TEMPLATES, DEFAULT_OCR_OPTION, SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS,
+    OVERRIDE_ALLOWED_TEMPLATES, SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS,
     SUBSCRIPTION_CODE_TO_MODEL_OPTIONS,
     SUBSCRIPTION_CODE_TO_TEMPLATES, SUBSCRIPTION_CODE_TO_TTS_OPTIONS,
-    SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS, DISABLE_OCR, LM_ORDER, DEFAULT_SUBSCRIPTION_CODE
+    SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS, LM_ORDER, DEFAULT_SUBSCRIPTION_CODE
 )
 from .pay import get_user_main_sub_code, Protocol, get_protocol_by_code, get_product, get_products
 import pytz
@@ -46,8 +47,6 @@ def get_user_templates(user: User, db=None):
 @needs_db
 def get_user_ocr_option(user: User, db=None):
     # TODO: let the user select one!
-    if DISABLE_OCR:
-        return 'disabled'
     return DEFAULT_OCR_OPTION
 
 
