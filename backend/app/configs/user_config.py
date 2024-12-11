@@ -1,8 +1,4 @@
 import math
-from .secrets import (
-    CLERK_JWT_PEM, CLERK_SECRET_KEY, CUSTOM_AUTH_SECRET, CUSTOM_AUTH_DB_ENDPOINT, CUSTOM_AUTH_DB_USERNAME,
-    CUSTOM_AUTH_DB_PASSWORD, CUSTOM_AUTH_DB_PORT, CUSTOM_AUTH_DB_NAME,
-)
 from .settings import SETTINGS
 from ..integrations.lm import make_code_from_setting
 from ..integrations.tts import TTS_PROVIDERS
@@ -37,13 +33,6 @@ if 'subscriptions' in SETTINGS:
 DEFAULT_FRONTEND_URL = "http://localhost:3000"
 FRONTEND_URL = SETTINGS['services']['frontend']['public_url'] if ('services' in SETTINGS and 'frontend' in SETTINGS['services'] and 'public_url' in SETTINGS['services']['frontend']) else DEFAULT_FRONTEND_URL
 
-AUTH_SYSTEM = "clerk" if CLERK_SECRET_KEY and CLERK_JWT_PEM else "custom"
-CUSTOM_AUTH_USE_DATABASE = True if (CUSTOM_AUTH_SECRET and CUSTOM_AUTH_DB_ENDPOINT and CUSTOM_AUTH_DB_USERNAME and CUSTOM_AUTH_DB_PASSWORD and CUSTOM_AUTH_DB_PORT and CUSTOM_AUTH_DB_NAME) else False
-
-#
-#  Mid-Importance Configuration Options
-#
-
 MAX_PDF_PAGES = 250  # SHOULD MATCH FRONTEND - the maximum size of a PDF a user can upload.
 
 MAX_CHAT_RETRIEVER_RESULTS = 7  # When a retriever query is made (without max chunks, or when the full context won't fit in the model), this gives the maximum number of chunks that the query will return in most circumstances. 
@@ -66,20 +55,6 @@ ILLEGAL_SHARE_DOMAINS = [
 
 MAX_EMAIL_LIMIT = 500  # The max number of recipients in a single email.
 MAX_EMAIL_WAIT = 10  # The number of seconds that needs to go by after a previous email to send a user-action generated email
-
-# The backend process communicates with redis as a message passer; this code configures that connection.
-# Note that it uses both the redis protocol (not HTTP) as well as "redis" instead of localhost (due to docker compose)
-CELERY_RESULT_BACKEND = "redis://redis:6379/0"
-CELERY_BROKER_URL = "redis://redis:6379/0"
-POOLER_CONNECTION_PARAMS = {
-    'host': 'redis',
-    'port': 6379,
-    'db': 1,  # Note that this is different from 0, the one used above for celery.
-}
-
-#
-#  Least Important Configuration Options
-#
 
 DEFAULT_PRODUCT_ID = os.environ.get('DEFAULT_PRODUCT_ID')
 

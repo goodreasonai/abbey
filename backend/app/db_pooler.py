@@ -1,5 +1,4 @@
-from .configs.user_config import POOLER_CONNECTION_PARAMS
-from .configs.secrets import *
+from .configs.conn_config import DB_ENDPOINT, DB_NAME, DB_PASSWORD, DB_PORT, DB_USERNAME, POOLER_CONNECTION_PARAMS
 import redis
 import pymysql
 from pymysql.constants import CLIENT
@@ -11,7 +10,7 @@ from threading import Lock, Timer
 from .utils import make_json_serializable
 import atexit
 from functools import wraps
-from queue import Queue, Empty, Full
+from queue import Queue, Empty
 import time
 
 """

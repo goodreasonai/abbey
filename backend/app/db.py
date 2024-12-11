@@ -3,7 +3,7 @@ from flask import current_app, g
 from .configs.secrets import *
 import warnings
 from .utils import get_unique_id
-from .configs.user_config import POOLER_CONNECTION_PARAMS
+from .configs.conn_config import POOLER_CONNECTION_PARAMS
 import redis
 import json
 import time
