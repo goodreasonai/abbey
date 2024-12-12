@@ -16,7 +16,9 @@ class TTS():
     desc: str = ""
     traits: str = ""  # A couple word description of strengths
     sample_url: str = ""
-    def __init__(self, model, voice, code, name, desc, traits, sample_url) -> None:
+    def __init__(self, voice, model, code, name, desc, traits, sample_url) -> None:
+        self.voice = voice
+        self.model = model
         self.code = code
         self.name = name
         self.desc = desc
