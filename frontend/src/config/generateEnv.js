@@ -73,6 +73,12 @@ try {
                 }
             }
         }
+        addEnv('CUSTOM_AUTH_DATABASE_ENABLED', 1)
+        addEnv('CUSTOM_AUTH_DB_HOST', env.CUSTOM_AUTH_DB_ENDPOINT || env.DB_ENDPOINT || 'mysql')
+        addEnv('CUSTOM_AUTH_DB_USER', env.CUSTOM_AUTH_DB_USER || env.DB_USER || 'root')
+        addEnv('CUSTOM_AUTH_DB_PASSWORD', env.CUSTOM_AUTH_DB_PASSWORD || env.DB_PASSWORD || env.MYSQL_ROOT_PASSWORD)
+        addEnv('CUSTOM_AUTH_DB_NAME', env.CUSTOM_AUTH_DB_NAME || env.DB_NAME || 'custom_auth')
+        addEnv('CUSTOM_AUTH_DB_PORT', env.CUSTOM_AUTH_DB_PORT || env.DB_PORT || 3306)
     }
     else {
         addEnv('NEXT_PUBLIC_AUTH_SYSTEM', 'clerk')

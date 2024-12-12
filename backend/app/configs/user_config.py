@@ -35,7 +35,8 @@ if 'subscriptions' in SETTINGS:
             SUBSCRIPTION_CODE_TO_TEMPLATES[key] = subs[key]['templates']
         else:
            SUBSCRIPTION_CODE_TO_TEMPLATES[key] = AVAILABLE_TEMPLATES
-        SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS[key] = subs[key]['limit']
+        if 'web' in subs[key]:  # optional
+            SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS[key] = subs[key]['web']
         SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS[key] = subs[key]['limit']
         SUBSCRIPTION_CODE_TO_TTS_OPTIONS[key] = subs[key]['tts']
         if 'product_id' in subs[key]:

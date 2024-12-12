@@ -302,7 +302,7 @@ if (process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH === '1'){
     })
 }
 
-if (process.env.NEXT_PUBLIC_KEYCLOAK_AUTH === '1'){
+if (process.env.NEXT_PUBLIC_ENABLE_KEYCLOAK_AUTH === '1'){
     authProviders['keycloak'] = new KeycloakAuth({
         'code': 'keycloak',
         'clientId': process.env.KEYCLOAK_CLIENT_ID,
