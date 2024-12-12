@@ -186,8 +186,10 @@ def set_students(user, asset_id, students_json, title="", db=None, no_commit=Fal
 
     student_emails = [x['email'] for x in students_json]
     student_users = get_users(emails=student_emails)
-    student_ids = [x.user_id for x in student_users]
-    ids_to_emails = {u.user_id: u.email_address for u in student_users}
+
+    # Important to keep all user ids as strings for comparison purposes (custom auth uses ints)
+    student_ids = [str(x.user_id) for x in student_users]
+    ids_to_emails = {str(u.user_id): u.email_address for u in student_users}
 
     if len(student_ids) < len(student_emails):
         # This is from debugging a weird blank save bug.
@@ -205,7 +207,7 @@ def set_students(user, asset_id, students_json, title="", db=None, no_commit=Fal
     # This can and should probably be put into a single sql query.
     results = curr.fetchall()
     for res in results:
-        if res['user_id'] not in student_ids:
+        if str(res['user_id']) not in student_ids:
             sql = """
                 DELETE FROM asset_metadata
                 WHERE `id`=%s
@@ -253,7 +255,7 @@ def set_students(user, asset_id, students_json, title="", db=None, no_commit=Fal
                 INSERT INTO asset_permissions (`asset_id`, `email_domain`)
                 VALUES (%s, %s)
             """
-            email = ids_to_emails[student.user_id]
+            email = ids_to_emails[str(student.user_id)]
             curr.execute(sql, (asset_id, email))
             need_emails.append(email)
             changed_permissions = True
