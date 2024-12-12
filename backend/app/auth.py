@@ -131,7 +131,7 @@ def get_permissioning_string(user: User, get_public=True, user_uploads_only=Fals
 # Gets users by emails (should expand to more)
 # Returns list of FullUser objects (not User objects)
 def get_users(emails=[], user_ids=[]):
-    auth: Auth = AUTH_PROVIDERS[AUTH_SYSTEM]
+    auth: Auth = AUTH_SYSTEM
     users = auth.get_users(emails=emails, user_ids=user_ids)
     return users
 
