@@ -7,6 +7,9 @@ services:
       - "5000:5000"
     volumes:
       - ./backend:/app
+      - ./settings.yml:/etc/abbey/settings.yml:ro
+      - ./.env:/etc/abbey/.env
+      - ./file-storage:/app/app/static
 
   # When making any code changes, you must rebuild the frontend.
   frontend:
@@ -15,6 +18,9 @@ services:
       dockerfile: frontend/Dockerfile.prod
     ports:
       - "3000:3000"
+    volumes:
+      - ./settings.yml:/etc/abbey/settings.yml:ro
+      - ./.env:/etc/abbey/.env:ro
 
   mysql:
     image: mysql:8
@@ -34,6 +40,9 @@ services:
     command: celery -A app.worker.celery worker
     volumes:
       - ./backend:/app
+      - ./settings.yml:/etc/abbey/settings.yml:ro
+      - ./.env:/etc/abbey/.env
+      - ./file-storage:/app/app/static
     depends_on:
       - backend
       - redis
@@ -50,6 +59,9 @@ services:
     command: python3 -m app.db_pooler
     volumes:
       - ./backend:/app
+      - ./settings.yml:/etc/abbey/settings.yml:ro
+      - ./.env:/etc/abbey/.env
+      - ./file-storage:/app/app/static
     depends_on:
       - redis
       - mysql
@@ -61,6 +73,9 @@ services:
     command: python3 -m app.email_process
     volumes:
       - ./backend:/app
+      - ./settings.yml:/etc/abbey/settings.yml:ro
+      - ./.env:/etc/abbey/.env
+      - ./file-storage:/app/app/static
     depends_on:
       - redis
       - mysql
