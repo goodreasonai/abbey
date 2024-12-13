@@ -252,7 +252,8 @@ class Ollama(LM):
             'model': self.model,
             'messages': messages,
             'options': {
-                'temperature': temperature if temperature else .7
+                'temperature': temperature if temperature else .7,
+                'num_ctx': self.context_length
             },
             'stream': False
         }

@@ -9,6 +9,7 @@ services:
       - ./backend:/app
       - ./settings.yml:/etc/abbey/settings.yml:ro
       - ./.env:/etc/abbey/.env
+      - ./file-storage:/app/app/static
     environment:
       - PYTHONUNBUFFERED=true
 
@@ -44,6 +45,7 @@ services:
       - ./backend:/app
       - ./settings.yml:/etc/abbey/settings.yml:ro
       - ./.env:/etc/abbey/.env
+      - ./file-storage:/app/app/static
     depends_on:
       - backend
       - redis
@@ -75,6 +77,7 @@ services:
       - ./backend:/app
       - ./settings.yml:/etc/abbey/settings.yml:ro
       - ./.env:/etc/abbey/.env
+      - ./file-storage:/app/app/static
     depends_on:
       - redis
       - mysql
