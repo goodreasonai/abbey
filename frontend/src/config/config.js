@@ -38,7 +38,7 @@ export const LOGIN_FOOTER_BACKGROUND = Library  // image that shows up in the ba
 export const CREATE_BACKGROUND = RhodesExpanded  // the image that shows up in the background of Create
 
 // Will promote the extension in the website template. Set to empty string to disable the promo.
-export const CHROME_EXT_PROMO_LINK = "https://chromewebstore.google.com/detail/abbey/lajhghkelnmbdapgcgmdbfolbicigeac"
+export const CHROME_EXT_PROMO_LINK = process.env.CHROME_EXT_PROMO_LINK
 
 export const ALLOW_SUBSCRIPTION = process.env.NEXT_PUBLIC_ENABLE_SUBSCRIPTION === '1'
 export const UPGRADE_SUBSCRIPTION_LINK = "/settings"  // if a user has surpassed his max allowed uploads, he is referred to this link to upgrade

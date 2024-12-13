@@ -51,7 +51,7 @@ try {
             addEnv('REFRESH_TOKEN_SECRET', 'not-a-secret')
         }
         // Add any appropriate provider keys
-        if (settings.auth.providers?.length){
+        if (settings.auth?.providers?.length){
             for (const provider of settings.auth.providers){
                 if (provider == 'google'){
                     addEnv('NEXT_PUBLIC_ENABLE_GOOGLE_AUTH', 1)
@@ -91,6 +91,13 @@ try {
     // Looks for any non disabled option (from the root) that has a non empty "tts" list
     if (!settings.tts?.voices?.length){
         addEnv('NEXT_PUBLIC_HIDE_TTS', 1)
+    }
+
+    // Web
+    // TTS
+    // Looks for any non disabled option (from the root) that has a non empty "tts" list
+    if (!settings.web?.engines?.length){
+        addEnv('NEXT_PUBLIC_DISABLE_WEB', 1)
     }
 
     // Collections - by default disabled

@@ -636,8 +636,10 @@ export default function Chat({id,
         if (id && canEdit && isSignedIn === true){
             getUserModel()
             getUserModelOptions()
-            getUserSearchEngine()
-            getUserSearchEngineOptions()
+            if (!DISABLE_WEB){
+                getUserSearchEngine()
+                getUserSearchEngineOptions()
+            }
         }
     }, [id, isSignedIn])
 

@@ -1267,13 +1267,15 @@ def suggest_questions(user: User, asset_row, context, detached=False, n=3):
     # Same code used in /chat (1/25/24)
     split_context_strs = [x['user']+ " AI: " + x['ai'] for x in split_context]  # combine both user and ai text for embedding
 
+    lm: LM = LM_PROVIDERS[FAST_CHAT_MODEL]
+
     system_prompt = ""
     if not detached:
         retriever: Retriever = make_retriever(user, asset_row)
         if len(split_context_strs):
             retrieval_response = retriever.query(real_q, max_results=MAX_CHAT_RETRIEVER_RESULTS, context=split_context_strs)
         else:
-            retrieval_response = retriever.random(MAX_CHAT_RETRIEVER_RESULTS)
+            retrieval_response = retriever.random(lm, MAX_CHAT_RETRIEVER_RESULTS)
 
         # note that context isn't being used in the prompt yet.
         system_prompt = get_suggest_questions_system_prompt(n, retrieval_response, real_q, split_context)
@@ -1282,8 +1284,6 @@ def suggest_questions(user: User, asset_row, context, detached=False, n=3):
 
     llm_question = get_suggest_questions_prompt(n, real_q)
 
-    # The current fast lm doens't support make_json, but in case it changes.
-    lm: LM = LM_PROVIDERS[FAST_CHAT_MODEL]
     text = lm.run(llm_question, system_prompt=system_prompt, make_json=True)
     total_json = json.loads(text)  # if it throws a value error, it throws a value error!
     questions = total_json['questions']  # if it throws a key error, it throws a key error!

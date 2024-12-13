@@ -416,7 +416,7 @@ lms:
 
 """
 def generate_lms():
-    DEFAUlT_CONTEXT_LENGTH = 4096
+    DEFAUlT_CONTEXT_LENGTH = 8192
     to_return = {}
     lms = SETTINGS['lms']['models']
     for lm in lms:
@@ -454,7 +454,7 @@ def generate_defaults():
 
     lms = SETTINGS['lms']['models']
     first_available = make_code_from_setting(lms[0])
-    longest_context = max(*LM_PROVIDERS.values(), key=lambda x: x.context_length).code
+    longest_context = max(LM_PROVIDERS.values(), key=lambda x: x.context_length).code
     
     to_return['DEFAULT_CHAT_MODEL'] = defaults['chat'] if 'chat' in defaults else first_available  # Use specified, else use first available
     to_return['HIGH_PERFORMANCE_CHAT_MODEL'] = defaults['high_performance'] if 'high_performance' in defaults else to_return['DEFAULT_CHAT_MODEL']  # Use specified else use default chat model
