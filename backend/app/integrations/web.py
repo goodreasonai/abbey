@@ -74,6 +74,9 @@ class SearXNG(SearchEngine):
             params['engines'] = self.engine
         response = requests.get(f"{url}/search", params=params)
         my_json = response.json()
+        if 'error' in my_json:
+            e = my_json['error']
+            raise Exception(f"Error trying SearXNG: {e}")
         results = my_json['results']
         result_objs = []
         for i, res in enumerate(results):

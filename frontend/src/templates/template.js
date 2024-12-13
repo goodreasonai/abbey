@@ -316,7 +316,7 @@ class CurriculumTemplate extends Template {
     static readableName = "Curriculum"
     static description = "Learn anything by generating a structured course for you to follow. Links with your docs and/or Collections."
     static icon = CurriculumIcon
-    static uploadable = true;
+    static uploadable = !(process.env.NEXT_PUBLIC_HIDE_COLLECTIONS === '1');  // annoying can't import HIDE_COLLECTIONS for some reason
     static primaryColor = '#1358a2'
     static summarizable = false
     static chattable = false

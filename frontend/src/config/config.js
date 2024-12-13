@@ -47,6 +47,7 @@ export const MAX_USER_SOURCES = 7  // SHOULD MATCH BACKEND
 export const MAX_PDF_PAGES = 250  // SHOULD MATCH BACKEND
 
 export const SHOW_SIGNED_OUT_HOME_PAGE = !(process.env.NEXT_PUBLIC_HIDE_SIGNED_OUT_HOME_PAGE === '1')  // if false, the root path (home page) will display the login page if the user is signed out, rather than the landing page.
+// For some import error reason, process.env.NEXT_PUBLIC_HIDE_COLLECTIONS is used directly in template.js for Curriculum hiding
 export const HIDE_COLLECTIONS = process.env.NEXT_PUBLIC_HIDE_COLLECTIONS === '1'  // if true, "Collections" will not show up in the nav bar, and it will be to the user as though Collections doesn't exist.
 export const DISABLE_OCR = process.env.NEXT_PUBLIC_DISABLE_OCR === '1'  // Should match backend. If true, the user is never prompted about OCR and is never given the option to retry with OCR
 export const DISABLE_WEB = process.env.NEXT_PUBLIC_DISABLE_WEB === '1'
