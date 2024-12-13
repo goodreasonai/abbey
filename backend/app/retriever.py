@@ -225,7 +225,6 @@ class Retriever():
 
 
     # Get as many chunks as possible given the size of the model
-    # Safety ratio = % of context length that is the max tokens used
     def max_chunks(self, lm: LM, context="", safe_context_length=None, use_ends=False):
         all_chunks = []
         chunk_lengths = []
@@ -235,7 +234,7 @@ class Retriever():
             chunk_length = get_token_estimate(chunk.txt)
             chunk_lengths.append(chunk_length)
         n_tokens = sum(chunk_lengths)
-        len_limit = safe_context_length if safe_context_length else get_safe_retrieval_context_length(lm)
+        len_limit = safe_context_length or get_safe_retrieval_context_length(lm)
         if n_tokens > len_limit:
             if use_ends:
                 # Use the beginning and end
@@ -256,11 +255,11 @@ class Retriever():
                         len_so_far += chunk_lengths[i]
                 all_chunks = first_half_chunks + second_half_chunks[::-1]
             elif context:
-                max_results = int((lm.context_length * safety_ratio) // self.chunk_size_tokens)
+                max_results = int(safe_context_length // self.chunk_size_tokens)
                 all_chunks = self.query(context, max_results=max_results)
             else:
                 # Remove random ~difference
-                ntok_to_remove = n_tokens - lm.context_length * safety_ratio
+                ntok_to_remove = n_tokens - safe_context_length
                 nchunks_to_remove = ntok_to_remove // self.chunk_size_tokens + 1
                 while nchunks_to_remove:
                     rand = random.randrange(0, len(all_chunks))
@@ -491,7 +490,7 @@ class Retriever():
                 yield result
 
     # Get n random chunks
-    def random(self, max_n):
+    def random(self, lm: LM, max_n, safe_context_length=None):
         reservoir = []
         for i, element in enumerate(self.get_chunks()):
             if i < max_n:
@@ -500,6 +499,17 @@ class Retriever():
                 j = random.randint(0, i)
                 if j < max_n:
                     reservoir[j] = element
+        # Make sure we're under the LM's safe context length
+        len_limit = safe_context_length or get_safe_retrieval_context_length(lm)
+        tokens = 0
+        for i, chunk in enumerate(reservoir):
+            chunk: Chunk
+            new_token_len = get_token_estimate(chunk.txt)
+            if tokens + new_token_len > len_limit:
+                reservoir = reservoir[:i]
+                break
+            tokens += new_token_len
+
         return reservoir
 
     # Used for sending requests the results of which should be an applier/retriever

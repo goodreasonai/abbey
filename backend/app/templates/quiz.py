@@ -53,7 +53,8 @@ def make_question(text, type, data={}, points=2, sources=[]):
 
 
 def generate_question(ret: Retriever, qtype=None, prev_q_texts=[], mcq_prob=.75):
-    chunks = ret.random(5)  # we should probably dedup with previous questions
+    lm: LM = LM_PROVIDERS[BALANCED_CHAT_MODEL]
+    chunks = ret.random(lm, 5)  # we should probably dedup with previous questions
     if not qtype:
         qtype = MULTIPLE_CHOICE if random.random() < mcq_prob else SHORT_ANSWER
     if qtype == MULTIPLE_CHOICE:
@@ -62,7 +63,6 @@ def generate_question(ret: Retriever, qtype=None, prev_q_texts=[], mcq_prob=.75)
         prompt = get_create_question_prompt_mcq(chunks)
         tries = 0
         while tries < 2:
-            lm: LM = LM_PROVIDERS[BALANCED_CHAT_MODEL]
             resp = lm.run(prompt, system_prompt=sys_prompt, make_json=True)
             try:
                 my_json = json.loads(resp)
@@ -102,7 +102,6 @@ def generate_question(ret: Retriever, qtype=None, prev_q_texts=[], mcq_prob=.75)
         prompt = get_create_question_prompt_sa(chunks)
         tries = 0
         while tries < 2:
-            lm: LM = LM_PROVIDERS[BALANCED_CHAT_MODEL]
             resp = lm.run(prompt, system_prompt=sys_prompt, make_json=True)
             try:
                 my_json = json.loads(resp)
