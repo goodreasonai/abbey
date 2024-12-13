@@ -1,6 +1,6 @@
 import Chat from "@/components/Chat/Chat";
 import { Auth } from "@/auth/auth";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ChatSearch from "./ChatSearch";
 import styles from './DetachedChat.module.css';
 import Head from "next/head";
@@ -62,7 +62,7 @@ export default function DetachedChat({manifestRow, canEdit, ...props}) {
         }
     }
 
-    async function makeDescription(newRoundStates){
+    async function makeDescription(){
         try {
             const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/detached-chat/make-description'
             const data = {
@@ -92,12 +92,15 @@ export default function DetachedChat({manifestRow, canEdit, ...props}) {
         }
     }
 
-    function saveCallback(newRoundStates) {
+    const saveCallback = useCallback((newRoundStates) => {
+        console.log("SAVE CALLBACK")
+        console.log(newRoundStates.length)
+        console.log(calledMakeDescription.current)
         if (newRoundStates?.length >= 2 && !calledMakeDescription.current ){
             calledMakeDescription.current = true
-            makeDescription(newRoundStates)
+            makeDescription()
         }
-    }
+    }, [manifestRow])
 
     const hideLeftPanel = isSignedIn === false
 

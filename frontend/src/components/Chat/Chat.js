@@ -66,7 +66,7 @@ export default function Chat({id,
                             hideStatus=false,
                             invertColor=false,  // light background instead of light primary
                             onAsk=undefined,  // function to send the user text to on ask
-                            saveCallback=undefined,  // function triggered after a save finishes - passes roundStates.
+                            saveCallback=undefined,  // NOTE: should be wrapped in useCallback. function triggered after a save finishes - passes roundStates.
                             exclude=[],
                             extraButtons=[],
                             allowOCR=false,
@@ -327,7 +327,7 @@ export default function Chat({id,
         catch (e) {
             console.log(e)
         }
-    }, [id, previousChatsLoadingState])
+    }, [id, previousChatsLoadingState, saveCallback])
     useSaveDataEffect(roundStates, canEdit && id, saveChat, 500)
 
     function removeChat(qIndex) {
