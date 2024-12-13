@@ -93,9 +93,6 @@ export default function DetachedChat({manifestRow, canEdit, ...props}) {
     }
 
     const saveCallback = useCallback((newRoundStates) => {
-        console.log("SAVE CALLBACK")
-        console.log(newRoundStates.length)
-        console.log(calledMakeDescription.current)
         if (newRoundStates?.length >= 2 && !calledMakeDescription.current ){
             calledMakeDescription.current = true
             makeDescription()
