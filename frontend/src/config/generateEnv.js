@@ -121,6 +121,10 @@ try {
         addEnv('NEXT_PUBLIC_HIDE_SIGNED_OUT_HOME_PAGE', 1)
     }
 
+    if (settings.name){
+        addEnv('NEXT_PUBLIC_APP_NAME', settings.name)
+    }
+
     // Subscriptions
     if (settings.subscriptions){
         addEnv('NEXT_PUBLIC_ENABLE_SUBSCRIPTION', 1)

@@ -12,7 +12,7 @@ AVAILABLE_TEMPLATES = ['document', 'folder', 'detached_chat', 'website', 'classr
 # This extra ranking is done so that a user sees a consistent / sensible ordering of LM options
 LM_ORDER = [make_code_from_setting(x) for x in SETTINGS['lms']['models']]  # Order that a user would see in settings or a dropdown
 
-APP_NAME = "Abbey"  # Used in certain prompts
+APP_NAME = SETTINGS['name'] if 'name' in SETTINGS else "Abbey"  # Used in certain prompts
 
 #
 # Subscription stuff

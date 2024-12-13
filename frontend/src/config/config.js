@@ -17,19 +17,19 @@ Most Important Config Variables
 
 */
 
-export const NAME = "Abbey"
+export const NAME = process.env.NEXT_PUBLIC_APP_NAME || "Abbey"
 export const NAV_BAR_LOGO = NavBarLogo
 export const LOGO = (<DefaultLogo mainImage={NAV_BAR_LOGO} mainText={NAME} />)  // just puts the text next to the image with the correct sizes / spacing.
 export const FAVICON_16x16 = Favicon16x16
 export const FAVICON_32x32 = Favicon32x32
-export const HOME_PAGE_URL = "https://abbey.us.ai"  // Used for metadata in iMessages/social media - must be publicly accessible to function
+export const HOME_PAGE_URL = process.env.NEXT_PUBLIC_ROOT_URL || "https://abbey.us.ai"  // Used for metadata in iMessages/social media - must be publicly accessible to function
 export const PREVIEW_IMAGE_URL = `${HOME_PAGE_URL}/Preview.png`  // In iMessages and social media, this image is used (needs to be publicly accessible to function)
 export const ANIMATED_LOGO = `/AnimatedLogo.svg`  // used in the signed out home page, if enabled.
 
 export const HOME_PAGE_HEADER = (first, last) => first ? `Thank you for using ${NAME}, ${first}.` : `Thank you for using ${NAME}.`
 
-export const DESCRIPTION = "Book-up on anything with Abbey, by US AI. Learn faster and better using LLM generated summaries, AI-tailored curricula, and a growing content library of articles and textbooks."
-export const SITE_TITLE = "Abbey - Book-up on anything"  // Shows up in a browser tab
+export const DESCRIPTION = `Book-up on anything with ${NAME}, by US AI. Learn faster and better using LLM generated summaries, AI workspaces, and more.`
+export const SITE_TITLE = `${NAME} - Book-up on anything`  // Shows up in a browser tab
 export const COMPANY = "U.S. Artificial Intelligence Inc."
 
 // To change these, place an image in public/random, import it above, and replace the current image here.
