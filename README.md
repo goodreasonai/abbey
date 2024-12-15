@@ -16,276 +16,219 @@ If Abbey is not by default configurable to your liking, and you're comfortable w
 
 ### Prerequisites
 
-- **Installs**: You must have `docker-compose` installed. See details [here](https://docs.docker.com/compose/install/).
+- **Installs**: You must have Docker and  `docker-compose` installed. See details [here](https://docs.docker.com/compose/install/).
 - **3rd Party Credentials**: AI functionality on Abbey relies on 3rd party integrations. If you're planning on using an API like the OpenAI API, you should have those credentials handy. *You must start Abbey with at least one language model and one embedding model*. In order to enable multi-user setups, you must use a separate OAuth2 provider and have a client ID and secret key ready; Abbey currently supports Google, Keycloak, and GitHub. You may also have API keys ready for Anthropic, Bing, and Mathpix. To send emails using Abbey, you must provide credentials for an SMTP server (like, your own email) or a Sendgrid API key.
 
-### Setup Options
+### Setup
 
-You may either run the `run.sh` bash script and follow directions to enter in your keys and preferences, or you can manually define environment variables.
+Setup involves cloning/downloading this repo, creating `.env` and `settings.yml` files with your chosen AI integrations, and then running docker compose for either development (worse performance but easy to play around with) or production (better performance but slower to change settings). Here are the steps:
 
-1. Clone the repo and navigate inside it.
-2. Start the Docker daemon if necessary (i.e., by running Docker Desktop on Mac)
+**Step 1:** Clone / download this repository and navigate inside it.
 
-3. Set up with `run.sh`: Run the setup bash script, `run.sh`, by using `./run.sh` on Mac or Linux. For Windows, `bash run.sh` works with Git Bash. You may need to run the script with superuser privileges depending on your setup, like `sudo ./run.sh`. The script will prompt you for API keys and other credentials and automatically generate three environment variable files for the backend, frontend, and root directories.
+**Step 2:** Create a file called `.env` for secret keys and a file called `settings.yml` for configuration settings at the root of the repo (i.e., at the same level as the `docker-compose.yml` file). Then, enter into those files the keys / models you want to use. You can find details on how to configure each type of integration throughout this README.
 
-or
+The `.env` file holds any API keys or other secrets you need. **You must also include a password for the MySQL database that Abbey uses.** A `.env` file for someone using the officical OpenAI API, an OpenAI Compatible API requiring a key, and the Anthropic API would look like:
 
-3. Set up manually by defining three environment variable files: see the "Manual Setup" section below for more details.
+```
+MYSQL_ROOT_PASSWORD="my-password"
+OPENAI_API_KEY="my-openai-key"
+OPENAI_COMPATIBLE_KEY="my-api-key"
+ANTHROPIC_API_KEY="my-anthropic-key"
+```
 
-### Run
+The `settings.yml` file configures Abbey to use the models and options you want. At minimum, you must use at least one language model and one embedding model. Put the best models first so that Abbey uses them by default. For example, here is a `settings.yml` file that uses models from the official OpenAI API, an OpenAI compatible API, Anthropic, and Ollama:
 
-Running Abbey with `./run.sh` is recommended; you may need to use `sudo ./run.sh` if your setup requires superuser privileges to run `docker-compose`. That's it.
+```
+lms:
+  models:
+    - provider: anthropic
+      model: "claude-3-5-sonnet-20241022"
+      name: "Claude 3.5 Sonnet"  # optional, give a name for Abbey to use
+      traits: "Coding"  # optional, let Abbey display what it's good for
+      desc: "One of the best models ever!"  # optional, let Abbey show a description
+      accepts_images: true  # optional, put true if the model is a vision model / accepts image inpupt
+      context_length: 200_000  # optional, defaults to 8192
+    - provider: openai_compatible
+      model: "gpt-4o"
+      accepts_images: true
+      context_length: 128_000  
+    - provider: ollama
+      model: "llama3.2"
 
-**If the backend/celery/db_pooler services stop immediately when running the first time - calmly restart them.** Use `docker-compose restart db_pooler` first, then the same for backend and celery. This issue is due to the fact that on the first startup, MySQL can take a bit longer than expected to initialize.
+embeds:
+  models:
+    - provider: "openai"
+      model: "text-embedding-ada-002"
+
+openai_compatible:
+  url: "http://host.docker.internal:12345"  # Use host.docker.internal for services running on localhost
+
+ollama:
+  url: "http://host.docker.internal:11434"  # Use host.docker.internal for services running on localhost
+```
+
+And given that you've also put the OpenAI API key into `.env`, that would be a minimally complete settings file. **To configure different models, search engines, authentication services, text-to-speech models, etc.: please look for the appropriate documentation below!**
+
+**Step 3:** If you're still playing around with your settings, you can run Abbey in dev mode simply using:
+
+```
+docker compose up
+```
+
+In dev mode, when you change your settings / secrets, you just need to restart the containers to get your settings to apply, which can be done with:
+
+```
+docker compose restart backend frontend celery db_pooler
+```
+
+Once you're ready, you can run Abbey in production mode to give better performance:
+
+```
+docker compose -f docker-compose.prod.yml up
+```
+
+If you want to change your settings / secrets, you need to rebuild the containers:
+
+```
+docker compose down
+```
+
+```
+docker compose -f docker-compose.prod.yml up --build
+```
+
+**Step 4:** Now Abbey should be running at `http://localhost:3000`! Just visit that URL in your browser to start using Abbey.
+
+Note that the backend runs at `http://localhost:5000` – if you go there, you should see a lyric from Gilbert and Sullivan's HMS Pinafore. If not, then the backend isn't running.
+
+If something's not working right, please (please) file an issue or reach out to the creator directly – `@gkamer8` on Twitter or `gordon@us.ai` by email.
+
+### Running Abbey at Different URLs / Ports
+
+By default, Abbey runs on localhost at ports 3000 for the frontend and 5000 for the backend. If you want to alter these (since you're pretty tech savvy), you'll need to modify the port mappings in the docker file, and then add this to your `settings.yml`:
+
+```
+services:
+  backend:
+    public_url: http://localhost:5000  # Replace with your new user-accessible BACKEND URL
+    internal_url: http://backend:5000  # This is where the frontend server calls the backend within docker
+  frontend:
+    public_url: http://localhost:3000  # Replace with your new user-accessible FRONTEND URL
+```
 
 ### Troubleshooting
 
 1. docker config invalid: If it's telling you your docker compose is invalid, then you probably need to upgrade docker on your machine to something >= version 2. Abbey takes advantage of certain relatively new docker features like defaults for env variables and profiles. It's going to be easier just to upgrade docker in the long run - trust.
 
-2. Things look blank / don't load / requests to the backend don't seem to work quite right. First, navigate to the backend in the browser, like to `http://localhost:5000` or whatever URL you put in originally. It should give you a message like "A British tar is a soaring soul..." If you see that, then the backend is up and running but your backend URL config is wrong or incomplete. Remember to type it out completely like `http://localhost:5000`. **If you messed it up then changed it, it might still be wrong because it's saved in the frontend-next docker volume. Delete the frontend container, delete that volume, and then rebuild with ./run --build or docker-compose --build.** If you don't even get the "British tar" thing, then make sure that your backend service is actually running.
+2. Things look blank / don't load / requests to the backend don't seem to work quite right. First, navigate to the backend in the browser, like to `http://localhost:5000` or whatever URL you put in originally. It should give you a message like "A British tar is a soaring soul..." If you see that, then the backend is up and running but your backend URL config is wrong or incomplete (were you playing around with it?). If your backend isn't running, check the logs in Docker for more information – please read what they say!
 
-3. Docker gets stuck downloading/intstalling/running an image. There is a possibility that you've run out of space on your machine. First, try running `docker system prune` to clean up any nasty stuff lying around in Docker that you've forgotten about. Then try clearing up space on your computer – perhaps enough for ~10gb on your machine. Then restart Docker and try again. If you still get issues – try uninstalling / reinstalling Docker.
+3. Docker gets stuck downloading/installing/running an image. There is a possibility that you've run out of space on your machine. First, try running `docker system prune` to clean up any nasty stuff lying around in Docker that you've forgotten about. Then try clearing up space on your computer – perhaps enough for ~10gb on your machine. Then restart Docker and try again. If you still get issues – try uninstalling / reinstalling Docker.
 
-4. The`docker-compose` command refuses to run because of some "API" issue or something. If docker is running (Docker Desktop on Mac, for example), then you should restart it. If that doesn't help, try purging/cleaning its data before restarting (click the "Bug" icon in Docker Desktop if you have it - then see `clean/purge` data). If docker isn't running, then that's your problem! You need to make sure the Docker daemon (i.e. Docker Desktop on Mac) is running before you run `./run.sh`.
+4. The `docker compose` command refuses to run because of some "API" issue or something. If docker is running (Docker Desktop on Mac, for example), then you should restart it. If that doesn't help, try purging/cleaning its data before restarting (click the "Bug" icon in Docker Desktop if you have it - then see `clean/purge` data). If docker isn't running, then that's your problem! You need to make sure the Docker daemon (i.e. Docker Desktop on Mac) is running.
 
-5. A port is already being used. The Abbey backend runs on port 5000 by default; the Abbey frontend runs on port 3000. It's possible that something on your computer is already using port 5000 or port 3000. On Mac that usually means AirPlay. Your goal should be to check whether anything's running on ports 3000 or 5000, and, if so, to shut down those processes.
+5. A port is already being used. The Abbey backend runs on port 5000 by default; the Abbey frontend runs on port 3000. It's possible that something on your computer is already using port 5000 or port 3000. On Mac that usually means AirPlay. Your goal should be to check whether anything's running on ports 3000 or 5000, and, if so, to shut down those processes. On Mac/Linux: Use `lsof -i :5000` or `lsof -i :3000` to check if any process is running on those ports. If you notice a process like 'ControlCe' running on Mac, that means "Control Center," and it's probably an airplay receiver thing. You can go into your System Settings on Mac and uncheck "AirPlay receiver". If you found something else, you can kill it with `kill -9 PID` where PID is replaced by the process ID (shown using lsof). On Windows: use `netstat -ano | findstr :5000` or `netstat -ano | findstr :3000`. You can then kill the process with `taskkill /PID YOUR_PID /F` - replace YOUR_PID with the process ID of the relevant process.
 
-#### Mac and Linux
+## Summary of Integrations
 
-Use `lsof -i :5000` or `lsof -i :3000` to check if any process is running on those ports. If you notice a process like 'ControlCe' running on Mac, that means "Control Center," and it's probably an airplay receiver thing. You can go into your system settings and uncheck "AirPlay receiver".
+3rd party integrations are managed in your settings and environment variable files. Here is a summary of those available:
 
-If you found something else, you can kill it with `kill -9 PID` where PID is replaced by the process ID (shown using lsof).
-
-#### Windows
-
-Use `netstat -ano | findstr :5000` or `netstat -ano | findstr :3000`. You can then kill the process with `taskkill /PID YOUR_PID /F` - replace YOUR_PID with the process ID of the relevant process.
-
-
-### Other run options
-
-If you would like to run Abbey in development mode (i.e. because you're trying to contribute to Abbey), use the `--dev` flag. If you're switching between dev and prod builds, use the `--build` flag to rebuild the containers. You may also need to delete the `frontend-next` and `frontend-node-modules` volumes in Docker so that they are properly rebuilt.
-
-If you'd like to use `docker-compose` directly, you might want to use the environment variable `MY_BUILD_ENV=prod` (or dev). If you want Abbey to send reminder emails, use also `--profile email` to start the special emailing service. You also need to make sure that the root password for the MySQL service is set correctly, for which you need to set `MYSQL_ROOT_PASSWORD="your-password"` (which is stored in the root `.env` file). So you might type in:
-
-```
-source .env && MY_BUILD_ENV=prod docker-compose --profile email up
-```
-
-## Manual Setup and Configuration
-
-**Note: When changing frontend ENV variables, you must make sure to delete your old abbey_frontend-next volume so that the frontend is rebuilt!**
-
-Abbey requires three environment variable files to run properly: a backend `.env` file with path `backend/app/configs/.env`; a frontend `.env.local` file with the path `frontend/.env.local`; and a `.env` file located in the root of the project. These files contain your third party keys for accessing AI APIs, email servers, and other configurations. Some keys should match between the front and backend; some are only present on one of the two.
-
-Here is what the `backend/app/configs/.env` backend file looks like:
-
-```
-# The OpenAI API key is mandatory if you don't have any other embedding function setup (like an ollama one)
-OPENAI_API_KEY="sk-my-openai-key"
-
-# If you want to use an openai compatible inference service (that isn't OpenAI), you can use these variables
-# If your service is running on the same machine but not the same docker VM, you should use this URL: http://host.docker.internal:<your-port>
-OPENAI_COMPATIBLE_URL="https://your-compatible-api.com"
-OPENAI_COMPATIBLE_KEY="not-a-key"
-# For language models, you should also give the context length (in tokens) you want them to have and whether or not they support images as input (vision).
-# Embedding / language / text-to-speech models are written in well-formed JSON; here are examples:
-OPENAI_COMPATIBLE_EMBEDS='[{"code": "text-embedding-3-small"}]'
-OPENAI_COMPATIBLE_LMS='[{"code": "gpt-4o", "context_length": 100000, "vision": true}]'
-OPENAI_COMPATIBLE_TTS='[{"voice": "onyx"}]'
-
-# Ollama specifically is given extra attention and has a more featureful API at the moment.
-# If Ollama is running on the same machine as Abbey but not in the same docker VM, you should use this URL:
-OLLAMA_URL="http://host.docker.internal:11434"
-# You specify which language models and embedding models from ollama you want using JSON.
-OLLAMA_LMS='[{"code": "llama3.2", "context_length": 4096, "vision": true}, {...}, ...]'
-# These are embedding models.
-OLLAMA_EMBEDS='[{"code": "all-minilm"}, {...}, ...]'
-
-# Email Server Details (Optional, and you can use either SMTP or Sendgrid)
-SMTP_SERVER="mail.server.com"
-SMTP_PORT="465"
-SMTP_EMAIL="your-email@us.ai"
-SMTP_PASSWORD="my-smtp-password"
-
-SENDGRID_API_KEY="sendgrid-api-key"
-SENDGRID_UNSUB_GROUP="sendgrid-unsubscribe-group"
-SENDGRID_EMAIL="my-sendgrid-email@us.ai"
-
-# Optional API keys (lacking them will disable the relevant features / models)
-ELEVEN_LABS_API_KEY="my-elevenlabs-api-key"
-BING_API_KEY="my-bing-api-key"
-ANTHROPIC_API_KEY = "my-anthropic-api-key"
-
-# An endpoint to enable search with SearXNG (host.docker used when SearXNG is being run in the same docker virtual machine as Abbey)
-SEARXNG_URL="http://host.docker.internal:8080"
-
-# Mathpix is used for OCR on PDFs - note that you need both an app name and key for that app
-MATHPIX_API_APP="my-mathpix-app"
-MATHPIX_API_KEY="my-mathpix-api-key"
-
-# These credentials need to match the actual credentials for the MySQL database you use
-# The included docker-compose file starts a MySQL server with a root password determined by an environment variable
-DB_ENDPOINT=mysql
-DB_USERNAME=root
-DB_PASSWORD="your-db-password"
-DB_PORT=3306
-DB_NAME=learn
-
-# This just causes the backend server to run some commands that might otherwise be restricted to it, like changing the isolation level to read-commited
-DB_TYPE=local
-
-# You can enable s3 storage (instead of using static storage)
-AWS_ACCESS_KEY = "my-aws-access-key"
-AWS_SECRET_KEY = "my-aws-secret-key"
-S3_BUCKET_NAME = "my-s3-bucket-name"
-
-# This secret should match the frontned authentication secret
-CUSTOM_AUTH_SECRET="your-custom-auth-secret"
-
-# In some production environments, the YouTube transcription API will fail
-# You can fix this by using a proxy
-PROXY_URL_HTTP = "http://proxy-username:proxy-password@my-proxy.com:proxy-port"
-PROXY_URL_HTTPS = "https://proxy-username:proxy-password@my-proxy.com:proxy-port"
-
-# The backend may instruct a redirect here; it should be publicly accessible, but in development is http://localhost:3000
-FRONTEND_URL="https://your-frontend-url.com"
-
-# This is a flask argument that may or may not be unused.
-SECRET_KEY="your-secret-key"
-```
-
-Here is what the `frontend/.env.local` file for the frontend looks like:
-
-```
-# The backend URL must be accessible to the client; when running only for one user on the same machine, it's http://localhost:5000
-NEXT_PUBLIC_BACKEND_URL="http://my-backend-url.com"
-NEXT_SERVER_SIDE_BACKEND_URL="http://backend:5000"
-
-# The frontend URL must also be accessible to the client. By default it runs on port 3000.
-NEXT_PUBLIC_ROOT_URL="http://my-frontend-url.com"
-
-# Your custom authentication variables
-# If you don't want to use a particular provider, then just don't include the relevant variables.
-# The enable variables are either 0 for false or 1 for true.
-NEXT_PUBLIC_ENABLE_GOOGLE_AUTH="0"
-GOOGLE_CLIENT_ID="google-auth-client-id"
-GOOGLE_SECRET="google-secret"
-
-NEXT_PUBLIC_ENABLE_GITHUB_AUTH="0"
-GITHUB_CLIENT_ID="github-client-id"
-GITHUB_SECRET="github-secret"
-
-# You may use a separate keycloak private URL if you're running Keycloak in the same docker vm
-# Otherwise, just don't include one
-KEYCLOAK_PUBLIC_URL="http://localhost:8080"
-KEYCLOAK_PRIVATE_URL="http://keycloak:8080"
-KEYCLOAK_REALM="my-keycloak-realm"
-KEYCLOAK_SECRET="my-keycloak-secret"
-KEYCLOAK_CLIENT_ID="my-keycloak-client-id"
-
-# These secrets are used for all custom auth tokens
-JWT_SECRET="my-jwt-secret"
-REFRESH_TOKEN_SECRET="my-jwt-refresh-token-secret"
-
-# When using multiple OAuth2 providers, a MySQL server is recommended to assign unique user ids for each email address
-CUSTOM_AUTH_DATABASE_ENABLED=0
-CUSTOM_AUTH_DB_HOST="mysql"
-CUSTOM_AUTH_DB_USER="root"
-CUSTOM_AUTH_DB_PASSWORD="your-mysql-db-password"
-CUSTOM_AUTH_DB_NAME="custom_auth"
-CUSTOM_AUTH_DB_PORT="3306"
-
-# If you want to use images from an external domain, you need to list them here (separated by commas)
-IMAGE_DOMAINS="some-domain.com,some-domain-2.com"
-
-# Unless you're trying to replicate the Abbey Collections system (see our hosted version), you should hide "Collections" from the user.
-NEXT_PUBLIC_HIDE_COLLECTIONS=1
-
-# If you have no text-to-speech models, this code makes sure that the frontend won't display options for TTS
-NEXT_PUBLIC_HIDE_TTS=1
-
-# If you don't want to use the default signed out home and instead just want to be sent to login
-NEXT_PUBLIC_HIDE_SIGNED_OUT_HOME_PAGE=1
-```
-
-**Note: When changing frontend ENV variables, you must make sure to delete your old abbey_frontend-next volume so that the frontend is rebuilt!**
-
-The `.env` file in the root has just one variable:
-
-```
-MYSQL_ROOT_PASSWORD="your-mysql-root-password"
-```
-
-It's passed to the docker-compose file so that when your MySQL server is built, it sets the correct root MySQL password.
-
-## Summary of 3rd Party Integrations
-
-3rd party integrations are managed in the environment variable files (see above). In the project code, they are organized in the `backend/app/integrations` folder. Here is a summary of those available:
-
-AI APIs (lm.py, ocr.py, tts.py, and embed.py)
+AI APIs
 - OpenAI
 - Anthropic
 - ElevenLabs
-- Mathpix
+- Mathpix (for OCR)
 - Ollama
 - Other OpenAI Compatible APIs (like LocalAI, LMStudio, etc.)
 
-Search Engines (web.py)
+Search Engines
 - Bing
 - SearXNG
 
-File Storage (file_storage.py)
+File Storage
 - s3
-- Local static folder (default)
+- Local `file-storage` folder (default)
 
-Authentication (auth.py - if none is available, one default sign in is provided)
+Authentication
 - Google
 - GitHub
 - Keycloak
-- Clerk (contact us for instructions if you're interested)
+- Clerk
+
+### Language Models (LMs)
+
+Language models are configured under `lms` in `settings.yml`. You can specify language models from any provider you wish to support, plus defaults that are used behind the scenes for things like quiz generation, summaries, and suggesting questions. You must have at least one LM for Abbey to work properly.
+
+```
+lms:
+  defaults:  # optional, use the optional "code" you specify, or "model-provider" like "gpt-4o-openai" by default
+    chat: "llama3.2-ollama"  # User chat model (user can change) - defaults to first listed model
+    high_performance: "gpt-4o"  # Your best language model, used for generating curricula - defaults to default chat model
+    long_context: "gpt-4o"  # Model used in long-context situations - defaults to longest context model specified
+    balanced: "claude-3-5-sonnet-anthropic" # Model that is in the middle for speed / accuracy - defaults to default chat model
+    fast_long_context: "gpt-4o-mini-openai"  # A long context model that's fast, defaults to long_context model, used for summaries / key points
+    alt_long_context: "claude-3-5-sonnet"  # A long context model used for variation in things like question generation - default to long_context
+
+  models:
+    - provider: openai  # required - see below table for options
+      model: "gpt-4o"  # required, code for the API
+      context_length: 128_000  # optional (defaults to 4096)
+      name: "GPT-4o"  # optional display name for the model
+      supports_json: true  # optional, defaults to false
+      accepts_images: true  # optional, defaults to false
+      desc: "One of the best models ever!"  # optional, lets Abbey display a description
+      code: "gpt-4o"  # optional - defaults to 'model-provider' like 'gpt-4o-openai' - used to specify defaults above.
+      disabled: false  # optional
+    # Specify more in a list...
+```
+
+### LM Providers
+
+This table gives the provider code for each provider and the relevant API key name to place in `.env`:
+
+| Provider   | Provider Code | API Key Name           |
+|------------|---------------|------------------------|
+| OpenAI     | openai        | OPENAI_API_KEY         |
+| Anthropic  | anthropic     | ANTHROPIC_API_KEY      |
+| Ollama  | ollama     |       |
+| OpenAI Compatible  | openai_compatible     | OPENAI_COMPATIBLE_KEY      |
+
+
+### Text-to-Speech Models (TTS)
+
+Text to speech models are configured under `tts` in `settings.yml`. You can specify tts models from any provider you wish to support, plus a default. TTS models are totally optional.
+
+```
+tts:
+  default: "openai_ontx"
+  voices:
+    - provider: openai  # required
+      voice: "onyx"  # required
+      model: "tts-1"  # required
+      name: "Onyx"  # optional
+      desc: "One of the best models ever!"  # optional
+      code: "openai_onyx"  # optional, to set a default via a code (defaults to "voice-model-provider")
+      sample_url: "https://public-audio-samples.s3.amazonaws.com/onyx.wav"  # optional
+      disabled: false  # optional
+```
+
+| Provider   | Provider Code | API Key Name           |
+|------------|---------------|------------------------|
+| OpenAI     | openai        | OPENAI_API_KEY         |
+| ElevenLabs  | eleven_labs     | ELEVEN_LABS_API_KEY      |
+| OpenAI Compatible  | openai_compatible     | OPENAI_COMPATIBLE_KEY      |
+
 
 ## Homepage Artwork
 
-You may notice that on the homepage (while signed in), the right side has an image and a description. On initialization of the database, there is one image that will appear there by default (which is hosted on the internet). To change that image, or to add more, you need to add entries to the `art_history` table in the `learn` database (on the MySQL service). There you put a URL for the image and markdown for the description. The domain where the image is hosted needs also to be included in the `IMAGE_DOMAINS` frontend environment variable (see manual setup).
-
-To add the entry into `art_history`, you need to execute some SQL. With docker-compose, you can use:
-
-```
-docker-compose exec mysql mysql -u root -p
-```
-
-and then use your MySQL root password (available in the `.env` file located in the root of the project). Then, you'll need to execute:
-
-```
-use learn;
-INSERT INTO art_history (`markdown`, `image`)
-VALUES ('This is my *description*', 'https://some-hosted-image.com/image.webp');
-```
+TODO
 
 ## Branding
 
-It is possible to change all of the branding of Abbey. On the frontend, the relevant file is `frontend/src/config/config.js`, which contains constants like Abbey's name, as well as React components that stand in for the logo. Images for logos and things can be place in `frontend/public`. It might be easiest to simply replace those images rather than mess around in the config.
-
-Pretty much all colors on abbey are defined in `frontend/src/styles/globals.css`. Feel free to switch them up.
-
-Please do not submit a PR with your custom branding.
+TODO
 
 ## Contributing Your Own Integration
 
-Abbey can integrate easily with a variety of 3rd party services, including AI APIs, authentication servers, storage servers, and more. It is straightforward to implement your own backend integration in Python. Details for doing so are below.
-
-Each type of integration (auth, embedding functions, language models, etc.) has its own file in `backend/app/integrations`. Each type of integration has its own base class implemented in the relevant file (e.g., `LM()`, `TTS()`, `OCR()`, ...). Each integration provider is implemented as a class that inherits from that base class (e.g., `OpenAI(LM)`, `Anthropic(LM)`). Each model is implemented as a class that inherits from a provider class (e.g., `GPT4(OpenAI)`, `Claude3Opus(Anthropic)`, etc.). Intances of these classes are put into a PROVIDERS dictionary (e.g., `LM_PROVIDERS`, `OCR_PROVIDERS`, `SEARCH_PROVIDERS`, etc.) at the bottom of the file. Each instance has associated with it a hardcoded "code" which specifies the unique model (e.g., `gpt-4o`, `bing`, `claude-3-5-sonnet`), and the PROVIDERS dictionary maps from that code to the object instance.
-
-Each model class implements relevant class functions. For example, classes inheriting from `LM()` implement a `run(...)` function and a `stream(...)` function, which return generated tokens in an all-at-once or streaming context, respectively. You can and should look at the existing classes for details on their implementation.
-
-The file `backend/app/config/user_config.py` is **extremely important** for actually enabling your integration. Here are the details:
-
-- An `AVAILABLE_PROVIDERS` dictionary determines which providers are enabled based on the set environment variables. If you add a new API provider – especially for LLMs – you should add your availability condition and add a new provider code.
-- There are other AVAILABLE dictionaries like `AVAILABLE_LM` or `AVAILABLE_EMBED` that map available providers to available models.
-- You may need to add your model to `LM_ORDER`, which specifies the order in which a user is shown available language models.
-- Default model variables, like `DEFAULT_CHAT_MODEL_RANKINGS`, which specifies the order in which models should take precedence for default status (some may or may not be enabled in AVAILABLE_PROVIDERS in any given setup). There are also simpler default model variables, like `DEFAULT_EMBEDDING_OPTION`, which is simply the code for the embedding model to use.
-
-For more information, simply look at the file; it's well-commented and not that complicated. In some cases, there is basic logic to determine which integrations are used: for example, if AWS credentials are present, s3 is used as the storage option; otherwise, Abbey uses local storage in the `static` folder.
+TODO
 
 ### Note on Authentication Integrations
 
@@ -312,11 +255,3 @@ On the frontend, all templates are implemented in one file, `frontend/src/templa
 Some templates are like leaves; for example, documents have no linked asset sources, which means that when you chat with a document, you are truly chatting only with that one document. Other templates have linked sources. For example, a folder's contents are linked assets. This system exists for other templates like the text editor, which can source material from other assets with its AI write functionality. Using sources in a consistent way makes sure that functionality that extends across templates, like sharing assets, remains functional. If you share a folder with someone, for example, the permissions propagate down to all of the items inside that folder.
 
 The standard way to retrieve information about an asset's sources on the frontend is with the `/assets/sources-info` endpoint. The standard way to add a source to an asset is with the endpoints `/assets/add-resource` and `/assets/add-resources`. These endpoints are looking for an entry in the `asset_metadata` table with key `retrieval_source` whose value is an asset id. See more details on those endpoints in `backend/app/assets.py`.
-
-## Deploying on a Network
-
-The frontend is exposed on port 3000, and the backend is exposed on port 5000. Both services need to be available to your users. A straightforward way to make Abbey available is to use a tunneling service like [Cloudflare Tunnel](https://www.cloudflare.com/products/tunnel/) or [Ngrok](https://ngrok.com/). You would map two tunnels to ports 3000 and 5000. Knowing the URLs of your tunnels, you must set the correct frontend and backend URLs in the relevant environment variable files (see manual setup).
-
-Another way to deploy would be to put one or both services behind a reverse proxy server like Nginx. You may find it convenient to change the `docker-compose.yml` file to map at least one of the services to port 80.
-
-**Remember to set the `NEXT_PUBLIC_BACKEND_URL` and `NEXT_PUBLIC_ROOT_URL` variables to their correct values in `frontend/.env.local` if you didn't specify them in your initial setup.**

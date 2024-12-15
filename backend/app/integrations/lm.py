@@ -464,7 +464,7 @@ def generate_defaults():
     to_return['FAST_CHAT_MODEL'] = defaults['fast'] if 'fast' in defaults else to_return['DEFAULT_CHAT_MODEL']  # Use specified else use default chat model
     to_return['LONG_CONTEXT_CHAT_MODEL'] = defaults['long_context'] if 'long_context' in defaults else longest_context  # Use specified else use default chat model
     to_return['FAST_LONG_CONTEXT_MODEL'] = defaults['fast_long_context'] if 'fast_long_context' in defaults else to_return['LONG_CONTEXT_CHAT_MODEL']  # Use specified else use long context model
-    to_return['ALT_LONG_CONTEXT_MODEL'] = defaults['high_performance'] if 'high_performance' in defaults else to_return['LONG_CONTEXT_CHAT_MODEL']  # Use specified else use long context model
+    to_return['ALT_LONG_CONTEXT_MODEL'] = defaults['alt_long_context'] if 'alt_long_context' in defaults else to_return['LONG_CONTEXT_CHAT_MODEL']  # Use specified else use long context model
 
     return to_return
 
