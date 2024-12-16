@@ -69,7 +69,7 @@ ollama:
 
 And given that you've also put the relevant keys into `.env`, that would be a minimally complete settings file. **To configure different models, search engines, authentication services, text-to-speech models, etc.: please look for the appropriate documentation below!**
 
-**Step 3:** If you're still playing around with your settings, you can run Abbey in dev mode simply using:
+**Step 3:** If you're still playing around with your settings, you can run Abbey in dev mode by simply using:
 
 ```
 docker compose up
@@ -132,27 +132,38 @@ services:
 
 3rd party integrations are managed in your settings and environment variable files. Here is a summary of those available:
 
-AI APIs
+[Language Models (LMs)](#language-models-lms)
 - OpenAI
 - Anthropic
-- ElevenLabs
-- Mathpix (for OCR)
 - Ollama
 - Other OpenAI Compatible APIs (like LocalAI, LMStudio, etc.)
 
-Search Engines
-- Bing
-- SearXNG
+[Embedding Models (Embeds)](#embeding-models-embeds)
+- OpenAI
+- Ollama
+- Other OpenAI Compatible APIs (like LocalAI, LMStudio, etc.)
 
-File Storage
+[Text-to-Speech (TTS)](#text-to-speech-models-tts)
+- OpenAI 
+- OpenAI Compatible
+- ElevenLabs
+
+[Optical Character Recognition (OCR)](#optical-character-recognition-ocr)
+- Mathpix
+
+[Search Engines (Web)](#search-engines-web)
+- Bing
+- SearXNG (+ any engine on SearXNG)
+
+[File Storage (Storage)](#file-storage-storage)
 - s3
 - Local `file-storage` folder (default)
 
-Authentication
+[Authentication](#authentication)
 - Google
 - GitHub
-- Keycloak
-- Clerk
+- [Keycloak](#keycloak) (self-hosted)
+- Clerk (reach out for details)
 
 ### Integration-Specific Configuration
 
@@ -464,7 +475,7 @@ DB_ENDPOINT=mysql
 DB_USERNAME=root
 DB_PASSWORD=my-root-password
 DB_PORT=3306
-DB_NAME=custom_auth
+DB_NAME=learn
 DB_TYPE=local  # 'local' or 'deployed' --> changes how app deals with transaction settings
 
 CUSTOM_AUTH_DB_ENDPOINT=mysql
@@ -473,6 +484,10 @@ CUSTOM_AUTH_DB_PASSWORD=my-root-password
 CUSTOM_AUTH_DB_PORT=3306
 CUSTOM_AUTH_DB_NAME=custom_auth
 ```
+
+#### Initialization
+
+When the default MySQL service is started, it will initialize itself using the files inside `mysql-init`. If you set up your own MySQL service, you shouuld initialize the relevant databases / tables by running those `.sql` files (copying and pasting into a terminal would be enough).
 
 ## Homepage Artwork
 
