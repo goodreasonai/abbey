@@ -1,7 +1,7 @@
 import '@/styles/globals.css'
 import Head from 'next/head'
 import { FAVICON_16x16, FAVICON_32x32, COMPANY, SITE_TITLE, NAV_BAR, DESCRIPTION, PREVIEW_IMAGE_URL } from '../config/config'
-import { Inter, Lora } from 'next/font/google'
+import { Inter } from 'next/font/google'
 import localFont from 'next/font/local'
 import { ThemeProvider } from 'next-themes'
 import { useRouter } from 'next/router'
@@ -10,32 +10,6 @@ import Loading from '@/components/Loading/Loading'
 import { Auth } from '@/auth/auth'
 
 const inter = Inter({ subsets: ['latin'] })
-const lora = Lora({ subsets: ['latin'] })
-
-const lemonMilk = localFont({
-    src: [
-      {
-        path: '../fonts/LEMONMILK/LEMONMILK-Regular.otf',
-        weight: '400',
-        style: 'normal',
-      },
-      {
-        path: '../fonts/LEMONMILK/LEMONMILK-RegularItalic.otf',
-        weight: '400',
-        style: 'italic',
-      },
-      {
-        path: '../fonts/LEMONMILK/LEMONMILK-Bold.otf',
-        weight: '700',
-        style: 'normal',
-      },
-      {
-        path: '../fonts/LEMONMILK/LEMONMILK-BoldItalic.otf',
-        weight: '700',
-        style: 'italic',
-      },
-    ],
-})
 
 const louisGeorgeCafe = localFont({
     src: [
@@ -60,16 +34,6 @@ const louisGeorgeCafe = localFont({
         style: 'italic',
       },
     ],
-})
-
-const berkeleyMono = localFont({
-    src: [
-        {
-            path: '../fonts/BerkeleyMono/BerkeleyMono-Regular.woff2',
-            weight: '400',
-            style: 'normal'
-        }
-    ]
 })
 
 
@@ -100,12 +64,6 @@ export default function App({ Component, pageProps }) {
         <>
             
             <style jsx global>{`
-                /*
-                :root {
-                    --font-body: ${inter.style.fontFamily};
-                    --font-header: ${louisGeorgeCafe.style.fontFamily};
-                }
-                */
                :root {
                     --font-body: ${inter.style.fontFamily};
                     --font-header: Trebuchet MS, Tahoma, Verdana, Arial;
