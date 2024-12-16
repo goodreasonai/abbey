@@ -215,11 +215,11 @@ This table gives the provider code for each provider and the relevant API key na
 
 ### Text-to-Speech Models (TTS)
 
-Text to speech models are configured under `tts` in `settings.yml`. You can specify tts models from any provider you wish to support, plus a default. TTS models are totally optional. Remember to configure the relevant provider settings as shown above under "Using Integrations".
+Text to speech models are configured under `tts` in `settings.yml`. You can specify tts models from any provider you wish to support, plus a default. TTS models are totally optional. Remember to configure the relevant provider settings as [shown above](#integration-specific-configuration).
 
 ```
 tts:
-  default: "openai_ontx"
+  default: "openai_onyx"
   voices:
     - provider: openai  # required
       voice: "onyx"  # required
@@ -239,7 +239,7 @@ tts:
 
 ### Embeding Models (Embeds)
 
-Embedding models are configured under `embeds` in `settings.yml`. For now, exactly one mandatory embedding model is used across Abbey at a time. Embedding models are used to search over documents. Remember to configure the relevant provider settings as shown above under "Using Integrations".
+Embedding models are configured under `embeds` in `settings.yml`. For now, exactly one mandatory embedding model is used across Abbey at a time. Embedding models are used to search over documents. Remember to configure the relevant provider settings as [shown above](#integration-specific-configuration).
 
 ```
 embeds:
@@ -257,13 +257,39 @@ embeds:
 
 ### Search Engines (Web)
 
-Search engines are configured under `web` in `settings.yml`. For now, exactly one mandatory embedding model is used across Abbey at a time. Embedding models are used to search over documents. Remember to configure the relevant provider settings as shown above under "Using Integrations".
+Search engines are configured under `web` in `settings.yml`. Remember to configure the relevant provider settings as [shown above](#integration-specific-configuration).
 
 ```
 web:
   engines:
     - provider: "bing"  # required
 
+    - provider: "searxng"
+    - engine: "pubmed"  # Optionally used for SearXNG - don't include to search over all engines you've enabled
+    
+    - provider: "searxng"
+    - engine: "arxiv"
+    - use_pdf: true  # Some SearXNG engines give PDF URLs - this tells Abbey to go to the PDF rather than the regular result
+```
+
+| Provider   | Provider Code | API Key Name           | Needs Provider Setting |
+|------------|---------------|------------------------|----------------|
+| Bing     | bing        | BING_API_KEY         | No |
+| SearXNG  | searxng     |       | [Yes](#integration-specific-configuration) |
+
+
+
+
+### Search Engines (Web)
+
+Search engines are configured under `web` in `settings.yml`. For now, exactly one mandatory embedding model is used across Abbey at a time. Embedding models are used to search over documents. Remember to configure the relevant provider settings as [shown above](#integration-specific-configuration).
+
+```
+web:
+  engines:
+    - provider: "bing"  # required
+
+    # TO USE SEARXNG, MAKE SURE YOUR SEARXNG SETTINGS ARE CORRECT - SEE BELOW
     - provider: "searxng"
     - engine: "pubmed"  # Only used for SearXNG - leave blank to search over all engines you've enabled
     
@@ -277,33 +303,27 @@ web:
 | Bing     | bing        | BING_API_KEY         | No |
 | SearXNG  | searxng     |       | [Yes](#integration-specific-configuration) |
 
+#### SearXNG
 
-### Search Engines (Web)
-
-Search engines are configured under `web` in `settings.yml`. For now, exactly one mandatory embedding model is used across Abbey at a time. Embedding models are used to search over documents. Remember to configure the relevant provider settings as shown above under "Using Integrations".
+SearXNG does not by default allow API access. When running your SearXNG instance, you must make sure that your SearXNG settings (not in Abbey's repo, but in `searxng/settings.yml`) allow JSON as a format, like:
 
 ```
-web:
-  engines:
-    - provider: "bing"  # required
-
-    - provider: "searxng"
-    - engine: "pubmed"  # Only used for SearXNG - leave blank to search over all engines you've enabled
-    
-    - provider: "searxng"
-    - engine: "arxiv"
-    - use_pdf: true  # Some SearXNG engines give PDF URLs - this tells Abbey to go to the PDF rather than the regular result
+search:
+  formats:
+    - html
+    - json
 ```
 
-| Provider   | Provider Code | API Key Name           | Needs Provider Setting |
-|------------|---------------|------------------------|----------------|
-| Bing     | bing        | BING_API_KEY         | No |
-| SearXNG  | searxng     |       | [Yes](#integration-specific-configuration) |
+You can make sure your SearXNG instance is working correctly when the following cURL request works (replace the URL with your SearXNG instance URL - the port might be different.)
+
+```
+curl -kLX GET --data-urlencode q='abbey ai' -d format=json http://localhost:8080
+```
 
 
 ### Search Engines (Web)
 
-Search engines are configured under `web` in `settings.yml`. For now, exactly one mandatory embedding model is used across Abbey at a time. Embedding models are used to search over documents. Remember to configure the relevant provider settings as shown above under "Using Integrations".
+Search engines are configured under `web` in `settings.yml`. For now, exactly one mandatory embedding model is used across Abbey at a time. Embedding models are used to search over documents. Remember to configure the relevant provider settings as [shown above](#integration-specific-configuration).
 
 ```
 web:
