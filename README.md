@@ -176,7 +176,7 @@ These go at the root of `settings.yml` at the same level as `lms` or `embeds`.
 
 ### Language Models (LMs)
 
-Language models are configured under `lms` in `settings.yml`. You can specify language models from any provider you wish to support, plus defaults that are used behind the scenes for things like quiz generation, summaries, and suggesting questions. You must have at least one LM for Abbey to work properly. Remember to configure the relevant provider settings as shown above under "Using Integrations".
+Language models are configured under `lms` in `settings.yml`. You can specify language models from any provider you wish to support, plus defaults that are used behind the scenes for things like quiz generation, summaries, and suggesting questions. You must have at least one LM for Abbey to work properly. Remember to configure the relevant provider settings if needed as [shown above](#integration-specific-configuration).
 
 ```
 lms:
@@ -215,7 +215,7 @@ This table gives the provider code for each provider and the relevant API key na
 
 ### Text-to-Speech Models (TTS)
 
-Text to speech models are configured under `tts` in `settings.yml`. You can specify tts models from any provider you wish to support, plus a default. TTS models are totally optional. Remember to configure the relevant provider settings as [shown above](#integration-specific-configuration).
+Text to speech models are configured under `tts` in `settings.yml`. You can specify tts models from any provider you wish to support, plus a default. TTS models are totally optional. Remember to configure the relevant provider settings if needed as [shown above](#integration-specific-configuration).
 
 ```
 tts:
@@ -239,7 +239,7 @@ tts:
 
 ### Embeding Models (Embeds)
 
-Embedding models are configured under `embeds` in `settings.yml`. For now, exactly one mandatory embedding model is used across Abbey at a time. Embedding models are used to search over documents. Remember to configure the relevant provider settings as [shown above](#integration-specific-configuration).
+Embedding models are configured under `embeds` in `settings.yml`. For now, exactly one mandatory embedding model is used across Abbey at a time. Embedding models are used to search over documents. Remember to configure the relevant provider settings if needed as [shown above](#integration-specific-configuration).
 
 ```
 embeds:
@@ -257,32 +257,7 @@ embeds:
 
 ### Search Engines (Web)
 
-Search engines are configured under `web` in `settings.yml`. Remember to configure the relevant provider settings as [shown above](#integration-specific-configuration).
-
-```
-web:
-  engines:
-    - provider: "bing"  # required
-
-    - provider: "searxng"
-    - engine: "pubmed"  # Optionally used for SearXNG - don't include to search over all engines you've enabled
-    
-    - provider: "searxng"
-    - engine: "arxiv"
-    - use_pdf: true  # Some SearXNG engines give PDF URLs - this tells Abbey to go to the PDF rather than the regular result
-```
-
-| Provider   | Provider Code | API Key Name           | Needs Provider Setting |
-|------------|---------------|------------------------|----------------|
-| Bing     | bing        | BING_API_KEY         | No |
-| SearXNG  | searxng     |       | [Yes](#integration-specific-configuration) |
-
-
-
-
-### Search Engines (Web)
-
-Search engines are configured under `web` in `settings.yml`. For now, exactly one mandatory embedding model is used across Abbey at a time. Embedding models are used to search over documents. Remember to configure the relevant provider settings as [shown above](#integration-specific-configuration).
+Search engines are configured under `web` in `settings.yml`. They're used when you check `Use Web` when chatting on Abbey. Remember to configure the relevant provider settings if needed as [shown above](#integration-specific-configuration).
 
 ```
 web:
@@ -320,30 +295,6 @@ You can make sure your SearXNG instance is working correctly when the following 
 curl -kLX GET --data-urlencode q='abbey ai' -d format=json http://localhost:8080
 ```
 
-
-### Search Engines (Web)
-
-Search engines are configured under `web` in `settings.yml`. For now, exactly one mandatory embedding model is used across Abbey at a time. Embedding models are used to search over documents. Remember to configure the relevant provider settings as [shown above](#integration-specific-configuration).
-
-```
-web:
-  engines:
-    - provider: "bing"  # required
-
-    - provider: "searxng"
-    - engine: "pubmed"  # Only used for SearXNG - leave blank to search over all engines you've enabled
-    
-    - provider: "searxng"
-    - engine: "arxiv"
-    - use_pdf: true  # Some SearXNG engines give PDF URLs - this tells Abbey to go to the PDF rather than the regular result
-```
-
-| Provider   | Provider Code | API Key Name           | Needs Provider Setting |
-|------------|---------------|------------------------|----------------|
-| Bing     | bing        | BING_API_KEY         | No |
-| SearXNG  | searxng     |       | [Yes](#integration-specific-configuration) |
-
-
 ### Optical Character Recognition (OCR)
 
 Optical Character Recognition APIs are configured under `ocr` in `settings.yml`. By default, no OCR is used. Optionally configuring OCR allows Abbey to read scanned PDFs. Abbey automatically determines whether OCR appears needed.
@@ -354,7 +305,7 @@ ocr:
     - provider: "mathpix"
 ```
 
-| Provider   | Provider Code | API Key Name           | Needs Provider Setting |
+| Provider   | Provider Code | API Key Names           | Needs Provider Setting |
 |------------|---------------|------------------------|----------------|
 | Mathpix     | mathpix        | MATHPIX_API_APP and MATHPIX_API_KEY      | No |
 
@@ -373,7 +324,7 @@ email:
       email: "your-email@example.com"
 ```
 
-| Provider   | Provider Code | API Key Name           | Needs Provider Setting |
+| Provider   | Provider Code | Mandatory Secrets           | Needs Provider Setting |
 |------------|---------------|------------------------|----------------|
 | Sendgrid     | sendgrid        | SENDGRID_API_KEY      | No |
 | SMTP Email     | smtp        | SMTP_SERVER, SMTP_PORT, SMTP_EMAIL, and SMTP_PASSWORD | No |
@@ -389,7 +340,7 @@ storage:
     - provider: s3
 ```
 
-| Provider   | Provider Code | API Key Name           | Needs Provider Setting |
+| Provider   | Provider Code | API Key Names           | Needs Provider Setting |
 |------------|---------------|------------------------|----------------|
 | s3     | s3        | AWS_ACCESS_KEY and AWS_SECRET_KEY      | No |
 | Local     | local        |  | No |
@@ -406,7 +357,7 @@ auth:
     - keycloak
 ```
 
-| Provider   | Provider Code | API Key Name           | How to Acquire Client ID / Secret |
+| Provider   | Provider Code | Env Variables           | How to Acquire Client ID / Secret |
 |------------|---------------|------------------------|----------------|
 | Google     | google        | GOOGLE_CLIENT_ID and GOOGLE_SECRET      | See [here](https://developers.google.com/identity/protocols/oauth2) |
 | GitHub     | github        | GITHUB_CLIENT_ID and GITHUB_SECRET | See [here](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)  |
@@ -421,7 +372,9 @@ REFRESH_TOKEN_SECRET="my-refresh-secret"
 
 #### Keycloak
 
-You can self-host authentication entirely using Keycloak. Using Keycloak with Abbey requires certain settings - for example, a frontend URL must be specified to allow Abbey and Keycloak to run in the same Docker VM. Here is a `keycloak-realm.json` file you can place next to your `docker-compose` file that sets up keycloak automatically:
+You can self-host authentication entirely using Keycloak. Using Keycloak with Abbey requires certain settings - for example, a frontend URL for the realm must be specified to allow Abbey and Keycloak to run in the same Docker VM. If you have an existing Keycloak instance, you should create a new client for Abbey with a client ID and client secret that you place in `.env`. Otherwise, here are instructions are setting up a new instance for Abbey:
+
+Here is a `keycloak-realm.json` file you can place next to your `docker-compose` file that sets up keycloak automatically:
 
 ```
 {
@@ -495,11 +448,11 @@ KEYCLOAK_SECRET="not-a-secret"
 KEYCLOAK_CLIENT_ID="abbey-client"
 ```
 
-Adding that service + creating the `keycloak-realm.json` file + entering secrets into `.env` should allow Abbey to "just work" with Keycloak.
+Adding that service + creating the `keycloak-realm.json` file + entering secrets into `.env` should allow Abbey to "just work" with Keycloak in a dev environment.
 
 ### Database
 
-By default, Abbey has a MySQL service for which you must provide a `MYSQL_ROOT_PASSWORD` in `.env`. Abbey uses two databases, `custom_auth` for authentication and `learn` for everything else. They can be on the same or different servers. As of now, the server must be a MySQL database.
+By default, Abbey has a MySQL service for which you must provide a `MYSQL_ROOT_PASSWORD` in `.env`. Abbey uses two databases, `custom_auth` for authentication and `learn` for everything else. They can be on the same or different servers. As of now, the server must be MySQL or MySQL compatible (not postgres).
 
 You can change where the MySQL server is available, using these `.env` variables:
 
@@ -523,17 +476,51 @@ CUSTOM_AUTH_DB_NAME=custom_auth
 
 ## Homepage Artwork
 
-TODO
+You may notice that on the homepage (while signed in), the right side has an image and a description. On initialization of the database, there is one image that will appear there by default (which is hosted on the internet). To change that image, or to add more, you need to add entries to the art_history table in the learn database (on the MySQL service). There you put a URL for the image and markdown for the description. The domain(s) where the image is hosted needs also to be included in `settings.yml`, like so:
+
+```
+images:
+  domains:
+    - "my-domain.com"
+```
+
+To add the entry into art_history, you need to execute some SQL. With docker-compose, you can use:
+
+```
+docker-compose exec mysql mysql -u root -p
+```
+
+and then use your MySQL root password (available in the .env file located in the root of the project). Then, you'll need to execute:
+
+```
+use learn;
+INSERT INTO art_history (`markdown`, `image`)
+VALUES ('This is my *description*', 'https://some-hosted-image.com/image.webp');
+```
+
+An image is selected randomly to display from that `art_history` table.
 
 ## Branding
 
-TODO
+You can change Abbey's name to whatever you like using this option in `settings.yml`:
 
-## Contributing Your Own Integration
+```
+name: "Abbey"  # Replace with your chosen name
+```
 
-TODO
+Other branding such as logos, favicons, and so on are located in `frontend/public`. You can change them by replacing the files (but keeping their names).
 
-### Note on Authentication Integrations
+## Contributing
+
+One of Abbey's main strengths is its extendibility. You can implement new integrations and interfaces straightforwardly.
+
+### Integrations
+
+Each type of integration except for auth (see notes below) resides in a file in `backend/app/integrations`. Each type of integration implements a specific class (for example, `lm.py` gives an LM class, and each type of integration implements that class). You can simply add a class that inherits from the base class (LM, TTS, OCR, etc.). Then, you should add your class to the `PROVIDER_TO_` dictionary (there's a different one for each type of integration). For integrations that can be chosen by the user, it should automatically pop up once the appropriate change has been made in `settings.yml` (for example, a user can select his search engine, language model, and text-to-speech model). For integrations like `embed` which are chosen by Abbey by default, you should make sure that your integration is the default in `settings.yml`.
+
+If your integration relies on secrets, you should add it to `backend/app/configs/secrets.py` using the pattern specified and then import it into the integration file (e.g., `lm.py`).
+
+#### Note on Authentication Integrations
 
 Unlike the other integrations, if you're simply adding an OAuth2 provider, there is in fact no reason to do anything whatsoever on the flask backend. The Next.js frontend server handles everything. What you need to do is:
 
@@ -541,11 +528,11 @@ Unlike the other integrations, if you're simply adding an OAuth2 provider, there
 2. Conditionally add an instance for that provider class to the `authProviders` variable based on the availability of secrets.
 3. Create a frontend login button for that provider in `frontend/src/auth/custom.js`. First, that means pushing to `enabledProviders` the code of your new provider conditionally based on whether an environment variable is set to 1 (the environment variable must start with NEXT_PUBLIC so that it's available client-side). Second, that means adding an object to the `providers` list specifying your provider code and button value (you can add your provider's logo by following the pattern and adding the logo to `frontend/public/random`).
 
-### Note on Search Engine Integrations
+#### Note on Search Engine Integrations
 
 One note on search engines: some class functions for a search engine return custom search objects; the relevant classes are implemented in `web.py`, and you should take a look if you choose to implement a new search engine integration.
 
-## Contributing Your Own Template (AI interface)
+### Contributing Your Own Template (AI interface)
 
 In Abbey, everything is an "asset", and every asset implements a "template". For example, if you upload a document, it becomes an "asset" of template `document`. Similarly, if you create a new Workspace, it becomes an "asset" of template `notebook` (the internal name for a Workspace). On the frontend, the interface provided to a user is determined by the template he's looking at. There are a littany of common variables that must be set for each template (for example, whether or not the template is allowed to be chatted with, if it's in folder or something like that). Those variables and implemented functions determine, among other things, the way that general endpoints like `/asset/chat` behave.
 

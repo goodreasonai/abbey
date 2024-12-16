@@ -130,6 +130,12 @@ try {
         addEnv('NEXT_PUBLIC_ENABLE_SUBSCRIPTION', 1)
     }
 
+    // Images
+    if (settings.images.domains?.length){
+        let domainList = settings.images.domains.join(",")
+        addEnv('IMAGE_DOMAINS', domainList)
+    }
+
     fs.writeFileSync(path.join(__dirname, '../../.env.local'), envContent);
     console.log('Environment variables generated successfully');
 } catch (e) {
