@@ -17,7 +17,7 @@ If Abbey is not by default configurable to your liking, and you're comfortable w
 ### Prerequisites
 
 - **Installs**: You must have Docker and  `docker-compose` installed. See details [here](https://docs.docker.com/compose/install/).
-- **3rd Party Credentials**: AI functionality on Abbey relies on 3rd party integrations. If you're planning on using an API like the OpenAI API, you should have those credentials handy. *You must start Abbey with at least one language model and one embedding model*. In order to enable multi-user setups, you must use a separate OAuth2 provider and have a client ID and secret key ready; Abbey currently supports Google, Keycloak, and GitHub. You may also have API keys ready for Anthropic, Bing, and Mathpix. To send emails using Abbey, you must provide credentials for an SMTP server (like, your own email) or a Sendgrid API key.
+- **3rd Party Credentials**: If you're setting up an outside API to work with Abbey, have those credentials handy.
 
 ### Setup (3 easy steps)
 
@@ -154,6 +154,8 @@ Authentication
 - Keycloak
 - Clerk
 
+### Integration-Specific Configuration
+
 **Some integrations require configuration in settings.yml. If using any of the following integrations, you must specify their settings like so:**
 
 ```
@@ -203,12 +205,12 @@ lms:
 
 This table gives the provider code for each provider and the relevant API key name to place in `.env`:
 
-| Provider   | Provider Code | API Key Name           |
-|------------|---------------|------------------------|
-| OpenAI     | openai        | OPENAI_API_KEY         |
-| Anthropic  | anthropic     | ANTHROPIC_API_KEY      |
-| Ollama  | ollama     |       |
-| OpenAI Compatible  | openai_compatible     | OPENAI_COMPATIBLE_KEY      |
+| Provider   | Provider Code | API Key Name           | Needs Provider Setting |
+|------------|---------------|------------------------|----------------------|
+| OpenAI     | openai        | OPENAI_API_KEY         | No |
+| Anthropic  | anthropic     | ANTHROPIC_API_KEY      | No |
+| Ollama  | ollama     |       | [Yes](#integration-specific-configuration) |
+| OpenAI Compatible  | openai_compatible     | OPENAI_COMPATIBLE_KEY      | [Yes](#integration-specific-configuration) |
 
 
 ### Text-to-Speech Models (TTS)
@@ -233,7 +235,7 @@ tts:
 |------------|---------------|------------------------|-------------|
 | OpenAI     | openai        | OPENAI_API_KEY         | No |
 | ElevenLabs  | eleven_labs     | ELEVEN_LABS_API_KEY      | No |
-| OpenAI Compatible  | openai_compatible     | OPENAI_COMPATIBLE_KEY      | Yes |
+| OpenAI Compatible  | openai_compatible     | OPENAI_COMPATIBLE_KEY      | [Yes](#integration-specific-configuration) |
 
 ### Embeding Models (Embeds)
 
@@ -249,8 +251,8 @@ embeds:
 | Provider   | Provider Code | API Key Name           | Needs Provider Setting |
 |------------|---------------|------------------------|----------------------|
 | OpenAI     | openai        | OPENAI_API_KEY         | No |
-| Ollama  | ollama     |       | Yes |
-| OpenAI Compatible  | openai_compatible     | OPENAI_COMPATIBLE_KEY      | Yes |
+| Ollama  | ollama     |       | [Yes](#integration-specific-configuration) |
+| OpenAI Compatible  | openai_compatible     | OPENAI_COMPATIBLE_KEY      | [Yes](#integration-specific-configuration) |
 
 
 ### Search Engines (Web)
@@ -273,7 +275,7 @@ web:
 | Provider   | Provider Code | API Key Name           | Needs Provider Setting |
 |------------|---------------|------------------------|----------------|
 | Bing     | bing        | BING_API_KEY         | No |
-| SearXNG  | searxng     |       | Yes |
+| SearXNG  | searxng     |       | [Yes](#integration-specific-configuration) |
 
 
 ### Search Engines (Web)
@@ -296,7 +298,7 @@ web:
 | Provider   | Provider Code | API Key Name           | Needs Provider Setting |
 |------------|---------------|------------------------|----------------|
 | Bing     | bing        | BING_API_KEY         | No |
-| SearXNG  | searxng     |       | Yes |
+| SearXNG  | searxng     |       | [Yes](#integration-specific-configuration) |
 
 
 ### Search Engines (Web)
@@ -319,7 +321,7 @@ web:
 | Provider   | Provider Code | API Key Name           | Needs Provider Setting |
 |------------|---------------|------------------------|----------------|
 | Bing     | bing        | BING_API_KEY         | No |
-| SearXNG  | searxng     |       | Yes |
+| SearXNG  | searxng     |       | [Yes](#integration-specific-configuration) |
 
 
 ### Optical Character Recognition (OCR)
@@ -388,7 +390,7 @@ auth:
 |------------|---------------|------------------------|----------------|
 | Google     | google        | GOOGLE_CLIENT_ID and GOOGLE_SECRET      | See [here](https://developers.google.com/identity/protocols/oauth2) |
 | GitHub     | github        | GITHUB_CLIENT_ID and GITHUB_SECRET | See [here](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)  |
-| Keycloak     | keycloak        | KEYCLOAK_PUBLIC_URL, KEYCLOAK_INTERNAL_URL, KEYCLOAK_REALM, KEYCLOAK_SECRET, and KEYCLOAK_CLIENT_ID | See below |
+| Keycloak     | keycloak        | KEYCLOAK_PUBLIC_URL, KEYCLOAK_INTERNAL_URL, KEYCLOAK_REALM, KEYCLOAK_SECRET, and KEYCLOAK_CLIENT_ID | See [below](#keycloak) |
 
 **In production environments, you should also provide additional auth secrets for handling auth tokens. Do so by adding the following to your environment file:**
 
