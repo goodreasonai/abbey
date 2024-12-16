@@ -131,7 +131,7 @@ def generate_engines():
         engine = option['engine'] if 'engine' in option else None
         code = make_code_from_setting(option)
         name = option['name'] if 'name' in option else (engine if engine else provider)
-        traits = option['traits'] if 'traits' in option else provider
+        traits = option['traits'] if 'traits' in option else ""
         desc = option['desc'] if 'desc' in option else (f"The search engine {engine} is provided by {provider}." if engine else "")
         use_pdf = option['use_pdf'] if 'use_pdf' in option else False
         obj = provider_class(

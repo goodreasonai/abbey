@@ -429,7 +429,7 @@ def generate_lms():
         code = make_code_from_setting(lm)
         name = lm['name'] if 'name' in lm else model
         context_length = lm['context_length'] if 'context_length' in lm else DEFAUlT_CONTEXT_LENGTH
-        traits = lm['traits'] if 'traits' in lm else provider
+        traits = lm['traits'] if 'traits' in lm else ""
         supports_json = lm['supports_json'] if 'supports_json' in lm else False
         accepts_images = lm['accepts_images'] if 'accepts_images' in lm else False
         desc = lm['desc'] if 'desc' in lm else f"The model {model} provided by {provider} has a context length of {context_length}."

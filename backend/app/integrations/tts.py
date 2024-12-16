@@ -210,7 +210,7 @@ def generate_tts():
         model = option['model']
         code = make_code_from_setting(option)
         name = option['name'] if 'name' in option else voice
-        traits = option['traits'] if 'traits' in option else provider
+        traits = option['traits'] if 'traits' in option else ""
         desc = option['desc'] if 'desc' in option else f"This voice uses the model {model} and is provided by {provider}."
         sample_url = option['sample_url'] if 'sample_url' in option else ""
         obj = provider_class(
