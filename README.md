@@ -4,7 +4,7 @@ Abbey is an AI interface with notebooks, basic chat, documents, YouTube videos, 
 
 **Having any issues? Please, please post an issue or reach out to the creator directly! Twitter DM @gkamer8, email gordon@us.ai, or otherwise ping him – he likes it.**
 
-If Abbey is not by default configurable to your liking, and you're comfortable writing code, please consider opening a PR with your improvements! Adding new integrations and even full interfaces is straightforward; see more details in the "Contributing" section below. Lastly, Abbey provides simple configuration variables for things like its name, logo, and color scheme. See below how to switch them up.
+If Abbey is not by default configurable to your liking, and you're comfortable writing code, please consider opening a PR with your improvements! Adding new integrations and even full interfaces is straightforward; see more details in the "Contributing" section below.
 
 ## Screenshots
 
@@ -19,7 +19,7 @@ If Abbey is not by default configurable to your liking, and you're comfortable w
 - **Installs**: You must have Docker and  `docker-compose` installed. See details [here](https://docs.docker.com/compose/install/).
 - **3rd Party Credentials**: AI functionality on Abbey relies on 3rd party integrations. If you're planning on using an API like the OpenAI API, you should have those credentials handy. *You must start Abbey with at least one language model and one embedding model*. In order to enable multi-user setups, you must use a separate OAuth2 provider and have a client ID and secret key ready; Abbey currently supports Google, Keycloak, and GitHub. You may also have API keys ready for Anthropic, Bing, and Mathpix. To send emails using Abbey, you must provide credentials for an SMTP server (like, your own email) or a Sendgrid API key.
 
-### Setup
+### Setup (3 easy steps)
 
 Setup involves cloning/downloading this repo, creating `.env` and `settings.yml` files with your chosen AI integrations, and then running docker compose for either development (worse performance but easy to play around with) or production (better performance but slower to change settings). Here are the steps:
 
@@ -27,7 +27,7 @@ Setup involves cloning/downloading this repo, creating `.env` and `settings.yml`
 
 **Step 2:** Create a file called `.env` for secret keys and a file called `settings.yml` for configuration settings at the root of the repo (i.e., at the same level as the `docker-compose.yml` file). Then, enter into those files the keys / models you want to use. You can find details on how to configure each type of integration throughout this README.
 
-The `.env` file holds any API keys or other secrets you need. **You must also include a password for the MySQL database that Abbey uses.** A `.env` file for someone using the officical OpenAI API, an OpenAI Compatible API requiring a key, and the Anthropic API would look like:
+The `.env` file holds any API keys or other secrets you need. **You must also include a password for the MySQL database that Abbey uses.** A `.env` file for someone using the official OpenAI API, an OpenAI Compatible API requiring a key, and the Anthropic API would look like:
 
 ```
 MYSQL_ROOT_PASSWORD="my-password"
@@ -36,7 +36,7 @@ OPENAI_COMPATIBLE_KEY="my-api-key"
 ANTHROPIC_API_KEY="my-anthropic-key"
 ```
 
-The `settings.yml` file configures Abbey to use the models and options you want. At minimum, you must use at least one language model and one embedding model. Put the best models first so that Abbey uses them by default. For example, here is a `settings.yml` file that uses models from the official OpenAI API, an OpenAI compatible API, Anthropic, and Ollama:
+The `settings.yml` file configures Abbey to use the models and options you want. **At minimum, you must use at least one language model and one embedding model.** Put the best models first so that Abbey uses them by default. For example, here is a `settings.yml` file that uses models from the official OpenAI API, an OpenAI compatible API, Anthropic, and Ollama:
 
 ```
 lms:
@@ -46,7 +46,7 @@ lms:
       name: "Claude 3.5 Sonnet"  # optional, give a name for Abbey to use
       traits: "Coding"  # optional, let Abbey display what it's good for
       desc: "One of the best models ever!"  # optional, let Abbey show a description
-      accepts_images: true  # optional, put true if the model is a vision model / accepts image inpupt
+      accepts_images: true  # optional, put true if the model is a vision model / accepts image input
       context_length: 200_000  # optional, defaults to 8192
     - provider: openai_compatible
       model: "gpt-4o"
@@ -67,7 +67,7 @@ ollama:
   url: "http://host.docker.internal:11434"  # Use host.docker.internal for services running on localhost
 ```
 
-And given that you've also put the OpenAI API key into `.env`, that would be a minimally complete settings file. **To configure different models, search engines, authentication services, text-to-speech models, etc.: please look for the appropriate documentation below!**
+And given that you've also put the relevant keys into `.env`, that would be a minimally complete settings file. **To configure different models, search engines, authentication services, text-to-speech models, etc.: please look for the appropriate documentation below!**
 
 **Step 3:** If you're still playing around with your settings, you can run Abbey in dev mode simply using:
 
@@ -87,7 +87,7 @@ Once you're ready, you can run Abbey in production mode to give better performan
 docker compose -f docker-compose.prod.yml up
 ```
 
-If you want to change your settings / secrets, you need to rebuild the containers:
+If you want to change your settings / secrets in prod mode, you need to rebuild the containers:
 
 ```
 docker compose down
@@ -128,7 +128,7 @@ services:
 
 5. A port is already being used. The Abbey backend runs on port 5000 by default; the Abbey frontend runs on port 3000. It's possible that something on your computer is already using port 5000 or port 3000. On Mac that usually means AirPlay. Your goal should be to check whether anything's running on ports 3000 or 5000, and, if so, to shut down those processes. On Mac/Linux: Use `lsof -i :5000` or `lsof -i :3000` to check if any process is running on those ports. If you notice a process like 'ControlCe' running on Mac, that means "Control Center," and it's probably an airplay receiver thing. You can go into your System Settings on Mac and uncheck "AirPlay receiver". If you found something else, you can kill it with `kill -9 PID` where PID is replaced by the process ID (shown using lsof). On Windows: use `netstat -ano | findstr :5000` or `netstat -ano | findstr :3000`. You can then kill the process with `taskkill /PID YOUR_PID /F` - replace YOUR_PID with the process ID of the relevant process.
 
-## Summary of Integrations
+## Using Integrations
 
 3rd party integrations are managed in your settings and environment variable files. Here is a summary of those available:
 
@@ -154,13 +154,31 @@ Authentication
 - Keycloak
 - Clerk
 
+**Some integrations require configuration in settings.yml. If using any of the following integrations, you must specify their settings like so:**
+
+```
+s3:
+  bucket: 'your-bucket'
+
+searxng:
+  url: "http://host.docker.internal:8080"  # Replace with your URL
+
+ollama:
+  url: "http://host.docker.internal:11434"  # Replace with your URL
+
+openai_compatible:
+  url: "http://host.docker.internal:12345"  # Replace with your URL
+```
+
+These go at the root of `settings.yml` at the same level as `lms` or `embeds`.
+
 ### Language Models (LMs)
 
-Language models are configured under `lms` in `settings.yml`. You can specify language models from any provider you wish to support, plus defaults that are used behind the scenes for things like quiz generation, summaries, and suggesting questions. You must have at least one LM for Abbey to work properly.
+Language models are configured under `lms` in `settings.yml`. You can specify language models from any provider you wish to support, plus defaults that are used behind the scenes for things like quiz generation, summaries, and suggesting questions. You must have at least one LM for Abbey to work properly. Remember to configure the relevant provider settings as shown above under "Using Integrations".
 
 ```
 lms:
-  defaults:  # optional, use the optional "code" you specify, or "model-provider" like "gpt-4o-openai" by default
+  defaults:  # all are optional, use the optional "code" you specify to refer to each model, or use "model-provider" like "gpt-4o-openai"
     chat: "llama3.2-ollama"  # User chat model (user can change) - defaults to first listed model
     high_performance: "gpt-4o"  # Your best language model, used for generating curricula - defaults to default chat model
     long_context: "gpt-4o"  # Model used in long-context situations - defaults to longest context model specified
@@ -195,7 +213,7 @@ This table gives the provider code for each provider and the relevant API key na
 
 ### Text-to-Speech Models (TTS)
 
-Text to speech models are configured under `tts` in `settings.yml`. You can specify tts models from any provider you wish to support, plus a default. TTS models are totally optional.
+Text to speech models are configured under `tts` in `settings.yml`. You can specify tts models from any provider you wish to support, plus a default. TTS models are totally optional. Remember to configure the relevant provider settings as shown above under "Using Integrations".
 
 ```
 tts:
@@ -211,12 +229,275 @@ tts:
       disabled: false  # optional
 ```
 
-| Provider   | Provider Code | API Key Name           |
-|------------|---------------|------------------------|
-| OpenAI     | openai        | OPENAI_API_KEY         |
-| ElevenLabs  | eleven_labs     | ELEVEN_LABS_API_KEY      |
-| OpenAI Compatible  | openai_compatible     | OPENAI_COMPATIBLE_KEY      |
+| Provider   | Provider Code | API Key Name           | Needs Provider Setting |
+|------------|---------------|------------------------|-------------|
+| OpenAI     | openai        | OPENAI_API_KEY         | No |
+| ElevenLabs  | eleven_labs     | ELEVEN_LABS_API_KEY      | No |
+| OpenAI Compatible  | openai_compatible     | OPENAI_COMPATIBLE_KEY      | Yes |
 
+### Embeding Models (Embeds)
+
+Embedding models are configured under `embeds` in `settings.yml`. For now, exactly one mandatory embedding model is used across Abbey at a time. Embedding models are used to search over documents. Remember to configure the relevant provider settings as shown above under "Using Integrations".
+
+```
+embeds:
+  models:
+    - provider: "openai"  # required
+      model: "text-embedding-ada-002"  # required
+```
+
+| Provider   | Provider Code | API Key Name           | Needs Provider Setting |
+|------------|---------------|------------------------|----------------------|
+| OpenAI     | openai        | OPENAI_API_KEY         | No |
+| Ollama  | ollama     |       | Yes |
+| OpenAI Compatible  | openai_compatible     | OPENAI_COMPATIBLE_KEY      | Yes |
+
+
+### Search Engines (Web)
+
+Search engines are configured under `web` in `settings.yml`. For now, exactly one mandatory embedding model is used across Abbey at a time. Embedding models are used to search over documents. Remember to configure the relevant provider settings as shown above under "Using Integrations".
+
+```
+web:
+  engines:
+    - provider: "bing"  # required
+
+    - provider: "searxng"
+    - engine: "pubmed"  # Only used for SearXNG - leave blank to search over all engines you've enabled
+    
+    - provider: "searxng"
+    - engine: "arxiv"
+    - use_pdf: true  # Some SearXNG engines give PDF URLs - this tells Abbey to go to the PDF rather than the regular result
+```
+
+| Provider   | Provider Code | API Key Name           | Needs Provider Setting |
+|------------|---------------|------------------------|----------------|
+| Bing     | bing        | BING_API_KEY         | No |
+| SearXNG  | searxng     |       | Yes |
+
+
+### Search Engines (Web)
+
+Search engines are configured under `web` in `settings.yml`. For now, exactly one mandatory embedding model is used across Abbey at a time. Embedding models are used to search over documents. Remember to configure the relevant provider settings as shown above under "Using Integrations".
+
+```
+web:
+  engines:
+    - provider: "bing"  # required
+
+    - provider: "searxng"
+    - engine: "pubmed"  # Only used for SearXNG - leave blank to search over all engines you've enabled
+    
+    - provider: "searxng"
+    - engine: "arxiv"
+    - use_pdf: true  # Some SearXNG engines give PDF URLs - this tells Abbey to go to the PDF rather than the regular result
+```
+
+| Provider   | Provider Code | API Key Name           | Needs Provider Setting |
+|------------|---------------|------------------------|----------------|
+| Bing     | bing        | BING_API_KEY         | No |
+| SearXNG  | searxng     |       | Yes |
+
+
+### Search Engines (Web)
+
+Search engines are configured under `web` in `settings.yml`. For now, exactly one mandatory embedding model is used across Abbey at a time. Embedding models are used to search over documents. Remember to configure the relevant provider settings as shown above under "Using Integrations".
+
+```
+web:
+  engines:
+    - provider: "bing"  # required
+
+    - provider: "searxng"
+    - engine: "pubmed"  # Only used for SearXNG - leave blank to search over all engines you've enabled
+    
+    - provider: "searxng"
+    - engine: "arxiv"
+    - use_pdf: true  # Some SearXNG engines give PDF URLs - this tells Abbey to go to the PDF rather than the regular result
+```
+
+| Provider   | Provider Code | API Key Name           | Needs Provider Setting |
+|------------|---------------|------------------------|----------------|
+| Bing     | bing        | BING_API_KEY         | No |
+| SearXNG  | searxng     |       | Yes |
+
+
+### Optical Character Recognition (OCR)
+
+Optical Character Recognition APIs are configured under `ocr` in `settings.yml`. By default, no OCR is used. Optionally configuring OCR allows Abbey to read scanned PDFs. Abbey automatically determines whether OCR appears needed.
+
+```
+ocr:
+  models:
+    - provider: "mathpix"
+```
+
+| Provider   | Provider Code | API Key Name           | Needs Provider Setting |
+|------------|---------------|------------------------|----------------|
+| Mathpix     | mathpix        | MATHPIX_API_APP and MATHPIX_API_KEY      | No |
+
+### Email
+
+Email APIs are configured under `email` in `settings.yml`. Configuring email allows Abbey to send links to assets on Abbey when they're shared, plus in a few other circumstances. By default, Abbey doesn't send emails. Running abbey with the email profile (like `docker compose up --profile email`) lets Abbey send additional reminder emails for some templates.
+
+```
+email:
+  default: smtp  # Refer to each service by its provider name
+  services:
+    - provider: sendgrid  # Required
+      email: "your-email@example.com"  # Required
+      unsub_group: 24624  # Optional, only for Sendgrid
+    - provider: smtp  # Regular email
+      email: "your-email@example.com"
+```
+
+| Provider   | Provider Code | API Key Name           | Needs Provider Setting |
+|------------|---------------|------------------------|----------------|
+| Sendgrid     | sendgrid        | SENDGRID_API_KEY      | No |
+| SMTP Email     | smtp        | SMTP_SERVER, SMTP_PORT, SMTP_EMAIL, and SMTP_PASSWORD | No |
+
+### File Storage (storage)
+
+File Storage APIs are configured under `storage` in `settings.yml`. By default, Abbey stores all uploaded files in the mounted `file-storage` folder. When backing up Abbey, you should backup that folder plus the database.
+
+```
+storage:
+  default: s3  # All new uploads go to the default provider (you don't need to set up local)
+  locations:
+    - provider: s3
+```
+
+| Provider   | Provider Code | API Key Name           | Needs Provider Setting |
+|------------|---------------|------------------------|----------------|
+| s3     | s3        | AWS_ACCESS_KEY and AWS_SECRET_KEY      | No |
+| Local     | local        |  | No |
+
+### Authentication
+
+Authentication providers are configured under `auth` in `settings.yml`. By default, Abbey will use a single "default" user. Setting up additional authentication providers allows multi-user setups. You can use an OAuth2 provider like Google, or you can self-host a Keycloak instance (instructions below). For providers like Google and GitHub, you'll need a client secret and client ID. When registering Abbey, you might have to provide the URL where Abbey is accessible - that would be `http://localhost:3000` by default, or whatever public URL you're using for Abbey's frontend.
+
+```
+auth:
+  providers:
+    - google
+    - github
+    - keycloak
+```
+
+| Provider   | Provider Code | API Key Name           | How to Acquire Client ID / Secret |
+|------------|---------------|------------------------|----------------|
+| Google     | google        | GOOGLE_CLIENT_ID and GOOGLE_SECRET      | See [here](https://developers.google.com/identity/protocols/oauth2) |
+| GitHub     | github        | GITHUB_CLIENT_ID and GITHUB_SECRET | See [here](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)  |
+| Keycloak     | keycloak        | KEYCLOAK_PUBLIC_URL, KEYCLOAK_INTERNAL_URL, KEYCLOAK_REALM, KEYCLOAK_SECRET, and KEYCLOAK_CLIENT_ID | See below |
+
+**In production environments, you should also provide additional auth secrets for handling auth tokens. Do so by adding the following to your environment file:**
+
+```
+CUSTOM_AUTH_SECRET="my-auth-secret"
+REFRESH_TOKEN_SECRET="my-refresh-secret"
+```
+
+#### Keycloak
+
+You can self-host authentication entirely using Keycloak. Using Keycloak with Abbey requires certain settings - for example, a frontend URL must be specified to allow Abbey and Keycloak to run in the same Docker VM. Here is a `keycloak-realm.json` file you can place next to your `docker-compose` file that sets up keycloak automatically:
+
+```
+{
+    "realm": "abbey-realm",
+    "enabled": true,
+    "loginWithEmailAllowed": true,
+    "duplicateEmailsAllowed": false,
+    "registrationEmailAsUsername": true,
+    "attributes": {
+        "frontendUrl": "http://localhost:8080"
+    },
+    "clients": [
+      {
+        "clientId": "abbey-client",
+        "enabled": true,
+        "protocol": "openid-connect",
+        "publicClient": false,
+        "secret": "not-a-secret",
+        "redirectUris": ["http://localhost:3000/*"]
+      }
+    ],
+    "users": [
+      {
+        "username": "testuser@example.com",
+        "email": "testuser@example.com",
+        "enabled": true,
+        "emailVerified": true,
+        "credentials": [
+          {
+            "type": "password",
+            "value": "password"
+          }
+        ]
+      }
+    ]
+}
+
+```
+
+Here is an example service you can run alongside that in your `docker-compose.yml` file:
+
+```
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:22.0.3
+    container_name: keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - 8080:8080
+    volumes:
+      - ./keycloak-realm.json:/opt/keycloak/data/import/myrealm.json
+    command: ["start-dev", "--import-realm"]
+
+volumes:
+  keycloak_data:
+```
+
+Keycloak also requires some additional secrets in `.env`:
+
+```
+# The Public URL should be user accessible
+KEYCLOAK_PUBLIC_URL="http://localhost:8080"
+
+# The optional Internal URL should be accessible within Docker
+KEYCLOAK_INTERNAL_URL="http://keycloak:8080"
+
+KEYCLOAK_REALM="abbey-realm"
+KEYCLOAK_SECRET="not-a-secret"
+KEYCLOAK_CLIENT_ID="abbey-client"
+```
+
+Adding that service + creating the `keycloak-realm.json` file + entering secrets into `.env` should allow Abbey to "just work" with Keycloak.
+
+### Database
+
+By default, Abbey has a MySQL service for which you must provide a `MYSQL_ROOT_PASSWORD` in `.env`. Abbey uses two databases, `custom_auth` for authentication and `learn` for everything else. They can be on the same or different servers. As of now, the server must be a MySQL database.
+
+You can change where the MySQL server is available, using these `.env` variables:
+
+```
+MYSQL_ROOT_PASSWORD=my-root-password
+
+# Remember that the endpoint is accessed server side, so "mysql" is the default network name
+DB_ENDPOINT=mysql
+DB_USERNAME=root
+DB_PASSWORD=my-root-password
+DB_PORT=3306
+DB_NAME=custom_auth
+DB_TYPE=local  # 'local' or 'deployed' --> changes how app deals with transaction settings
+
+CUSTOM_AUTH_DB_ENDPOINT=mysql
+CUSTOM_AUTH_DB_USERNAME=root
+CUSTOM_AUTH_DB_PASSWORD=my-root-password
+CUSTOM_AUTH_DB_PORT=3306
+CUSTOM_AUTH_DB_NAME=custom_auth
+```
 
 ## Homepage Artwork
 
