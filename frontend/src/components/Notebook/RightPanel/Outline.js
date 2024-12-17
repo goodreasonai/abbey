@@ -21,6 +21,19 @@ export default function Outline({ outline, refresh, outlineLoadingState, highlig
     
     */
 
+    if (!outline?.outline?.length && outlineLoadingState === 1){
+        return (
+            <div style={{'height': '80%', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'}}>
+                <div style={{'width': '70%', 'textAlign': 'center', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center', 'gap': '10px'}}>
+                    <div>
+                        Creating outline
+                    </div>
+                    <Loading text="" />
+                </div>
+            </div>
+        )
+    }
+
     if (!outline?.outline?.length){
         return (
             <div style={{'height': '80%', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'}}>

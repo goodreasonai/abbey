@@ -22,7 +22,7 @@ import sys
 from flask_socketio import Namespace, emit, join_room, leave_room, rooms
 import hashlib
 from ..utils import text_from_html, get_token_estimate, get_current_utc_time
-from ..integrations.lm import LM, LM_PROVIDERS, FAST_CHAT_MODEL
+from ..integrations.lm import LM, LM_PROVIDERS, FAST_CHAT_MODEL, get_safe_retrieval_context_length
 from ..configs.user_config import APP_NAME
 from ..prompts.prompt_fragments import get_basic_ai_identity, get_citation_prompt
 from ..utils import get_unique_id
@@ -256,8 +256,8 @@ def save_notebook_socket(user: User, asset_id, val, prev_hash, db=None):
 # Has token control
 # For key points / outline
 # get text is function (block type, block) -> text
-def get_block_texts_from_blocks(lm: LM, blocks, get_text, safety_ratio = .5):
-    context_len = lm.context_length
+def get_block_texts_from_blocks(lm: LM, blocks, get_text, safe_context_length=None):
+    max_length = safe_context_length or get_safe_retrieval_context_length(lm)
     block_texts = []
     tot_tokens = 0
     for block in blocks[::-1]:
@@ -266,7 +266,7 @@ def get_block_texts_from_blocks(lm: LM, blocks, get_text, safety_ratio = .5):
         if spec_text:
             new_block_text = f"NOTE ID: {block['id']}\n{spec_text}"
             tot_tokens += get_token_estimate(new_block_text)
-            if tot_tokens > safety_ratio * context_len:
+            if tot_tokens > max_length:
                 break
             block_texts = [new_block_text] + block_texts
     return block_texts

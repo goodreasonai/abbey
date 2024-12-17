@@ -263,6 +263,12 @@ class Ollama(LM):
         response.raise_for_status()  # Raise an error for bad responses
         my_json = response.json()
         x = my_json['message']['content']
+
+        # Right now, there is no great way to force JSON in the API (there is in new versions of Ollama - waiting for more usage)
+        # This gets rid of one of the primary issues with that (the wrapping of the code in ```)
+        if make_json:
+            x = x.replace('```', '')
+
         return x
 
     def stream(self, txt, system_prompt=None, context=[], temperature=None, images=[]):

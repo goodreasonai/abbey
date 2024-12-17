@@ -21,6 +21,19 @@ export default function KeyPoints({ keyPoints, refresh, keyPointsLoadingState, h
     
     */
 
+    if (!keyPoints?.bullets?.length && keyPointsLoadingState === 1){
+        return (
+            <div style={{'height': '80%', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'}}>
+                <div style={{'width': '70%', 'textAlign': 'center', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center', 'gap': '10px'}}>
+                    <div>
+                        Creating key points
+                    </div>
+                    <Loading text="" />
+                </div>
+            </div>
+        )
+    }
+
     if (!keyPoints?.bullets?.length){
         return (
             <div style={{'height': '80%', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'}}>
