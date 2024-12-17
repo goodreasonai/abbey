@@ -1,6 +1,6 @@
 # Abbey 📚
 
-Abbey is an AI interface with notebooks, basic chat, documents, YouTube videos, and more. It orchestrates a variety of AI models in a private self-hosted package. You can run Abbey as a server for multiple users using your own authentication provider, or you can run it for yourself on your own machine. Abbey is highly configurable and extendible, using your chosen LLMs, TTS models, OCR models, and search engines. You can find a hosted version of Abbey [here](https://abbey.us.ai), which is used by many students and professionals.
+Abbey is an AI interface with notebooks, basic chat, documents, YouTube videos, and more. It orchestrates a variety of AI models in a private self-hosted package. You can run Abbey as a server for multiple users using your own authentication provider, or you can run it for yourself on your own machine. Abbey is highly configurable, using your chosen LLMs, TTS models, OCR models, and search engines. You can find a hosted version of Abbey [here](https://abbey.us.ai), which is used by many students and professionals.
 
 **Having any issues? Please, please post an issue or reach out to the creator directly! Twitter DM @gkamer8, email gordon@us.ai, or otherwise ping him – he likes it.**
 
@@ -16,18 +16,18 @@ If Abbey is not by default configurable to your liking, and you're comfortable w
 
 ### Prerequisites
 
-- **Installs**: You must have Docker and  `docker-compose` installed. See details [here](https://docs.docker.com/compose/install/).
-- **3rd Party Credentials**: If you're setting up an outside API to work with Abbey, have those credentials handy.
+- **Installs**: You must have Docker and  `docker compose` installed. See details [here](https://docs.docker.com/compose/install/).
+- **3rd Party Credentials**: If you're setting up an outside API to work with Abbey, have those credentials handy. You'll need to configure at least 1 language model and 1 embedding model.
 
 ### Setup (3 easy steps)
 
-Setup involves cloning/downloading this repo, creating `.env` and `settings.yml` files with your chosen AI integrations, and then running docker compose for either development (worse performance but easy to play around with) or production (better performance but slower to change settings). Here are the steps:
+Setup involves cloning/downloading this repo, creating `.env` and `settings.yml` files with your chosen AI integrations, and then running `docker compose` for either development (worse performance but easy to play around with) or production (better performance but slower to change settings). Here are the steps:
 
 **Step 1:** Clone / download this repository and navigate inside it.
 
 **Step 2:** Create a file called `.env` for secret keys and a file called `settings.yml` for configuration settings at the root of the repo (i.e., at the same level as the `docker-compose.yml` file). Then, enter into those files the keys / models you want to use. You can find details on how to configure each type of integration throughout this README.
 
-The `.env` file holds any API keys or other secrets you need. **You must also include a password for the MySQL database that Abbey uses.** A `.env` file for someone using the official OpenAI API, an OpenAI Compatible API requiring a key, and the Anthropic API would look like:
+The `.env` file holds any API keys or other secrets you need. **You must also include a password for the MySQL database that Abbey uses.** A `.env` file for someone using the official OpenAI API, an OpenAI Compatible API requiring a key, and the Anthropic API might look like:
 
 ```
 MYSQL_ROOT_PASSWORD="my-password"
@@ -55,19 +55,19 @@ lms:
     - provider: ollama
       model: "llama3.2"
 
+openai_compatible:
+  url: "http://host.docker.internal:1234"  # Use host.docker.internal for services running on localhost
+
+ollama:
+  url: "http://host.docker.internal:11434"  # Use host.docker.internal for services running on localhost
+
 embeds:
   models:
     - provider: "openai"
       model: "text-embedding-ada-002"
-
-openai_compatible:
-  url: "http://host.docker.internal:12345"  # Use host.docker.internal for services running on localhost
-
-ollama:
-  url: "http://host.docker.internal:11434"  # Use host.docker.internal for services running on localhost
 ```
 
-And given that you've also put the relevant keys into `.env`, that would be a minimally complete settings file. **To configure different models, search engines, authentication services, text-to-speech models, etc.: please look for the appropriate documentation below!**
+And given that you've also put the relevant keys into `.env`, that would be a complete settings file. **To configure different models, search engines, authentication services, text-to-speech models, etc.: please look for the appropriate documentation below!**
 
 **Step 3:** If you're still playing around with your settings, you can run Abbey in dev mode by simply using:
 
@@ -97,7 +97,7 @@ docker compose down
 docker compose -f docker-compose.prod.yml up --build
 ```
 
-**Step 4:** Now Abbey should be running at `http://localhost:3000`! Just visit that URL in your browser to start using Abbey.
+**Step 4:** Now Abbey should be running at `http://localhost:3000`! Just visit that URL in your browser to start using Abbey. In dev mode, it might take a second to load.
 
 Note that the backend runs at `http://localhost:5000` – if you go there, you should see a lyric from Gilbert and Sullivan's HMS Pinafore. If not, then the backend isn't running.
 
@@ -105,7 +105,7 @@ If something's not working right, please (please) file an issue or reach out to 
 
 ### Running Abbey at Different URLs / Ports
 
-By default, Abbey runs on localhost at ports 3000 for the frontend and 5000 for the backend. If you want to alter these (since you're pretty tech savvy), you'll need to modify the port mappings in the docker file, and then add this to your `settings.yml`:
+By default, Abbey runs on localhost at ports 3000 for the frontend and 5000 for the backend. If you want to alter these (since you're pretty tech savvy), you'll need to modify your docker compose file, and then add this to your `settings.yml`:
 
 ```
 services:
@@ -118,15 +118,17 @@ services:
 
 ### Troubleshooting
 
-1. docker config invalid: If it's telling you your docker compose is invalid, then you probably need to upgrade docker on your machine to something >= version 2. Abbey takes advantage of certain relatively new docker features like defaults for env variables and profiles. It's going to be easier just to upgrade docker in the long run - trust.
+1. General: make sure that all the docker containers are actually running with `docker ps`. You should see 6: backend, frontend, celery, redis, MySQL, and db_pooler (sorry that there are so many - Abbey can do AI tasks in the background and in multiple threads, which necessitates the pooler, redis, and celery containers). If one isn't running, try restarting it with `docker compose restart backend` (or frontend, or celery, or what have you). If it keeps crashing, there's a good chance you've messed up your `settings.yml` or forgot to put appropriate secrets into `.env`. Otherwise, look at the logs.
 
-2. Things look blank / don't load / requests to the backend don't seem to work quite right. First, navigate to the backend in the browser, like to `http://localhost:5000` or whatever URL you put in originally. It should give you a message like "A British tar is a soaring soul..." If you see that, then the backend is up and running but your backend URL config is wrong or incomplete (were you playing around with it?). If your backend isn't running, check the logs in Docker for more information – please read what they say!
+2. docker config invalid: If it's telling you your docker compose is invalid, then you probably need to upgrade docker on your machine to something >= version 2. Abbey takes advantage of certain relatively new docker features like defaults for env variables and profiles. It's going to be easier just to upgrade docker in the long run - trust.
 
-3. Docker gets stuck downloading/installing/running an image. There is a possibility that you've run out of space on your machine. First, try running `docker system prune` to clean up any nasty stuff lying around in Docker that you've forgotten about. Then try clearing up space on your computer – perhaps enough for ~10gb on your machine. Then restart Docker and try again. If you still get issues – try uninstalling / reinstalling Docker.
+3. Things look blank / don't load / requests to the backend don't seem to work quite right. First, navigate to the backend in the browser, like to `http://localhost:5000` or whatever URL you put in originally. It should give you a message like "A British tar is a soaring soul..." If you see that, then the backend is up and running but your backend URL config is wrong or incomplete (were you playing around with it?). If your backend isn't running, check the logs in Docker for more information – please read what they say!
 
-4. The `docker compose` command refuses to run because of some "API" issue or something. If docker is running (Docker Desktop on Mac, for example), then you should restart it. If that doesn't help, try purging/cleaning its data before restarting (click the "Bug" icon in Docker Desktop if you have it - then see `clean/purge` data). If docker isn't running, then that's your problem! You need to make sure the Docker daemon (i.e. Docker Desktop on Mac) is running.
+4. Docker gets stuck downloading/installing/running an image. There is a possibility that you've run out of space on your machine. First, try running `docker system prune` to clean up any nasty stuff lying around in Docker that you've forgotten about. Then try clearing up space on your computer – perhaps enough for ~10gb on your machine. Then restart Docker and try again. If you still get issues – try uninstalling / reinstalling Docker.
 
-5. A port is already being used. The Abbey backend runs on port 5000 by default; the Abbey frontend runs on port 3000. It's possible that something on your computer is already using port 5000 or port 3000. On Mac that usually means AirPlay. Your goal should be to check whether anything's running on ports 3000 or 5000, and, if so, to shut down those processes. On Mac/Linux: Use `lsof -i :5000` or `lsof -i :3000` to check if any process is running on those ports. If you notice a process like 'ControlCe' running on Mac, that means "Control Center," and it's probably an airplay receiver thing. You can go into your System Settings on Mac and uncheck "AirPlay receiver". If you found something else, you can kill it with `kill -9 PID` where PID is replaced by the process ID (shown using lsof). On Windows: use `netstat -ano | findstr :5000` or `netstat -ano | findstr :3000`. You can then kill the process with `taskkill /PID YOUR_PID /F` - replace YOUR_PID with the process ID of the relevant process.
+5. The `docker compose` command refuses to run because of some "API" issue or something. If docker is running (Docker Desktop on Mac, for example), then you should restart it. If that doesn't help, try purging/cleaning its data before restarting (click the "Bug" icon in Docker Desktop if you have it - then see `clean/purge` data). If docker isn't running, then that's your problem! You need to make sure the Docker daemon (i.e. Docker Desktop on Mac) is running.
+
+6. A port is already being used. The Abbey backend runs on port 5000 by default; the Abbey frontend runs on port 3000. It's possible that something on your computer is already using port 5000 or port 3000. On Mac that usually means AirPlay. Your goal should be to check whether anything's running on ports 3000 or 5000, and, if so, to shut down those processes. On Mac/Linux: Use `lsof -i :5000` or `lsof -i :3000` to check if any process is running on those ports. If you notice a process like 'ControlCe' running on Mac, that means "Control Center," and it's probably an airplay receiver thing. You can go into your System Settings on Mac and uncheck "AirPlay receiver". If you found something else, you can kill it with `kill -9 YOUR_PID` where `YOUR_PID` is replaced by the process ID (shown using lsof). On Windows: use `netstat -ano | findstr :5000` or `netstat -ano | findstr :3000`. You can then kill the process with `taskkill /PID YOUR_PID /F` - replace `YOUR_PID` with the process ID of the relevant process.
 
 ## Using Integrations
 
@@ -167,7 +169,7 @@ services:
 
 ### Integration-Specific Configuration
 
-**Some integrations require configuration in settings.yml. If using any of the following integrations, you must specify their settings like so:**
+**Some integrations require configuration in settings.yml. If using any of the following integrations, you must specify its settings like so:**
 
 ```
 s3:
@@ -203,9 +205,9 @@ lms:
     - provider: openai  # required - see below table for options
       model: "gpt-4o"  # required, code for the API
       context_length: 128_000  # optional (defaults to 4096)
-      name: "GPT-4o"  # optional display name for the model
       supports_json: true  # optional, defaults to false
       accepts_images: true  # optional, defaults to false
+      name: "GPT-4o"  # optional display name for the model
       desc: "One of the best models ever!"  # optional, lets Abbey display a description
       code: "gpt-4o"  # optional - defaults to 'model-provider' like 'gpt-4o-openai' - used to specify defaults above.
       disabled: false  # optional
@@ -275,7 +277,7 @@ web:
   engines:
     - provider: "bing"  # required
 
-    # TO USE SEARXNG, MAKE SURE YOUR SEARXNG SETTINGS ARE CORRECT - SEE BELOW
+    # TO USE SEARXNG, MAKE SURE YOUR SEARXNG SETTINGS ARE CORRECT - SEE [BELOW](#searxng)
     - provider: "searxng"
     - engine: "pubmed"  # Only used for SearXNG - leave blank to search over all engines you've enabled
     
@@ -326,7 +328,7 @@ Email APIs are configured under `email` in `settings.yml`. Configuring email all
 
 ```
 email:
-  default: smtp  # Refer to each service by its provider name
+  default: smtp  # Refer to each service by its provider name (defaults to first specified)
   services:
     - provider: sendgrid  # Required
       email: "your-email@example.com"  # Required
@@ -342,7 +344,7 @@ email:
 
 ### File Storage (storage)
 
-File Storage APIs are configured under `storage` in `settings.yml`. By default, Abbey stores all uploaded files in the mounted `file-storage` folder. When backing up Abbey, you should backup that folder plus the database.
+File Storage APIs are configured under `storage` in `settings.yml`. By default, Abbey stores all uploaded files in the mounted `file-storage` folder. When backing up Abbey, you should backup that folder plus the database. If you want to use s3, you can use the following:
 
 ```
 storage:
@@ -477,6 +479,7 @@ DB_PASSWORD=my-root-password
 DB_PORT=3306
 DB_NAME=learn
 DB_TYPE=local  # 'local' or 'deployed' --> changes how app deals with transaction settings
+# You should set global transaction isolation level to READ COMMITTED when using your own database
 
 CUSTOM_AUTH_DB_ENDPOINT=mysql
 CUSTOM_AUTH_DB_USERNAME=root
@@ -510,7 +513,7 @@ and then use your MySQL root password (available in the .env file located in the
 ```
 use learn;
 INSERT INTO art_history (`markdown`, `image`)
-VALUES ('This is my *description*', 'https://some-hosted-image.com/image.webp');
+VALUES ('This is my *description*', 'https://my-domain.com/image.webp');
 ```
 
 An image is selected randomly to display from that `art_history` table.
@@ -523,7 +526,7 @@ You can change Abbey's name to whatever you like using this option in `settings.
 name: "Abbey"  # Replace with your chosen name
 ```
 
-Other branding such as logos, favicons, and so on are located in `frontend/public`. You can change them by replacing the files (but keeping their names).
+Other branding such as logos, favicons, and so on are located in `frontend/public`. You can change them by replacing the files (but keeping their names). Background images are in the `frontend/public/random` folder.
 
 ## Ping
 
