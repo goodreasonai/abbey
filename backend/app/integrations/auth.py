@@ -117,7 +117,8 @@ class CustomAuth(Auth):
             'database': CUSTOM_AUTH_DB_NAME,
             'cursorclass': pymysql.cursors.DictCursor
         }
-        self.conn = pymysql.connect(**db_params)
+        self.db_params = db_params
+        self.conn = None
         super().__init__(code="custom")
     
     def extract_token_info(self, token):
@@ -128,6 +129,9 @@ class CustomAuth(Auth):
         return {'email': email, 'user_id': str(user_id)}
 
     def get_users(self, emails=[], user_ids=[], tries=0):
+
+        if not self.conn:
+            self.conn = pymysql.connect(**self.db_params)
 
         # Basically this is set up to be somewhat stable; errors that involve connections timing out etc will automatically ping to reconnect and try again.
         if tries < 2:

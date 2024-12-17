@@ -131,7 +131,7 @@ try {
     }
 
     // Images
-    if (settings.images.domains?.length){
+    if (settings.images?.domains?.length){
         let domainList = settings.images.domains.join(",")
         addEnv('IMAGE_DOMAINS', domainList)
     }
