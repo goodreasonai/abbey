@@ -84,7 +84,7 @@ docker compose restart backend frontend celery db_pooler
 Once you're ready, you can run Abbey in production mode to give better performance:
 
 ```
-docker compose -f docker-compose.prod.yml up
+docker compose -f docker-compose.prod.yml up --build
 ```
 
 If you want to change your settings / secrets in prod mode, you need to rebuild the containers:
