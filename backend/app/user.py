@@ -4,19 +4,19 @@ from flask import (
     request,
 )
 from flask_cors import cross_origin
-from .integrations.lm import LM_PROVIDERS, LM
-from .integrations.tts import TTS, TTS_PROVIDERS
-from .integrations.web import SearchEngine, SEARCH_PROVIDERS
+from .integrations.lm import LM_PROVIDERS, LM, DEFAULT_CHAT_MODEL
+from .integrations.tts import TTS, TTS_PROVIDERS, DEFAULT_TTS_MODEL
+from .integrations.web import SearchEngine, SEARCH_PROVIDERS, DEFAULT_SEARCH_ENGINE
+from .integrations.ocr import DEFAULT_OCR_OPTION
 from .configs.str_constants import USER_CHAT_MODEL, USER_TTS_MODEL, USER_PRODUCT_CODE, USER_PIN, USER_UPLOAD_COUNTER, USER_ALERT_ACTIVITY, USER_SEARCH_ENGINE
 from .auth import User, token_required
 from .db import get_db, needs_db
 from .template_response import MyResponse
 from .configs.user_config import (
-    OVERRIDE_ALLOWED_TEMPLATES, DEFAULT_OCR_OPTION, SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS,
-    SUBSCRIPTION_CODE_TO_MODEL_OPTIONS, DEFAULT_CHAT_MODEL, DEFAULT_SEARCH_ENGINE,
+    OVERRIDE_ALLOWED_TEMPLATES, SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS,
+    SUBSCRIPTION_CODE_TO_MODEL_OPTIONS,
     SUBSCRIPTION_CODE_TO_TEMPLATES, SUBSCRIPTION_CODE_TO_TTS_OPTIONS,
-    SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS, DISABLE_OCR, LM_ORDER, DEFAULT_TTS_MODEL, 
-    get_available, AVAILABLE_LMS, AVAILABLE_TTS, AVAILABLE_SEARCH, DEFAULT_SUBSCRIPTION_CODE
+    SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS, LM_ORDER, DEFAULT_SUBSCRIPTION_CODE
 )
 from .pay import get_user_main_sub_code, Protocol, get_protocol_by_code, get_product, get_products
 import pytz
@@ -47,8 +47,6 @@ def get_user_templates(user: User, db=None):
 @needs_db
 def get_user_ocr_option(user: User, db=None):
     # TODO: let the user select one!
-    if DISABLE_OCR:
-        return 'disabled'
     return DEFAULT_OCR_OPTION
 
 
@@ -95,7 +93,7 @@ def get_user_chat_model_code(user: User, db=None):
         model = results[0]['value']
     
     # If the model selected isn't available (beacuse it's been removed), return the default model.
-    if model not in get_available(AVAILABLE_LMS):
+    if model not in LM_PROVIDERS:
         model = DEFAULT_CHAT_MODEL
 
     return model
@@ -113,7 +111,7 @@ def get_user_tts_model_code(user: User, db=None):
         model = results[0]['value']
 
     # If the model selected isn't available (beacuse it's been removed), return the default model.
-    if model not in get_available(AVAILABLE_TTS):
+    if model not in TTS_PROVIDERS:
         model = DEFAULT_TTS_MODEL 
     
     return model
@@ -131,7 +129,7 @@ def get_user_search_engine_code(user: User, db=None):
         model = results[0]['value']
 
     # If the model selected isn't available (beacuse it's been removed), return the default model.
-    if model not in get_available(AVAILABLE_SEARCH):
+    if model not in SEARCH_PROVIDERS:
         model = DEFAULT_SEARCH_ENGINE 
     
     return model
@@ -258,8 +256,6 @@ def get_user_tts_model_options_(user: User):
     codes = get_user_tts_options_codes(user)
     for tts in TTS_PROVIDERS.values():
         tts: TTS
-        if tts.code not in get_available(AVAILABLE_TTS):
-            continue
         if tts.code in codes:
             available.append(tts.to_json_obj())
         else:
@@ -279,8 +275,6 @@ def get_user_search_engine_options_(user: User):
     codes = get_user_search_options_codes(user)
     for se in SEARCH_PROVIDERS.values():
         se: SearchEngine
-        if se.code not in get_available(AVAILABLE_SEARCH):
-            continue
         if se.code in codes:
             available.append(se.to_json_obj())
         else:

@@ -17,19 +17,19 @@ Most Important Config Variables
 
 */
 
-export const NAME = "Abbey"
+export const NAME = process.env.NEXT_PUBLIC_APP_NAME || "Abbey"
 export const NAV_BAR_LOGO = NavBarLogo
 export const LOGO = (<DefaultLogo mainImage={NAV_BAR_LOGO} mainText={NAME} />)  // just puts the text next to the image with the correct sizes / spacing.
 export const FAVICON_16x16 = Favicon16x16
 export const FAVICON_32x32 = Favicon32x32
-export const HOME_PAGE_URL = "https://abbey.us.ai"  // Used for metadata in iMessages/social media - must be publicly accessible to function
+export const HOME_PAGE_URL = process.env.NEXT_PUBLIC_ROOT_URL || "https://abbey.us.ai"  // Used for metadata in iMessages/social media - must be publicly accessible to function
 export const PREVIEW_IMAGE_URL = `${HOME_PAGE_URL}/Preview.png`  // In iMessages and social media, this image is used (needs to be publicly accessible to function)
 export const ANIMATED_LOGO = `/AnimatedLogo.svg`  // used in the signed out home page, if enabled.
 
 export const HOME_PAGE_HEADER = (first, last) => first ? `Thank you for using ${NAME}, ${first}.` : `Thank you for using ${NAME}.`
 
-export const DESCRIPTION = "Book-up on anything with Abbey, by US AI. Learn faster and better using LLM generated summaries, AI-tailored curricula, and a growing content library of articles and textbooks."
-export const SITE_TITLE = "Abbey - Book-up on anything"  // Shows up in a browser tab
+export const DESCRIPTION = `Book-up on anything with ${NAME}, by US AI. Learn faster and better using LLM generated summaries, AI workspaces, and more.`
+export const SITE_TITLE = `${NAME} - Book-up on anything`  // Shows up in a browser tab
 export const COMPANY = "U.S. Artificial Intelligence Inc."
 
 // To change these, place an image in public/random, import it above, and replace the current image here.
@@ -38,7 +38,7 @@ export const LOGIN_FOOTER_BACKGROUND = Library  // image that shows up in the ba
 export const CREATE_BACKGROUND = RhodesExpanded  // the image that shows up in the background of Create
 
 // Will promote the extension in the website template. Set to empty string to disable the promo.
-export const CHROME_EXT_PROMO_LINK = "https://chromewebstore.google.com/detail/abbey/lajhghkelnmbdapgcgmdbfolbicigeac"
+export const CHROME_EXT_PROMO_LINK = process.env.CHROME_EXT_PROMO_LINK
 
 export const ALLOW_SUBSCRIPTION = process.env.NEXT_PUBLIC_ENABLE_SUBSCRIPTION === '1'
 export const UPGRADE_SUBSCRIPTION_LINK = "/settings"  // if a user has surpassed his max allowed uploads, he is referred to this link to upgrade
@@ -47,6 +47,7 @@ export const MAX_USER_SOURCES = 7  // SHOULD MATCH BACKEND
 export const MAX_PDF_PAGES = 250  // SHOULD MATCH BACKEND
 
 export const SHOW_SIGNED_OUT_HOME_PAGE = !(process.env.NEXT_PUBLIC_HIDE_SIGNED_OUT_HOME_PAGE === '1')  // if false, the root path (home page) will display the login page if the user is signed out, rather than the landing page.
+// For some import error reason, process.env.NEXT_PUBLIC_HIDE_COLLECTIONS is used directly in template.js for Curriculum hiding
 export const HIDE_COLLECTIONS = process.env.NEXT_PUBLIC_HIDE_COLLECTIONS === '1'  // if true, "Collections" will not show up in the nav bar, and it will be to the user as though Collections doesn't exist.
 export const DISABLE_OCR = process.env.NEXT_PUBLIC_DISABLE_OCR === '1'  // Should match backend. If true, the user is never prompted about OCR and is never given the option to retry with OCR
 export const DISABLE_WEB = process.env.NEXT_PUBLIC_DISABLE_WEB === '1'

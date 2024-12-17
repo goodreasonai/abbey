@@ -4,3 +4,7 @@
 **/.DS_Store
 **/venv
 .env
+settings.yml
+settings.prod.yml
+docker-compose.keycloak.yml
+keycloak-realm.json

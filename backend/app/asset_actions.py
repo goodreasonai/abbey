@@ -6,13 +6,12 @@ import json
 from .auth import get_permissioning_string
 from .db import get_db, needs_db, with_lock, needs_special_db, ProxyDB, PooledCursor
 from .retriever import consistency_check, Retriever
-from .configs.secrets import DB_TYPE, FRONTEND_URL
-from .configs.str_constants import CHAT_CONTEXT, SUMMARY_APPLY_JOB, SUMMARY_PAIRWISE_JOB, HAS_EDITED_ASSET_TITLE, HAS_EDITED_ASSET_DESC, PROTECTED_METADATA_KEYS, RETRIEVAL_SOURCE, BOOK_ORDER
+from .configs.secrets import DB_TYPE
+from .configs.str_constants import CHAT_CONTEXT, SUMMARY_APPLY_JOB, SUMMARY_PAIRWISE_JOB, HAS_EDITED_ASSET_TITLE, HAS_EDITED_ASSET_DESC, PROTECTED_METADATA_KEYS, RETRIEVAL_SOURCE, BOOK_ORDER, RETRIEVAL_SOURCE
 from .jobs import complete_job, job_error_wrapper, start_job
-from .configs.str_constants import RETRIEVAL_SOURCE
-from .configs.user_config import ILLEGAL_SHARE_DOMAINS, MAX_CHAT_RETRIEVER_RESULTS, FAST_CHAT_MODEL
+from .configs.user_config import ILLEGAL_SHARE_DOMAINS, MAX_CHAT_RETRIEVER_RESULTS, FRONTEND_URL
 from .prompts.suggest_questions_prompts import get_suggest_questions_system_prompt, get_suggest_questions_prompt, get_suggest_questions_system_prompt_detached
-from .integrations.lm import LM_PROVIDERS, LM
+from .integrations.lm import LM_PROVIDERS, LM, FAST_CHAT_MODEL
 from .utils import is_valid_email
 from .prompts.summary_prompts import get_summary_apply_instructions, get_summary_reduce_instructions
 from .worker import task_apply, task_general
@@ -1268,13 +1267,15 @@ def suggest_questions(user: User, asset_row, context, detached=False, n=3):
     # Same code used in /chat (1/25/24)
     split_context_strs = [x['user']+ " AI: " + x['ai'] for x in split_context]  # combine both user and ai text for embedding
 
+    lm: LM = LM_PROVIDERS[FAST_CHAT_MODEL]
+
     system_prompt = ""
     if not detached:
         retriever: Retriever = make_retriever(user, asset_row)
         if len(split_context_strs):
             retrieval_response = retriever.query(real_q, max_results=MAX_CHAT_RETRIEVER_RESULTS, context=split_context_strs)
         else:
-            retrieval_response = retriever.random(MAX_CHAT_RETRIEVER_RESULTS)
+            retrieval_response = retriever.random(lm, MAX_CHAT_RETRIEVER_RESULTS)
 
         # note that context isn't being used in the prompt yet.
         system_prompt = get_suggest_questions_system_prompt(n, retrieval_response, real_q, split_context)
@@ -1283,8 +1284,6 @@ def suggest_questions(user: User, asset_row, context, detached=False, n=3):
 
     llm_question = get_suggest_questions_prompt(n, real_q)
 
-    # The current fast lm doens't support make_json, but in case it changes.
-    lm: LM = LM_PROVIDERS[FAST_CHAT_MODEL]
     text = lm.run(llm_question, system_prompt=system_prompt, make_json=True)
     total_json = json.loads(text)  # if it throws a value error, it throws a value error!
     questions = total_json['questions']  # if it throws a key error, it throws a key error!

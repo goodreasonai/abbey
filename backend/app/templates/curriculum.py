@@ -8,7 +8,7 @@ from ..asset_actions import get_asset, search_assets, get_asset_metadata, set_so
 from flask_cors import cross_origin
 from ..template_response import MyResponse
 from ..db import get_db
-from ..integrations.lm import LM, LM_PROVIDERS
+from ..integrations.lm import LM, LM_PROVIDERS, FAST_CHAT_MODEL, BALANCED_CHAT_MODEL, HIGH_PERFORMANCE_CHAT_MODEL
 from ..prompts.curriculum_prompts import (
     get_brainstorm_system_prompt,
     get_to_structured_system_prompt,
@@ -23,11 +23,10 @@ import sys
 from ..utils import get_unique_id
 from ..activity import get_aggregated_activity, make_log
 from ..configs.str_constants import CURR_START_ACTIVITY, CURR_COMPLETE_ACTIVITY, DIVIDER_TEXT
-from ..configs.user_config import FAST_CHAT_MODEL, BALANCED_CHAT_MODEL, HIGH_PERFORMANCE_CHAT_MODEL
 from .template import EmailRules
 from ..db import needs_db, ProxyDB
 from ..auth import get_users
-from ..configs.secrets import FRONTEND_URL
+from ..configs.user_config import FRONTEND_URL
 from ..configs.user_config import APP_NAME
 import random
 

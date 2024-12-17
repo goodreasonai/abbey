@@ -126,16 +126,20 @@ export default function TTSModels({ productCode, ...props}){
                         </div>
                         {logo}
                     </div>
-                    <div style={{'color': 'var(--passive-text)'}}>
-                        {item.traits}
-                    </div>                    
+                    {item.traits ? (
+                        <div style={{'color': 'var(--passive-text)'}}>
+                            {item.traits}
+                        </div>
+                    ) : ""}
                 </div>
-                <div>
-                    <audio controls style={{'height': '2rem'}}>
-                        <source src={item.sample_url} />
-                        Your browser does not support the audio element.
-                    </audio>
-                </div>
+                {item.sample_url ? (
+                    <div>
+                        <audio controls style={{'height': '2rem'}}>
+                            <source src={item.sample_url} />
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                ) : ""}
             </div>
         )
     }

@@ -1,2 +1,3 @@
 app/cache
 app/configs/.env
+app/static

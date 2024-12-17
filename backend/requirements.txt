@@ -29,3 +29,5 @@ pdfkit
 tiktoken
 pillow
 pyheif
+pyyaml
+apscheduler

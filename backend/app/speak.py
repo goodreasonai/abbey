@@ -6,7 +6,6 @@ from flask import (
 )
 from .auth import token_optional, User
 
-from .configs.user_config import DEFAULT_TTS_MODEL
 from .template_response import MyResponse, response_from_resource
 import sys
 import gevent
@@ -22,7 +21,7 @@ import json
 from .configs.str_constants import MEDIA_USER_INFO
 from mutagen.mp3 import MP3
 from .utils import mimetype_from_ext
-from .integrations.tts import TTS, TTS_PROVIDERS
+from .integrations.tts import TTS, TTS_PROVIDERS, DEFAULT_TTS_MODEL
 
 
 # NOTE: only works for MP3 atm

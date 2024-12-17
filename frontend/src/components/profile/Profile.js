@@ -142,9 +142,11 @@ export default function Profile(){
                     <div>
                         {item.name}
                     </div>
-                    <div style={{'fontSize': '1rem'}}>
-                        <span style={{'color': 'var(--passive-text)'}}>Best for:</span> <span>{item.traits}</span>
-                    </div>
+                    {item.traits ? (
+                        <div style={{'fontSize': '1rem'}}>
+                            <span style={{'color': 'var(--passive-text)'}}>Best for:</span> <span>{item.traits}</span>
+                        </div>
+                    ) : ""}
                     {item.accepts_images ? (
                         <>
                             <div style={{'flex': '1'}}></div>

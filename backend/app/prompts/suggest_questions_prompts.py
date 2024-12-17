@@ -1,7 +1,7 @@
 
 # We don't do anything with context yet...
 def get_suggest_questions_system_prompt(nquestions, chunks, question, context):
-    start = f"""You are tasked with suggesting good follow-up questions related to some source material and a user's conversation with it. You must suggest exactly {nquestions} question{'s' if nquestions > 1 else ''}."""
+    start = f"""You are tasked with suggesting good follow-up questions related to some source material and a person's conversation with it. You must suggest exactly {nquestions} question{'s' if nquestions > 1 else ''}."""
     questions_posed_to_doc = "The questions should be asked about the source material; not directed toward the user. It should be answered somewhere in the source."
     example = """Your response should be in JSON format. Here is the correct schema given as an example when n is 3: {"questions": ["Why is the sky blue?", "What does the author mean by 'dialectic'?", "Where did this take place?"]}"""
     
@@ -11,7 +11,7 @@ def get_suggest_questions_system_prompt(nquestions, chunks, question, context):
     return "\n".join([start, questions_posed_to_doc, example, doc])
 
 def get_suggest_questions_prompt(nquestions, question):
-    prev = f'Here is the user\'s last question to help you create the follow-up(s): "{question}". ' if question else ""
+    prev = f'Here is the question I would like you create to create the follow-up(s) for: "{question}". ' if question else ""
     question = f"""{prev}Please respond with {nquestions} question{'s' if nquestions > 1 else ''} using the correct JSON schema."""
     return question
 

@@ -471,7 +471,7 @@ export default function Classroom({ manifestRow, canEdit }){
         }
         setStudentsJson(savedStudents.current)
         setSaveStudentsIsLoading(false)
-    }, [studentsJson, setSaveStudentsIsLoading])
+    }, [studentsJson])
 
     useSaveDataEffect(studentsJson, canEdit && fullStateLoadingState == 2, saveStudents, 0)
 

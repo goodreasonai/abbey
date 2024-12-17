@@ -12,8 +12,7 @@ from ..db import needs_db, get_db
 from ..prompts.detached_chat_prompts import pure_detached_chat_system_prompt, make_title_system_prompt
 from flask_cors import cross_origin
 from ..template_response import MyResponse
-from ..integrations.lm import LM, LM_PROVIDERS
-from ..configs.user_config import FAST_CHAT_MODEL
+from ..integrations.lm import LM, LM_PROVIDERS, FAST_CHAT_MODEL
 import sys
 from ..configs.str_constants import CHAT_CONTEXT
 from ..worker import task_new_desc

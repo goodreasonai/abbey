@@ -2,17 +2,14 @@ from .template import Template
 from ..db import needs_db, ProxyDB
 from ..auth import User
 from flask import (
-    Blueprint,
     request,
 )
 import requests
-from bs4 import BeautifulSoup
 from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound
 from ..asset_actions import has_asset_title_been_updated, replace_asset_resource
 import re
 from ..storage_interface import upload_asset_file
 import re
-from pytube import YouTube
 import sys
 from ..prompts.prompt_fragments import get_basic_ai_identity, get_video_citation_prompt
 from ..configs.str_constants import MAIN_FILE

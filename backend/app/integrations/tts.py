@@ -2,19 +2,23 @@ from .file_loaders import TextSplitter
 import os
 import requests
 import sys
-import json
-from ..configs.secrets import ELEVEN_LABS_API_KEY, OPENAI_API_KEY, OPENAI_COMPATIBLE_URL, OPENAI_COMPATIBLE_KEY, OPENAI_COMPATIBLE_TTS
+from ..configs.settings import SETTINGS
+from ..configs.secrets import ELEVEN_LABS_API_KEY, OPENAI_API_KEY, OPENAI_COMPATIBLE_KEY
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY if OPENAI_API_KEY else ""
 from openai import OpenAI
 openai_client = OpenAI() if OPENAI_API_KEY else None
 
 class TTS():
-    code: str = ""
+    voice: str = ""  # An identifier specific to the provider and model (like "onyx" for openai)
+    model: str = ""  # An identifier specific to the provider (like "tts-1" for openai)
+    code: str = ""  # A universally unique identifier
     name: str = ""
     desc: str = ""
     traits: str = ""  # A couple word description of strengths
     sample_url: str = ""
-    def __init__(self, code, name, desc, traits, sample_url) -> None:
+    def __init__(self, voice, model, code, name, desc, traits, sample_url) -> None:
+        self.voice = voice
+        self.model = model
         self.code = code
         self.name = name
         self.desc = desc
@@ -40,11 +44,15 @@ class TTS():
             'traits': self.traits,
             'sample_url': self.sample_url
         }
-    
 
-class OpenAITTS(TTS):
-    def __init__(self, code, name, desc, traits, sample_url) -> None:
+
+class OpenAICompatibleBaseTTS(TTS):
+    def __init__(self, url, key, voice, model, code, name, desc, traits, sample_url="") -> None:
+        self.url = url
+        self.key = key
         super().__init__(
+            voice=voice,
+            model=model,
             code=code,
             name=name,
             desc=desc,
@@ -52,60 +60,12 @@ class OpenAITTS(TTS):
             sample_url=sample_url
         )
 
-    def stream(self, txt, speed=1.0, voice="alloy", hd=False):
-        
+    def stream(self, txt, speed=1.0):
         speed = max(min(speed, 4.0), .25)  # based on API limitations
         
-        url = "https://api.openai.com/v1/audio/speech"
+        url = f"{self.url}/v1/audio/speech"
         headers = {
-            "Authorization": f'Bearer {OPENAI_API_KEY}',  # Replace with your API key
-        }
-
-        text_splitter = TextSplitter(
-            max_chunk_size=2048,  # in characters, needs to be less than 4096. Lower values allow us to abort faster if the user stops listening.
-            chunk_overlap=0,
-            length_function=len
-        )
-        txts = text_splitter.split_text(txt)
-
-        def to_stream():
-            for split in txts:
-                try:
-                    data = {
-                        "model": 'tts-1' if not hd else "tts-1-hd",
-                        "input": split,
-                        "voice": voice,
-                        "response_format": "mp3",
-                        'speed': speed
-                    }
-                    with requests.post(url, headers=headers, json=data, stream=True) as response:
-                        if response.status_code == 200:
-                            for chunk in response.iter_content(chunk_size=4096):
-                                yield chunk
-                        else:
-                            print(f"Error getting audio: {response.status_code} - {response.text}", file=sys.stderr)
-                except Exception as e:
-                    print(f"Error while making requests for audio: {e}", file=sys.stderr)
-        return "mp3", to_stream()
-
-
-class OpenAICompatibleTTS(TTS):
-    def __init__(self, voice, code, name, desc, traits, sample_url="") -> None:
-        self.voice = voice
-        super().__init__(
-            code=code,
-            name=name,
-            desc=desc,
-            traits=traits,
-            sample_url=sample_url
-        )
-
-    def stream(self, txt, speed=1.0, hd=False):
-        speed = max(min(speed, 4.0), .25)  # based on API limitations
-        
-        url = f"{OPENAI_COMPATIBLE_URL}/v1/audio/speech"
-        headers = {
-            "Authorization": f'Bearer {OPENAI_COMPATIBLE_KEY}',  # Replace with your API key
+            "Authorization": f'Bearer {self.key}',  # Replace with your API key
         }
         text_splitter = TextSplitter(
             max_chunk_size=2048,  # in characters, needs to be less than 4096. Lower values allow us to abort faster if the user stops listening.
@@ -117,7 +77,7 @@ class OpenAICompatibleTTS(TTS):
             for split in txts:
                 try:
                     data = {
-                        "model": 'tts-1' if not hd else "tts-1-hd",
+                        "model": self.model,
                         "input": split,
                         "voice": self.voice,
                         "response_format": "mp3",
@@ -134,20 +94,51 @@ class OpenAICompatibleTTS(TTS):
         return "mp3", to_stream()
 
 
-class ElevenLabs(TTS):
-    def __init__(self, code, name, desc, traits, sample_url) -> None:
+class OpenAITTS(OpenAICompatibleBaseTTS):
+    def __init__(self, voice, model, code, name, desc, traits, sample_url) -> None:
         super().__init__(
+            url="https://api.openai.com",
+            key=OPENAI_API_KEY,
+            voice=voice,
+            model=model,
             code=code,
             name=name,
             desc=desc,
             traits=traits,
             sample_url=sample_url
         )
-            
 
-    def stream(self, txt, speed=1.0, voice_id="pNInz6obpgDQGcFmaJgB", model_id="eleven_multilingual_v2"):
+
+class OpenAICompatibleTTS(OpenAICompatibleBaseTTS):
+    def __init__(self, voice, model, code, name, desc, traits, sample_url) -> None:
+        super().__init__(
+            url=SETTINGS['openai_compatible']['url'],
+            key=OPENAI_COMPATIBLE_KEY,
+            voice=voice,
+            model=model,
+            code=code,
+            name=name,
+            desc=desc,
+            traits=traits,
+            sample_url=sample_url
+        )
+
+
+class ElevenLabs(TTS):
+    def __init__(self, voice, model, code, name, desc, traits, sample_url) -> None:
+        super().__init__(
+            voice=voice,
+            model=model,
+            code=code,
+            name=name,
+            desc=desc,
+            traits=traits,
+            sample_url=sample_url
+        )
+
+    def stream(self, txt, speed=1.0):
         
-        url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream"
+        url = f"https://api.elevenlabs.io/v1/text-to-speech/{self.voice}/stream"
         headers = {
             'Content-Type': 'application/json',
             'xi-api-key': ELEVEN_LABS_API_KEY
@@ -163,7 +154,7 @@ class ElevenLabs(TTS):
         def to_stream():
             for split in txts:
                 data = {
-                    "model_id": model_id,
+                    "model_id": self.model,
                     "text": split
                 }
                 with requests.post(url, headers=headers, json=data, stream=True) as response:
@@ -175,71 +166,81 @@ class ElevenLabs(TTS):
         return "mp3", to_stream()
 
 
-class ElevenAdam(ElevenLabs):
-    def __init__(self) -> None:
-        super().__init__(
-            code="eleven_adam",
-            name="Adam",
-            desc="A popular male American narrative voice",
-            traits="Narrator",
-            sample_url="https://public-audio-samples.s3.amazonaws.com/ElevenAdam.mp3"
-        )
-
-    def stream(self, *args, **kwargs):
-        return super().stream(*args, **kwargs, model_id="eleven_multilingual_v2", voice_id="pNInz6obpgDQGcFmaJgB")
-
-
-class Fable(OpenAITTS):
-    def __init__(self) -> None:
-        super().__init__(
-            code='openai_fable',
-            name='Fable',
-            desc='A British storytelling voice from OpenAI',
-            traits='British Storytime',
-            sample_url='https://public-audio-samples.s3.amazonaws.com/fable.wav'
-        )
-
-    def stream(self, *args, **kwargs):
-        return super().stream(*args, **kwargs, voice='fable')
-
-
-class Onyx(OpenAITTS):
-    def __init__(self) -> None:
-        super().__init__('openai_onyx', 'Onyx', 'A deep and boring storytelling voice from OpenAI', 'American Calm', 'https://public-audio-samples.s3.amazonaws.com/onyx.wav')
-
-    def stream(self, *args, **kwargs):
-        return super().stream(*args, **kwargs, voice='onyx')
-
-
-def gen_openai_compatible_tts():
-
-    if not OPENAI_COMPATIBLE_URL or not OPENAI_COMPATIBLE_TTS:
-        return []
-    
-    openai_compatible_tts = json.loads(OPENAI_COMPATIBLE_TTS)
-    if not len(openai_compatible_tts):
-        return []
-
-    # TODO: confirm that all the models are downloaded / available.
-    models = []
-    for model in openai_compatible_tts:
-        voice = model['voice']
-        models.append(OpenAICompatibleTTS(
-            voice=voice,
-            code=f'{voice}-oai-compatible',
-            name=voice,
-            desc=f'{voice} is running via an OpenAI Compatible API',
-            traits="API",
-        ))
-    return models
-
-openai_compatible_models = {x.code: x for x in gen_openai_compatible_tts()}
-
-
-TTS_PROVIDERS = {
-    'openai_fable': Fable(),
-    'openai_onyx': Onyx(),
-    'eleven_adam': ElevenAdam(),
-    **openai_compatible_models
+PROVIDER_TO_TTS = {
+    'openai': OpenAITTS,
+    'eleven_labs': ElevenLabs,
+    'openai_compatible': OpenAICompatibleTTS
 }
 
+def make_code_from_setting(tts):
+    voice = tts['voice']
+    model = tts['model']
+    provider = tts['provider']
+    return tts['code'] if 'code' in tts else f"{voice}-{model}-{provider}"
+
+"""
+Settings look like:
+
+tts:
+  voices:
+    - provider: openai  # required
+      voice: "onyx"  # required
+      model: "tts-1"
+      name: "Onyx"  # optional
+      desc: "One of the best models ever!"  # optional
+      code: "openai_onyx"  # optional
+      sample_url: "https://public-audio-samples.s3.amazonaws.com/onyx.wav"
+      disabled: false  # optional
+
+"""
+def generate_tts():
+    if 'tts' not in SETTINGS:
+        return {}
+    if 'voices' not in SETTINGS['tts'] or not len(SETTINGS['tts']['voices']):
+        return {}
+    
+    to_return = {}
+    options = SETTINGS['tts']['voices']
+    for option in options:
+        if 'disabled' in option and option['disabled']:
+            continue
+        provider = option['provider']
+        provider_class = PROVIDER_TO_TTS[provider]
+        voice = option['voice']
+        model = option['model']
+        code = make_code_from_setting(option)
+        name = option['name'] if 'name' in option else voice
+        traits = option['traits'] if 'traits' in option else ""
+        desc = option['desc'] if 'desc' in option else f"This voice uses the model {model} and is provided by {provider}."
+        sample_url = option['sample_url'] if 'sample_url' in option else ""
+        obj = provider_class(
+            voice=voice,
+            model=model,
+            code=code,
+            name=name,
+            desc=desc,
+            traits=traits,
+            sample_url=sample_url
+        )
+        to_return[code] = obj
+    return to_return
+
+
+TTS_PROVIDERS = generate_tts()
+
+
+def generate_default():
+    if 'tts' not in SETTINGS:
+        return ""
+    if 'voices' not in SETTINGS['tts'] or not len(SETTINGS['tts']['voices']):
+        return ""
+    
+    voices = SETTINGS['tts']['voices']
+
+    if 'default' in SETTINGS['tts']:
+        return SETTINGS['tts']['default']
+    
+    return make_code_from_setting(voices[0])  # first available 
+
+
+DEFAULT_TTS_MODEL = generate_default()

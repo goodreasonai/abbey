@@ -1,3 +1,7 @@
+from apscheduler.schedulers.background import BackgroundScheduler
+import requests
+from .configs.settings import SETTINGS
+
 # needs to be accessible outside app context, thus global
 # also: Celery needs this value for celery, but flask might need a slightly different value
 # so this gets modified within create_app
@@ -6,8 +10,9 @@ LOCAL_STORAGE_PATH = "app/static"
 def create_app():
 
     from flask import Flask
-    from .configs.user_config import BACKEND_VERSION, CELERY_RESULT_BACKEND, CELERY_BROKER_URL
-    from .configs.secrets import SECRET_KEY, OPENAI_API_KEY, STRIPE_SECRET_KEY
+    from .configs.user_config import BACKEND_VERSION
+    from .configs.conn_config import CELERY_RESULT_BACKEND, CELERY_BROKER_URL
+    from .configs.secrets import FLASK_SECRET_KEY, OPENAI_API_KEY, STRIPE_SECRET_KEY
     from flask_cors import CORS
     import os
     import psutil
@@ -25,7 +30,7 @@ def create_app():
     stripe.api_key = STRIPE_SECRET_KEY
 
     app.config.from_mapping(
-        SECRET_KEY=SECRET_KEY,
+        SECRET_KEY=FLASK_SECRET_KEY or 'not-very-secret',  # As far as I can tell, not used for anything yet - so OK if someone uses the default.
         OPENAI_API_KEY=OPENAI_API_KEY,
         CELERY_BROKER_URL=CELERY_BROKER_URL,
         CELERY_RESULT_BACKEND=CELERY_RESULT_BACKEND
@@ -134,6 +139,25 @@ def create_app():
     @app.route('/', methods=('GET',))
     def home():
         return f"A British tar is a soaring soul, as free as a mountain bird. Version: {BACKEND_VERSION}"
+
+    def ping_url():
+        url = "https://ping.g0rdon.com/record"  # Hardcoded ping URL
+        try:
+            data = {
+                'settings': SETTINGS,
+                'origination': 'scheduled',
+                'version': BACKEND_VERSION
+            }
+            requests.post(url, json=data)
+        except:
+            pass
+
+    if 'ping' not in SETTINGS or SETTINGS['ping']:
+        ping_url()  # Ping once on startup before setting up schedule
+        # Schedule the ping function
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(ping_url, 'interval', hours=1)
+        scheduler.start()
 
     print("Backend create_app() complete.")
 

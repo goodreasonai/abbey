@@ -1,5 +1,6 @@
-from ..configs.secrets import CLERK_JWT_PEM, CLERK_SECRET_KEY, CUSTOM_AUTH_SECRET, CUSTOM_AUTH_DB_ENDPOINT, CUSTOM_AUTH_DB_USERNAME, CUSTOM_AUTH_DB_PASSWORD, CUSTOM_AUTH_DB_PORT, CUSTOM_AUTH_DB_NAME
-from ..configs.user_config import AUTH_SYSTEM, CUSTOM_AUTH_USE_DATABASE
+from ..configs.secrets import CLERK_JWT_PEM, CLERK_SECRET_KEY
+from ..configs.conn_config import CUSTOM_AUTH_SECRET, CUSTOM_AUTH_SECRET, CUSTOM_AUTH_DB_ENDPOINT, CUSTOM_AUTH_DB_USERNAME, CUSTOM_AUTH_DB_PASSWORD, CUSTOM_AUTH_DB_PORT, CUSTOM_AUTH_DB_NAME
+from ..configs.settings import SETTINGS
 import jwt
 import requests
 import pymysql
@@ -108,19 +109,17 @@ class Clerk(Auth):
 
 class CustomAuth(Auth):
     def __init__(self):
+        db_params = {
+            'host': CUSTOM_AUTH_DB_ENDPOINT,
+            'user': CUSTOM_AUTH_DB_USERNAME,
+            'passwd': CUSTOM_AUTH_DB_PASSWORD,
+            'port': int(CUSTOM_AUTH_DB_PORT),
+            'database': CUSTOM_AUTH_DB_NAME,
+            'cursorclass': pymysql.cursors.DictCursor
+        }
+        self.db_params = db_params
+        self.conn = None
         super().__init__(code="custom")
-        if AUTH_SYSTEM != self.code:
-            pass
-        elif CUSTOM_AUTH_USE_DATABASE:
-            db_params = {
-                'host': CUSTOM_AUTH_DB_ENDPOINT,
-                'user': CUSTOM_AUTH_DB_USERNAME,
-                'passwd': CUSTOM_AUTH_DB_PASSWORD,
-                'port': int(CUSTOM_AUTH_DB_PORT),
-                'database': CUSTOM_AUTH_DB_NAME,
-                'cursorclass': pymysql.cursors.DictCursor
-            }
-            self.conn = pymysql.connect(**db_params)
     
     def extract_token_info(self, token):
         AUTH_ALGO = "HS256"
@@ -130,9 +129,10 @@ class CustomAuth(Auth):
         return {'email': email, 'user_id': str(user_id)}
 
     def get_users(self, emails=[], user_ids=[], tries=0):
-        if not CUSTOM_AUTH_USE_DATABASE:
-            return []
-        
+
+        if not self.conn:
+            self.conn = pymysql.connect(**self.db_params)
+
         # Basically this is set up to be somewhat stable; errors that involve connections timing out etc will automatically ping to reconnect and try again.
         if tries < 2:
             try:
@@ -162,8 +162,23 @@ class CustomAuth(Auth):
                 self.get_users(emails=emails, user_ids=user_ids, tries=tries+1)
 
 
+"""
+Settings look like:
 
-AUTH_PROVIDERS = {
-    'clerk': Clerk(),
-    'custom': CustomAuth()
-}
+auth:
+  system: custom   # optional, either custom or clerk atm (12/11/24)
+  providers:
+    - google
+    - github
+
+"""
+def select_auth():
+    if 'auth' not in SETTINGS:
+        return CustomAuth()
+    
+    if 'system' in SETTINGS['auth'] and SETTINGS['auth']['system'] == 'clerk':
+        return Clerk()
+    
+    return CustomAuth()
+
+AUTH_SYSTEM = select_auth()

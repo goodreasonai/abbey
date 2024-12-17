@@ -3,11 +3,10 @@ from flask import Response
 import json
 import random
 from .configs.str_constants import DIVIDER_TEXT, CHAT_ERROR_TEXT
-from .configs.user_config import DEFAULT_CHAT_MODEL
 import concurrent.futures
 import time
 import queue
-from .integrations.lm import LM, LM_PROVIDERS
+from .integrations.lm import LM, LM_PROVIDERS, DEFAULT_CHAT_MODEL
 
 """
 

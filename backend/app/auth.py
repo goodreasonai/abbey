@@ -1,12 +1,12 @@
 from flask import request
 from app.db import needs_db
 from functools import wraps
-from .configs.user_config import PERMISSIONING, AUTH_SYSTEM
+from .configs.user_config import PERMISSIONING
 from .template_response import MyResponse
 import requests
 from .exceptions import UserIsNoneError
 from .configs.str_constants import PERMISSIONS_REQUEST
-from .integrations.auth import Auth, AUTH_PROVIDERS
+from .integrations.auth import Auth, AUTH_SYSTEM
 from .utils import is_valid_email
 
 
@@ -19,7 +19,7 @@ class User():
     def __init__(self, token, fake=False) -> None:
         if fake:
             return
-        auth: Auth = AUTH_PROVIDERS[AUTH_SYSTEM]
+        auth: Auth = AUTH_SYSTEM
         token_info = auth.extract_token_info(token)
         self.email = token_info['email']
         self.user_id = token_info['user_id']
@@ -131,7 +131,7 @@ def get_permissioning_string(user: User, get_public=True, user_uploads_only=Fals
 # Gets users by emails (should expand to more)
 # Returns list of FullUser objects (not User objects)
 def get_users(emails=[], user_ids=[]):
-    auth: Auth = AUTH_PROVIDERS[AUTH_SYSTEM]
+    auth: Auth = AUTH_SYSTEM
     users = auth.get_users(emails=emails, user_ids=user_ids)
     return users
 

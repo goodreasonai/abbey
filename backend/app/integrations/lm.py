@@ -1,5 +1,5 @@
-import warnings
-from ..configs.secrets import OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_URL, OLLAMA_LMS, OPENAI_COMPATIBLE_URL, OPENAI_COMPATIBLE_KEY, OPENAI_COMPATIBLE_LMS
+from ..configs.secrets import OPENAI_API_KEY, ANTHROPIC_API_KEY, OPENAI_COMPATIBLE_KEY
+from ..configs.settings import SETTINGS
 from ..utils import extract_from_base64_url
 import os
 import requests
@@ -13,14 +13,16 @@ client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY els
 
 
 class LM():
-    code: str = ""
+    model: str = ""  # A code unique to the provider (OpenAI, Anthropic, Ollama, etc)
+    code: str = ""  # A universally unique code across all providers (OpenAI, Anthropic, Ollama, etc)
     name: str = ""  # How users see the name presented
-    desc: str = ""
-    traits: str = ""  # A couple word description of strengths
+    desc: str = ""  # A description shown in Settings
+    traits: str = ""  # A couple word description of strengths shown in Settings
     context_length: int  # in tokens
-    accepts_images: bool
-    supports_json: bool
-    def __init__(self, code, name, desc, traits, context_length, accepts_images=False, supports_json=False) -> None:
+    accepts_images: bool  # can run and stream use images?
+    supports_json: bool  # Does inference give a guarantee of correct JSON if requested?
+    def __init__(self, model, code, name, desc, traits, context_length, accepts_images=False, supports_json=False) -> None:
+        self.model = model
         self.code = code
         self.name = name
         self.desc = desc
@@ -48,17 +50,6 @@ class LM():
 
 
 class OpenAILM(LM):
-    def __init__(self, openai_code, code, name, desc, traits, context_length, supports_json=False, accepts_images=False) -> None:
-        self.openai_code = openai_code
-        super().__init__(
-            code=code,
-            name=name,
-            desc=desc,
-            traits=traits,
-            context_length=context_length,
-            supports_json=supports_json,
-            accepts_images=accepts_images
-        )
 
     def _make_messages(self, txt, system_prompt=None, context=[], images=[]):
         messages = []
@@ -96,7 +87,7 @@ class OpenAILM(LM):
         if make_json and self.supports_json:
             extra_kwargs['response_format'] = {'type': 'json_object'}
         
-        completion = openai_client.chat.completions.create(model=self.openai_code, messages=messages, stream=False, **extra_kwargs)
+        completion = openai_client.chat.completions.create(model=self.model, messages=messages, stream=False, **extra_kwargs)
         return completion.choices[0].message.content
 
 
@@ -113,24 +104,13 @@ class OpenAILM(LM):
         if temperature is not None:
             extra_kwargs['temperature'] = temperature
 
-        completion = openai_client.chat.completions.create(model=self.openai_code, messages=messages, stream=True, **extra_kwargs)
+        completion = openai_client.chat.completions.create(model=self.model, messages=messages, stream=True, **extra_kwargs)
         for chunk in completion:
             if chunk.choices[0].delta.content is not None:
                 yield chunk.choices[0].delta.content
 
 
 class Anthropic(LM):
-    def __init__(self, model, code, name, desc, traits, context_length, supports_json=False, accepts_images=False) -> None:
-        self.model = model
-        super().__init__(
-            code=code,
-            name=name,
-            desc=desc,
-            traits=traits,
-            context_length=context_length,
-            supports_json=supports_json,
-            accepts_images=accepts_images
-        )
 
     def _make_messages(self, txt, system_prompt=None, context=[], images=[]):
         messages = []
@@ -234,17 +214,6 @@ class Anthropic(LM):
 
 
 class Ollama(LM):
-    def __init__(self, ollama_code, code, name, desc, traits, context_length, supports_json=True, accepts_images=False) -> None:
-        self.model = ollama_code
-        super().__init__(
-            code=code,
-            name=name,
-            desc=desc,
-            traits=traits,
-            context_length=context_length,
-            supports_json=supports_json,
-            accepts_images=accepts_images
-        )
 
     def _make_messages(self, txt, system_prompt=None, context=[], images=[]):
         messages = []
@@ -283,15 +252,23 @@ class Ollama(LM):
             'model': self.model,
             'messages': messages,
             'options': {
-                'temperature': temperature if temperature else .7
+                'temperature': temperature if temperature else .7,
+                'num_ctx': self.context_length
             },
             'stream': False
         }
-        url = f'{OLLAMA_URL}/api/chat'
+        ollama_url = SETTINGS['ollama']['url']
+        url = f'{ollama_url}/api/chat'
         response = requests.post(url, json=params, stream=False)
         response.raise_for_status()  # Raise an error for bad responses
         my_json = response.json()
         x = my_json['message']['content']
+
+        # Right now, there is no great way to force JSON in the API (there is in new versions of Ollama - waiting for more usage)
+        # This gets rid of one of the primary issues with that (the wrapping of the code in ```)
+        if make_json:
+            x = x.replace('```', '')
+
         return x
 
     def stream(self, txt, system_prompt=None, context=[], temperature=None, images=[]):
@@ -304,7 +281,8 @@ class Ollama(LM):
             },
             'stream': True
         }
-        url = f'{OLLAMA_URL}/api/chat'
+        ollama_url = SETTINGS['ollama']['url']
+        url = f'{ollama_url}/api/chat'
         try:
             response = requests.post(url, json=params, stream=True)
             response.raise_for_status()  # Raise an error for bad responses
@@ -323,17 +301,6 @@ class Ollama(LM):
 
 
 class OpenAICompatibleLM(LM):
-    def __init__(self, model_code, code, name, desc, traits, context_length, supports_json=False, accepts_images=False) -> None:
-        self.model_code = model_code
-        super().__init__(
-            code=code,
-            name=name,
-            desc=desc,
-            traits=traits,
-            context_length=context_length,
-            supports_json=supports_json,
-            accepts_images=accepts_images
-        )
 
     def _make_messages(self, txt, system_prompt=None, context=[], images=[]):
         messages = []
@@ -372,12 +339,13 @@ class OpenAICompatibleLM(LM):
             extra_kwargs['response_format'] = {'type': 'json_object'}
         
         params = {
-            'model': self.model_code,
+            'model': self.model,
             'messages': messages,
             'temperature': temperature if temperature else .7,
             'stream': False
         }
-        url = f'{OPENAI_COMPATIBLE_URL}/v1/chat/completions'
+        oai_compatible_url = SETTINGS['openai_compatible']['url']
+        url = f'{oai_compatible_url}/v1/chat/completions'
         response = requests.post(url, headers={'Authorization': f'Bearer {OPENAI_COMPATIBLE_KEY}'}, json=params, stream=False)
         response.raise_for_status()  # Raise an error for bad responses
         my_json = response.json()
@@ -398,13 +366,14 @@ class OpenAICompatibleLM(LM):
             extra_kwargs['temperature'] = temperature
 
         params = {
-            'model': self.model_code,
+            'model': self.model,
             'messages': messages,
             'temperature': temperature if temperature else .7,
             'stream': True
         }
 
-        url = f'{OPENAI_COMPATIBLE_URL}/v1/chat/completions'
+        oai_compatible_url = SETTINGS['openai_compatible']['url']
+        url = f'{oai_compatible_url}/v1/chat/completions'
         response = requests.post(url, headers={'Authorization': f'Bearer {OPENAI_COMPATIBLE_KEY}'}, json=params, stream=True)
         response.raise_for_status()  # Raise an error for bad responses
 
@@ -421,213 +390,98 @@ class OpenAICompatibleLM(LM):
                     yield delta['content']
 
 
-class GPT4(OpenAILM):
-    def __init__(self) -> None:
-        super().__init__(
-            openai_code='gpt-4',
-            code='gpt-4',
-            name='GPT-4',
-            desc='GPT-4 is among the most powerful models of intelligence on the planet.',
-            traits="Smart",
-            context_length=8_192,
-            supports_json=True,
-            accepts_images=False
-        )
-
-
-class GPT4o(OpenAILM):
-    def __init__(self) -> None:
-        super().__init__(
-            openai_code='gpt-4o',
-            code='gpt-4o',
-            name='GPT-4o',
-            desc='GPT-4o is a flagship model from OpenAI, which is very fast, very smart, and natively multimodal.',
-            traits="Very Smart and Fast",
-            context_length=128_000,
-            supports_json=True,
-            accepts_images=True
-        )
-
-
-class GPT35Turbo(OpenAILM):
-    def __init__(self) -> None:
-        super().__init__(
-            openai_code='gpt-3.5-turbo',
-            code='gpt-3.5-turbo',
-            name='GPT-3.5 Turbo',
-            desc="GPT 3.5 is fast and often adequate for straightforward document Q&A.",
-            traits="Fast",
-            context_length=16_385,
-            supports_json=True,
-            accepts_images=False
-        )
-
-
-class GPT4Turbo(OpenAILM):
-    def __init__(self) -> None:
-        super().__init__(
-            openai_code='gpt-4-turbo',
-            code='gpt-4-turbo',
-            name='GPT-4 Turbo',
-            desc="GPT 4 Turbo sits between 3.5 and 4 for speed and intelligence, so some argue that it is faster than 4.",
-            traits="Smart and Fast",
-            context_length=128_000,
-            supports_json=True,
-            accepts_images=True
-        )
-
-
-class GPT4oMini(OpenAILM):
-    def __init__(self) -> None:
-        super().__init__(
-            openai_code='gpt-4o-mini',
-            code='gpt-4o-mini',
-            name='GPT-4o Mini',
-            desc="GPT 4o mini is slim and fast.",
-            traits="Fast",
-            context_length=128_000,
-            supports_json=True,
-            accepts_images=True
-        )
-
-
-class O1Preview(OpenAILM):
-    def __init__(self) -> None:
-        super().__init__(
-            openai_code='o1-preview',
-            code='o1-preview',
-            name='O1 Preview',
-            desc="O1 is an experimental, slow, but highlly intelligent model by OpenAI.",
-            traits="Slow and Smart",
-            context_length=128_000,
-            supports_json=True,
-            accepts_images=True
-        )
-
-
-class O1Mini(OpenAILM):
-    def __init__(self) -> None:
-        super().__init__(
-            openai_code='o1-mini',
-            code='o1-mini',
-            name='O1 Mini',
-            desc="O1 Mini is an experimental, slow, but highlly intelligent model by OpenAI. It is smaller and faster than O1 Preview.",
-            traits="Slow and Smart",
-            context_length=128_000,
-            supports_json=True,
-            accepts_images=True
-        )
-
-
-class Claude3Opus(Anthropic):
-    def __init__(self) -> None:
-        super().__init__(
-            model='claude-3-opus-latest',
-            code='claude-3-opus',
-            name='Claude 3 Opus',
-            desc="Released in early 2024, Opus was the first broadly available non-OpenAI model to rival GPT-4 in intelligence.",
-            traits="Smart",
-            context_length=200_000,
-            supports_json=True,
-            accepts_images=True
-        )
-
-
-class Claude35Sonnet(Anthropic):
-    def __init__(self) -> None:
-        super().__init__(
-            model='claude-3-5-sonnet-20240620',
-            code='claude-3-5-sonnet',
-            name='Claude 3.5 Sonnet',
-            desc="It is powerful iteration of the intermediate level model in the latest Claude 3.5 lineup, rivaling GPT-4o. It is especially good for writing code.",
-            traits="Coding",
-            context_length=200_000,
-            supports_json=True,
-            accepts_images=True
-        )
-
-
-# Unlike others, ollama model objects are made from environment variables.
-def gen_ollama_lms():
-
-    if not OLLAMA_URL or not OLLAMA_LMS:
-        return []
-    
-    ollama_lms = json.loads(OLLAMA_LMS)
-    if not len(ollama_lms):
-        return []
-
-    # Just check to make sure ollama URL is setup correctly.
-    url = f'{OLLAMA_URL}/api/tags'
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        print(f"Could not retrieve ollama models at {OLLAMA_URL}. Maybe you should change the URL? See manual setup in the README.")
-
-    # TODO: confirm that all the models are downloaded / available.
-
-    models = []
-    for model in ollama_lms:
-        code = model['code']
-        models.append(Ollama(
-            ollama_code=code,
-            code=f'{code}-ollama',
-            name=code,
-            desc=f'{code} is an open source edge model run via Ollama.',
-            traits="Open Source",
-            context_length=model['context_length'],
-            supports_json=True,
-            accepts_images=model['vision']
-        ))
-    return models
-
-ollama_models = {x.code: x for x in gen_ollama_lms()}
-
-
-# Unlike others, ollama model objects are made from environment variables.
-def gen_openai_compatible_lms():
-
-    if not OPENAI_COMPATIBLE_URL or not OPENAI_COMPATIBLE_LMS:
-        return []
-    
-    openai_compatible_lms = json.loads(OPENAI_COMPATIBLE_LMS)
-    if not len(openai_compatible_lms):
-        return []
-
-    # TODO: confirm that all the models are downloaded / available.
-    models = []
-    for model in openai_compatible_lms:
-        code = model['code']
-        models.append(OpenAICompatibleLM(
-            model_code=code,
-            code=f'{code}-oai-compatible',
-            name=code,
-            desc=f'{code} is running via an OpenAI Compatible API',
-            traits="API",
-            context_length=model['context_length'],
-            supports_json=True,
-            accepts_images=model['vision']
-        ))
-    return models
-
-openai_compatible_models = {x.code: x for x in gen_openai_compatible_lms()}
-
-
-LM_PROVIDERS = {
-    'gpt-4': GPT4(),
-    'gpt-4o-mini': GPT4oMini(),
-    'gpt-4-turbo': GPT4Turbo(),
-    'claude-3-opus': Claude3Opus(),
-    'claude-3-5-sonnet': Claude35Sonnet(),
-    'gpt-4o': GPT4o(),
-    # Add the generated models
-    **ollama_models,
-    **openai_compatible_models,
-    # o1-preview and o1-mini don't yet support system prompts, images, and streaming - so they are disabled in user_config.
-    'o1-preview': O1Preview(),
-    'o1-mini': O1Mini()
+PROVIDER_TO_LM = {
+    'ollama': Ollama,
+    'openai': OpenAILM,
+    'anthropic': Anthropic,
+    'openai_compatible': OpenAICompatibleLM
 }
+
+
+# Creates a universal code based on the settings entry
+# Used both in generate defaults and user_config to give a predictable ordering of models to the user.
+def make_code_from_setting(lm):
+    model = lm['model']
+    provider = lm['provider']
+    return lm['code'] if 'code' in lm else model + f"-{provider}"
+
+
+"""
+Settings look like:
+
+lms:
+  models:
+    - provider: openai  # required
+      model: "gpt-4o"  # required
+      context_length: 100000  # optional (defaults to 4096)
+      name: "GPT-4o"  # optional
+      supports_json: true  # optional
+      accepts_images: true  # optional
+      desc: "One of the best models ever!"  # optional
+      code: "gpt-4o"  # optional
+      disabled: false  # optional
+
+"""
+def generate_lms():
+    DEFAUlT_CONTEXT_LENGTH = 8192
+    to_return = {}
+    lms = SETTINGS['lms']['models']
+    for lm in lms:
+        if 'disabled' in lm and lm['disabled']:
+            continue
+        provider = lm['provider']
+        provider_class = PROVIDER_TO_LM[provider]
+        model = lm['model']
+        code = make_code_from_setting(lm)
+        name = lm['name'] if 'name' in lm else model
+        context_length = lm['context_length'] if 'context_length' in lm else DEFAUlT_CONTEXT_LENGTH
+        traits = lm['traits'] if 'traits' in lm else ""
+        supports_json = lm['supports_json'] if 'supports_json' in lm else False
+        accepts_images = lm['accepts_images'] if 'accepts_images' in lm else False
+        desc = lm['desc'] if 'desc' in lm else f"The model {model} provided by {provider} has a context length of {context_length}."
+        obj = provider_class(
+            model=model,
+            code=code,
+            name=name,
+            desc=desc,
+            traits=traits,
+            context_length=context_length,
+            supports_json=supports_json,
+            accepts_images=accepts_images
+        )
+        to_return[code] = obj
+    return to_return
+
+
+LM_PROVIDERS = generate_lms()
+
+def generate_defaults():
+    defaults = SETTINGS['lms']['defaults'] if 'defaults' in SETTINGS['lms'] else {}
+    to_return = {}
+
+    lms = SETTINGS['lms']['models']
+    first_available = make_code_from_setting(lms[0])
+    longest_context = max(LM_PROVIDERS.values(), key=lambda x: x.context_length).code
+    
+    to_return['DEFAULT_CHAT_MODEL'] = defaults['chat'] if 'chat' in defaults else first_available  # Use specified, else use first available
+    to_return['HIGH_PERFORMANCE_CHAT_MODEL'] = defaults['high_performance'] if 'high_performance' in defaults else to_return['DEFAULT_CHAT_MODEL']  # Use specified else use default chat model
+    
+    to_return['BALANCED_CHAT_MODEL'] = defaults['balanced'] if 'balanced' in defaults else to_return['DEFAULT_CHAT_MODEL']  # Use specified else use default chat model
+    to_return['FAST_CHAT_MODEL'] = defaults['fast'] if 'fast' in defaults else to_return['DEFAULT_CHAT_MODEL']  # Use specified else use default chat model
+    to_return['LONG_CONTEXT_CHAT_MODEL'] = defaults['long_context'] if 'long_context' in defaults else longest_context  # Use specified else use default chat model
+    to_return['FAST_LONG_CONTEXT_MODEL'] = defaults['fast_long_context'] if 'fast_long_context' in defaults else to_return['LONG_CONTEXT_CHAT_MODEL']  # Use specified else use long context model
+    to_return['ALT_LONG_CONTEXT_MODEL'] = defaults['alt_long_context'] if 'alt_long_context' in defaults else to_return['LONG_CONTEXT_CHAT_MODEL']  # Use specified else use long context model
+
+    return to_return
+
+_defaults = generate_defaults()
+DEFAULT_CHAT_MODEL = _defaults['DEFAULT_CHAT_MODEL']
+HIGH_PERFORMANCE_CHAT_MODEL = _defaults['HIGH_PERFORMANCE_CHAT_MODEL']
+BALANCED_CHAT_MODEL = _defaults['BALANCED_CHAT_MODEL']
+FAST_CHAT_MODEL = _defaults['FAST_CHAT_MODEL']
+LONG_CONTEXT_CHAT_MODEL = _defaults['LONG_CONTEXT_CHAT_MODEL']
+FAST_LONG_CONTEXT_MODEL = _defaults['FAST_LONG_CONTEXT_MODEL']
+ALT_LONG_CONTEXT_MODEL = _defaults['ALT_LONG_CONTEXT_MODEL']
 
 
 """

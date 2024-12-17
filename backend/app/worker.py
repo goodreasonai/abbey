@@ -1,5 +1,5 @@
 from celery import Celery
-from .configs.user_config import CELERY_RESULT_BACKEND, CELERY_BROKER_URL
+from .configs.conn_config import CELERY_RESULT_BACKEND, CELERY_BROKER_URL
 import pickle
 from .retriever import Retriever, ResourceRetriever
 from .db import get_db

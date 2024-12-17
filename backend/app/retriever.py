@@ -7,7 +7,7 @@ from .batch_and_stream_lm import stream_batched_lm, stream_progress_batched_lm
 from .prompts.retrieval_prompts import guess_answer_prompt, guess_answer_prompt_backup
 import json
 import sys
-from .integrations.lm import LM, LM_PROVIDERS, get_safe_retrieval_context_length
+from .integrations.lm import LM, LM_PROVIDERS, get_safe_retrieval_context_length, FAST_CHAT_MODEL, DEFAULT_CHAT_MODEL
 from .integrations.file_loaders import get_loader, TextSplitter
 from .utils import make_json_serializable, ntokens_to_nchars, get_extension_from_path
 import tempfile
@@ -17,7 +17,6 @@ import os
 import pickle
 from .db import needs_special_db, get_db
 from .configs.str_constants import APPLIER_RESPONSE
-from .configs.user_config import FAST_CHAT_MODEL, DEFAULT_CHAT_MODEL, DEFAULT_EMBEDDING_OPTION
 from .utils import remove_ext
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import math
@@ -26,7 +25,7 @@ import random
 from .prompts.auto_label_prompts import get_auto_desc_system_prompt
 from .utils import get_token_estimate, convert_heic_to_jpg
 from .integrations.ocr import OCR_PROVIDERS, OCR
-from .integrations.embed import EMBED_PROVIDERS, Embed
+from .integrations.embed import EMBED_PROVIDERS, Embed, DEFAULT_EMBEDDING_OPTION
 import time
 
 
@@ -226,7 +225,6 @@ class Retriever():
 
 
     # Get as many chunks as possible given the size of the model
-    # Safety ratio = % of context length that is the max tokens used
     def max_chunks(self, lm: LM, context="", safe_context_length=None, use_ends=False):
         all_chunks = []
         chunk_lengths = []
@@ -236,7 +234,7 @@ class Retriever():
             chunk_length = get_token_estimate(chunk.txt)
             chunk_lengths.append(chunk_length)
         n_tokens = sum(chunk_lengths)
-        len_limit = safe_context_length if safe_context_length else get_safe_retrieval_context_length(lm)
+        len_limit = safe_context_length or get_safe_retrieval_context_length(lm)
         if n_tokens > len_limit:
             if use_ends:
                 # Use the beginning and end
@@ -257,11 +255,11 @@ class Retriever():
                         len_so_far += chunk_lengths[i]
                 all_chunks = first_half_chunks + second_half_chunks[::-1]
             elif context:
-                max_results = int((lm.context_length * safety_ratio) // self.chunk_size_tokens)
+                max_results = int(safe_context_length // self.chunk_size_tokens)
                 all_chunks = self.query(context, max_results=max_results)
             else:
                 # Remove random ~difference
-                ntok_to_remove = n_tokens - lm.context_length * safety_ratio
+                ntok_to_remove = n_tokens - safe_context_length
                 nchunks_to_remove = ntok_to_remove // self.chunk_size_tokens + 1
                 while nchunks_to_remove:
                     rand = random.randrange(0, len(all_chunks))
@@ -492,7 +490,7 @@ class Retriever():
                 yield result
 
     # Get n random chunks
-    def random(self, max_n):
+    def random(self, lm: LM, max_n, safe_context_length=None):
         reservoir = []
         for i, element in enumerate(self.get_chunks()):
             if i < max_n:
@@ -501,6 +499,17 @@ class Retriever():
                 j = random.randint(0, i)
                 if j < max_n:
                     reservoir[j] = element
+        # Make sure we're under the LM's safe context length
+        len_limit = safe_context_length or get_safe_retrieval_context_length(lm)
+        tokens = 0
+        for i, chunk in enumerate(reservoir):
+            chunk: Chunk
+            new_token_len = get_token_estimate(chunk.txt)
+            if tokens + new_token_len > len_limit:
+                reservoir = reservoir[:i]
+                break
+            tokens += new_token_len
+
         return reservoir
 
     # Used for sending requests the results of which should be an applier/retriever
