@@ -525,6 +525,16 @@ name: "Abbey"  # Replace with your chosen name
 
 Other branding such as logos, favicons, and so on are located in `frontend/public`. You can change them by replacing the files (but keeping their names).
 
+## Ping
+
+By default, Abbey will ping a hardcoded URL when the backend starts up and each hour thereafter. This is done to track usage statistics. The backend version you're on plus your `settings.yml` are included in the ping. To disable the ping, put the following in your `settings.yml`:
+
+```
+ping: false
+```
+
+Since I can't tell the difference between a user who's set `ping: false` and a user who's stopped using Abbey, consider reaching out to gordon@us.ai so I can get a rough number of users who disable the ping.
+
 ## Contributing
 
 One of Abbey's main strengths is its extendibility. You can implement new integrations and interfaces straightforwardly.
