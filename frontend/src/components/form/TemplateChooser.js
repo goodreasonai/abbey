@@ -10,7 +10,7 @@ import StarIcon from '../../../public/icons/StarIcon.png';
 import Info from '../Info/Info';
 import InfinityIcon from '../../../public/icons/InfinityIcon.png'
 import Link from 'next/link';
-import { UPGRADE_SUBSCRIPTION_LINK } from '@/config/config';
+import { ALLOW_SUBSCRIPTION, UPGRADE_SUBSCRIPTION_LINK } from '@/config/config';
 
 export const tmpToBox = (tmp) => {
     return {
@@ -134,23 +134,25 @@ export default function TemplateChooser({value, setValue, allowedTemplates=[], h
                     </>
                 )}
             </div>
-            <div style={{'position': 'absolute', 'right': '10px', 'top': '10px', 'backgroundColor': 'var(--light-background)', 'padding': '5px 10px', 'color': 'var(--dark-text)', 'borderRadius': 'var(--small-border-radius)', 'border': '1px solid var(--light-border)'}}>
-                {assetCountsLoadState != 2 ? (
-                    <Loading text="" />
-                ) : (
-                    <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
-                        {totalLimit == 'inf' ? (
-                            <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '5px'}}>
-                                <div>
-                                    {`${totalUserCount} /`}
+            {ALLOW_SUBSCRIPTION ? (
+                <div style={{'position': 'absolute', 'right': '10px', 'top': '10px', 'backgroundColor': 'var(--light-background)', 'padding': '5px 10px', 'color': 'var(--dark-text)', 'borderRadius': 'var(--small-border-radius)', 'border': '1px solid var(--light-border)'}}>
+                    {assetCountsLoadState != 2 ? (
+                        <Loading text="" />
+                    ) : (
+                        <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
+                            {totalLimit == 'inf' ? (
+                                <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '5px'}}>
+                                    <div>
+                                        {`${totalUserCount} /`}
+                                    </div>
+                                    <MyImage src={InfinityIcon} width={20} height={20} alt={"Infinity"} />
                                 </div>
-                                <MyImage src={InfinityIcon} width={20} height={20} alt={"Infinity"} />
-                            </div>
-                        ) : `${totalUserCount} / ${totalLimit}`}
-                        <Info iconSize={15} text={totalLimit == 'inf' ? 'Thanks to your subscription, you have unlimited uploads.' : `You have used ${totalUserCount} of your allowed ${totalLimit} uploads. Upgrade in Settings for more.`} />
-                    </div>
-                )}
-            </div>
+                            ) : `${totalUserCount} / ${totalLimit}`}
+                            <Info iconSize={15} text={totalLimit == 'inf' ? 'Thanks to your subscription, you have unlimited uploads.' : `You have used ${totalUserCount} of your allowed ${totalLimit} uploads. Upgrade in Settings for more.`} />
+                        </div>
+                    )}
+                </div>
+            ) : ""}
             {assetCountsLoadState == 2 && totalLimit != 'inf' && totalUserCount >= totalLimit ? (
                 <div style={{'position': 'absolute', 'top': '0px', 'right': '0px', 'left': '0px', 'bottom': '0px', 'backgroundColor': 'rgba(var(--light-primary-rgb), .7)', 'zIndex': '11', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'}}>
                     <div style={{'backgroundColor': 'var(--light-primary)', 'padding': 'var(--std-margin)', 'borderRadius': 'var(--large-border-radius)', 'border': '1px solid var(--light-border)', 'fontSize': '1.25rem', 'textAlign': 'center', 'lineHeight': '2rem'}}>
