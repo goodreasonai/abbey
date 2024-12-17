@@ -27,6 +27,11 @@ class FileStorage():
 
 
 class S3(FileStorage):
+    def __init__(self, code):
+        if 's3' not in SETTINGS['s3'] or 'bucket' not in SETTINGS['s3']['bucket']:
+            print(f"Warning: s3 bucket not initialized; attempts to use s3 will fail. Refer to README for correct configuration.", file=sys.stderr)
+        super().__init__(code)
+
     def upload_file(self, suggested_path_list, temp_path, ext, use_data=None):
         S3_BUCKET_NAME = SETTINGS['s3']['bucket']
         session = boto3.session.Session()

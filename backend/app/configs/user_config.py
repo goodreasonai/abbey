@@ -37,7 +37,10 @@ if 'subscriptions' in SETTINGS:
            SUBSCRIPTION_CODE_TO_TEMPLATES[key] = AVAILABLE_TEMPLATES
         if 'web' in subs[key]:  # optional
             SUBSCRIPTION_CODE_TO_SEARCH_OPTIONS[key] = subs[key]['web']
-        SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS[key] = subs[key]['limit']
+        limit = subs[key]['limit']
+        if limit >= 10_000:
+            limit = math.inf
+        SUBSCRIPTION_CODE_TO_TOTAL_ASSET_LIMITS[key] = limit
         SUBSCRIPTION_CODE_TO_TTS_OPTIONS[key] = subs[key]['tts']
         if 'product_id' in subs[key]:
             _available_product_id = subs[key]['product_id']
@@ -85,4 +88,3 @@ ALLOW_PUBLIC_UPLOAD = True  # NOTE: Should match frontend
 #
 
 MOBILE_FRIENDLY_TEMPLATES = ['document', 'folder', 'detached_chat']  # controls whether these templates show up for mobile users in some backend calls
-

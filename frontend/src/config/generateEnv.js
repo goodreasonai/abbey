@@ -136,6 +136,10 @@ try {
         addEnv('IMAGE_DOMAINS', domainList)
     }
 
+    if (settings.chrome_ext){
+        addEnv('CHROME_EXT_PROMO_LINK', settings.chrome_ext)
+    }
+
     fs.writeFileSync(path.join(__dirname, '../../.env.local'), envContent);
     console.log('Environment variables generated successfully');
 } catch (e) {
