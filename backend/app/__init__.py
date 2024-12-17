@@ -148,7 +148,7 @@ def create_app():
                 'origination': 'scheduled',
                 'version': BACKEND_VERSION
             }
-            response = requests.post(url, json=data)
+            requests.post(url, json=data)
         except:
             pass
 
@@ -158,10 +158,6 @@ def create_app():
         scheduler = BackgroundScheduler()
         scheduler.add_job(ping_url, 'interval', hours=1)
         scheduler.start()
-
-        @app.teardown_appcontext
-        def shutdown_scheduler(exception=None):
-            scheduler.shutdown()
 
     print("Backend create_app() complete.")
 
