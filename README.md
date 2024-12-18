@@ -12,12 +12,14 @@ If Abbey is not by default configurable to your liking, and you're comfortable w
 
 ![Workspace screenshot](screenshots/workspace-ss.png)
 
-## Setup and Install
+## Setup and Install (New)
 
 ### Prerequisites
 
 - **Installs**: You must have Docker and  `docker compose` installed. See details [here](https://docs.docker.com/compose/install/).
 - **3rd Party Credentials**: If you're setting up an outside API to work with Abbey, have those credentials handy. You'll need to configure at least 1 language model and 1 embedding model.
+
+*If you have a previous version of Abbey and are doing the "new install" pattern with settings.yml for the first time, pull, create a new settings.yml and .env as described below, move your files from backend/app/static to file-storage, and rebuild with --build*
 
 ### Setup (3 easy steps)
 
