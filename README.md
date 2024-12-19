@@ -156,7 +156,7 @@ services:
 - Mathpix
 
 [Search Engines (Web)](#search-engines-web)
-- Bing
+- Bing (uses this endpoint: `https://api.bing.microsoft.com/v7.0/search`)
 - SearXNG (+ any engine on SearXNG)
 
 [File Storage (Storage)](#file-storage-storage)
