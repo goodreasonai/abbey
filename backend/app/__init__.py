@@ -138,7 +138,20 @@ def create_app():
 
     @app.route('/', methods=('GET',))
     def home():
-        return f"A British tar is a soaring soul, as free as a mountain bird. Version: {BACKEND_VERSION}"
+        db_time = "DB Connection Not Working"
+        try:
+            from .db import get_db, ProxyDB, PooledCursor
+            my_db: ProxyDB = get_db()
+            curr: PooledCursor = my_db.cursor()
+            sql = """
+                SELECT NOW() as time
+            """
+            curr.execute(sql)
+            db_time = curr.fetchone()['time']
+            my_db.close()
+        except:
+            pass
+        return f"A British tar is a soaring soul, as free as a mountain bird. Version: {BACKEND_VERSION}. DB Time: {db_time}"
 
     def ping_url():
         url = "https://ping.g0rdon.com/record"  # Hardcoded ping URL
