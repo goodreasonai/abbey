@@ -10,6 +10,10 @@ services:
       - ./settings.yml:/etc/abbey/settings.yml:ro
       - ./.env:/etc/abbey/.env
       - ./file-storage:/app/app/static
+    depends_on:
+      - redis
+      - mysql
+      - db_pooler
 
   # When making any code changes, you must rebuild the frontend.
   frontend:
@@ -44,7 +48,8 @@ services:
       - ./.env:/etc/abbey/.env
       - ./file-storage:/app/app/static
     depends_on:
-      - backend
+      - mysql
+      - db_pooler
       - redis
 
   redis:
@@ -79,6 +84,7 @@ services:
     depends_on:
       - redis
       - mysql
+      - db_pooler
     profiles:
       - email
 

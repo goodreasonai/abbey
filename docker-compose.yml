@@ -12,6 +12,10 @@ services:
       - ./file-storage:/app/app/static
     environment:
       - PYTHONUNBUFFERED=true
+    depends_on:
+      - mysql
+      - redis
+      - db_pooler
 
   frontend:
     build:
@@ -47,7 +51,8 @@ services:
       - ./.env:/etc/abbey/.env
       - ./file-storage:/app/app/static
     depends_on:
-      - backend
+      - mysql
+      - db_pooler
       - redis
 
   redis:
@@ -81,6 +86,7 @@ services:
     depends_on:
       - redis
       - mysql
+      - db_pooler
     profiles:
       - email
 
