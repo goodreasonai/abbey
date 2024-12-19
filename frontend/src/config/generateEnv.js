@@ -66,7 +66,9 @@ try {
                 else if (provider == 'keycloak'){
                     addEnv('NEXT_PUBLIC_ENABLE_KEYCLOAK_AUTH', 1)
                     addEnv('KEYCLOAK_PUBLIC_URL', env['KEYCLOAK_PUBLIC_URL'])
-                    addEnv('KEYCLOAK_INTERNAL_URL', env['KEYCLOAK_INTERNAL_URL'])
+                    if (env['KEYCLOAK_INTERNAL_URL']){
+                        addEnv('KEYCLOAK_INTERNAL_URL', env['KEYCLOAK_INTERNAL_URL'])
+                    }
                     addEnv('KEYCLOAK_REALM', env['KEYCLOAK_REALM'])
                     addEnv('KEYCLOAK_SECRET', env['KEYCLOAK_SECRET'])
                     addEnv('KEYCLOAK_CLIENT_ID', env['KEYCLOAK_CLIENT_ID'])

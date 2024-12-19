@@ -284,8 +284,8 @@ web:
     - engine: "pubmed"  # Only used for SearXNG - leave blank to search over all engines you've enabled
     
     - provider: "searxng"
-    - engine: "arxiv"
-    - use_pdf: true  # Some SearXNG engines give PDF URLs - this tells Abbey to go to the PDF rather than the regular result
+      engine: "arxiv"
+      use_pdf: true  # Some SearXNG engines give PDF URLs - this tells Abbey to go to the PDF rather than the regular result
 ```
 
 | Provider   | Provider Code | API Key Name           | Needs Provider Setting |
