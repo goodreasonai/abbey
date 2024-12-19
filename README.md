@@ -113,9 +113,19 @@ By default, Abbey runs on localhost at ports 3000 for the frontend and 5000 for 
 services:
   backend:
     public_url: http://localhost:5000  # Replace with your new user-accessible BACKEND URL
-    internal_url: http://backend:5000  # This is where the frontend server calls the backend within docker
+    internal_url: http://backend:5000  # This probably won't change - it's where the frontend calls the backend server side, within Docker
   frontend:
     public_url: http://localhost:3000  # Replace with your new user-accessible FRONTEND URL
+```
+
+**Be sure to update your docker compose file by, for example, changing the port mapping for the backend to 1234:5000, if changing the port.** Be sure to switch it out for the correct docker-compose file (`docker-compose.prod.yml` for prod builds, `docker-compose.yml` for dev). Here's what that would look like for the backend:
+
+```
+backend:
+    # ... some stuff
+    ports:
+      - "1234:5000"  # now the backend is at http://localhost:1234 in my browser
+    # ... some stuff
 ```
 
 ### Troubleshooting
