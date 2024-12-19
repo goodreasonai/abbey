@@ -28,7 +28,7 @@ class FileStorage():
 
 class S3(FileStorage):
     def __init__(self, code):
-        if 's3' not in SETTINGS['s3'] or 'bucket' not in SETTINGS['s3']['bucket']:
+        if 's3' not in SETTINGS or 'bucket' not in SETTINGS['s3']:
             print(f"Warning: s3 bucket not initialized; attempts to use s3 will fail. Refer to README for correct configuration.", file=sys.stderr)
         super().__init__(code)
 
