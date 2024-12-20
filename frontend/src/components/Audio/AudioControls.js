@@ -11,6 +11,7 @@ import RecentIcon from '../../../public/icons/RecentIcon.png'
 import io from 'socket.io-client';
 import { secondsToFormattedTime } from "@/utils/time"
 import { Auth } from "@/auth/auth"
+import { extractPath } from "@/utils/text"
 
 
 export default function AudioControls({ text, assetId, name, iconSize=20, loadingText='', loadingFlipped=false }){
@@ -352,7 +353,7 @@ export default function AudioControls({ text, assetId, name, iconSize=20, loadin
 
     useEffect(() => {
         // Connect to the WebSocket server
-        const newSocket = io(process.env.NEXT_PUBLIC_BACKEND_URL + '/speak');
+        const newSocket = io(process.env.NEXT_PUBLIC_BACKEND_URL + '/speak', {'path': extractPath(process.env.NEXT_PUBLIC_BACKEND_URL + '/socket.io')});
         newSocket.on('connect', function() {
             console.log('Socket connected to the server.');
         });
