@@ -19,6 +19,7 @@ import LoadingIcon from '../../../public/icons/LoadingIcon.png'
 import EditIcon from '../../../public/icons/EditIcon.png'
 import RichTextSavingEditor from "../RichText/SavingEditor";
 import { NOTES_FILE } from "@/config/strConstants";
+import { removeHTMLTags } from "@/utils/html";
 
 
 export default function SummaryToolbar({ manifestRow, allowSpeech, setRoundStates, invertColor, chatContainerRef, onSourceButtonClick, showTitle, scrollToBottom, tabDisplay, setTabDisplay, tabState, setTabState, ...props}){
@@ -192,6 +193,7 @@ export default function SummaryToolbar({ manifestRow, allowSpeech, setRoundState
                 'doneText': '',
                 'doneImg': (EditIcon),
                 'img': (EditIcon),
+                'showDot': !!removeHTMLTags(notes),
                 'code': 'notes',
                 'isLoading': false,
                 'isDone': notesLoadState === 2,
@@ -242,7 +244,12 @@ export default function SummaryToolbar({ manifestRow, allowSpeech, setRoundState
                             {item.isLoading ? (
                                 <Loading text="" />
                             ) : (
-                                <MyImage src={item.isDone ? item.doneImg : item.img} alt={"Icon"} width={20} height={20} />
+                                <div style={{'display': 'flex', 'alignItems': 'center', 'position': 'relative'}}>
+                                    <MyImage src={item.isDone ? item.doneImg : item.img} alt={"Icon"} width={20} height={20} />
+                                    {item.showDot ? (
+                                        <div style={{'position': 'absolute', 'width': 10, 'height': 10, 'backgroundColor': 'var(--dark-primary)', 'borderRadius': 5, 'bottom': -3, 'left': -3, 'borderColor': 'var(--light-primary)', 'borderWidth': '1px', 'borderStyle': 'solid'}}></div>
+                                    ) : ""}
+                                </div>
                             )}
                         </div>
                     )
@@ -423,7 +430,6 @@ function KeyPointsTab({manifestRow, bullets, onSourceButtonClick, redoCallback, 
 }
 
 function NotesTab({ notes, setNotes, manifestRow, setSaveState }) {
-
     return (
         <div style={{'paddingTop': '1rem', 'paddingBottom': '1rem', 'height': '100%'}}>
             <RichTextSavingEditor
