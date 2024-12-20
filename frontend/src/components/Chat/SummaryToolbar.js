@@ -20,6 +20,7 @@ import EditIcon from '../../../public/icons/EditIcon.png'
 import RichTextSavingEditor from "../RichText/SavingEditor";
 import { NOTES_FILE } from "@/config/strConstants";
 import { removeHTMLTags } from "@/utils/html";
+import { useIsMobile } from "@/utils/mobile";
 
 
 export default function SummaryToolbar({ manifestRow, allowSpeech, setRoundStates, invertColor, chatContainerRef, onSourceButtonClick, showTitle, scrollToBottom, tabDisplay, setTabDisplay, tabState, setTabState, ...props}){
@@ -273,6 +274,7 @@ function SummaryTab({ manifestRow, text = "", isDone, allowSpeech, setRoundState
 
     const [listenClicked, setListenClicked] = useState(false)
     const SUMMARY_AUDIO_NAME = 'summary_audio'
+    const { isMobile } = useIsMobile()
 
     const onCitationClick = useCallback((citation) => {
         function handleGoToSourcePage(pageData) {
@@ -354,7 +356,7 @@ function SummaryTab({ manifestRow, text = "", isDone, allowSpeech, setRoundState
                             <MyImage src={AIWriteIcon} alt={"Longer"} height={20} />
                         </div>
                     </Tooltip>
-                    {allowSpeech ? (
+                    {allowSpeech && !isMobile ? (  /* Audio doesn't work on mobile */
                         listenClicked ? (
                             <AudioControls text={removeCitations(text)} assetId={manifestRow.id} name={SUMMARY_AUDIO_NAME} />
                         ) : (
