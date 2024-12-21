@@ -189,3 +189,28 @@ def convert_heic_to_jpg(heic_path, jpg_path):
 
     # Save the image as a JPG file
     image.save(jpg_path, "JPEG")
+
+
+# Some users incorrectly input their openai_compatible URLs; this fixes the common mistakes
+def fix_openai_compatible_url(url):
+    fixed_url = str(url)
+    if not url:
+        raise Exception("OpenAI Compatible URL is blank! Please enter one into your settings (refer to the README).")
+    else:
+        erroneous_suffixes = [
+            '/v1/audio/speech/',
+            '/v1/audio/speech',
+            '/v1/embeddings/'
+            '/v1/embeddings'
+            '/v1/audio/',
+            '/v1/audio',
+            '/v1/',
+            '/v1',
+            '/'
+        ]
+        for suffix in erroneous_suffixes:
+            if len(fixed_url) >= len(suffix):
+                if fixed_url[-len(suffix):] == suffix:
+                    fixed_url = fixed_url[:-len(suffix)]
+
+    return fixed_url

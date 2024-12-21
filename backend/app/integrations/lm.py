@@ -1,6 +1,7 @@
 from ..configs.secrets import OPENAI_API_KEY, ANTHROPIC_API_KEY, OPENAI_COMPATIBLE_KEY
 from ..configs.settings import SETTINGS
 from ..utils import extract_from_base64_url
+from ..utils import fix_openai_compatible_url
 import os
 import requests
 import json
@@ -345,6 +346,7 @@ class OpenAICompatibleLM(LM):
             'stream': False
         }
         oai_compatible_url = SETTINGS['openai_compatible']['url']
+        oai_compatible_url = fix_openai_compatible_url(oai_compatible_url)
         url = f'{oai_compatible_url}/v1/chat/completions'
         response = requests.post(url, headers={'Authorization': f'Bearer {OPENAI_COMPATIBLE_KEY}'}, json=params, stream=False)
         response.raise_for_status()  # Raise an error for bad responses
@@ -373,6 +375,7 @@ class OpenAICompatibleLM(LM):
         }
 
         oai_compatible_url = SETTINGS['openai_compatible']['url']
+        oai_compatible_url = fix_openai_compatible_url(oai_compatible_url)
         url = f'{oai_compatible_url}/v1/chat/completions'
         response = requests.post(url, headers={'Authorization': f'Bearer {OPENAI_COMPATIBLE_KEY}'}, json=params, stream=True)
         response.raise_for_status()  # Raise an error for bad responses
