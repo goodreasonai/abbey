@@ -239,7 +239,11 @@ def generate_default():
     voices = SETTINGS['tts']['voices']
 
     if 'default' in SETTINGS['tts']:
-        return SETTINGS['tts']['default']
+        default = SETTINGS['tts']['default']
+        if default not in TTS_PROVIDERS:
+            print(f"\n\nWARNING: a default you specified, '{default}', does not exist. Make sure you're using the correct code schema as specified in the README. Instead, '{make_code_from_setting(voices[0])}' will be used as the default.\n\n", file=sys.stderr)
+        else:
+            return default
     
     return make_code_from_setting(voices[0])  # first available 
 

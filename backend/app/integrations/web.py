@@ -157,7 +157,11 @@ def generate_default():
     engines = SETTINGS['web']['engines']
 
     if 'default' in SETTINGS['web']:
-        return SETTINGS['web']['default']
+        default = SETTINGS['web']['default']
+        if default not in SEARCH_PROVIDERS:
+            print(f"\n\nWARNING: a default you specified, '{default}', does not exist. Make sure you're using the correct code schema as specified in the README. Instead, '{make_code_from_setting(engines[0])}' will be used as the default.\n\n", file=sys.stderr)
+        else:
+            return SETTINGS['web']['default']
 
     return make_code_from_setting(engines[0])  # first available 
 
