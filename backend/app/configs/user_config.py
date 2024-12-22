@@ -48,7 +48,7 @@ if 'subscriptions' in SETTINGS:
 DEFAULT_PRODUCT_ID = _available_product_id
 
 DEFAULT_FRONTEND_URL = "http://localhost:3000"
-FRONTEND_URL = SETTINGS['services']['frontend']['public_url'] if ('services' in SETTINGS and 'frontend' in SETTINGS['services'] and 'public_url' in SETTINGS['services']['frontend']) else DEFAULT_FRONTEND_URL
+FRONTEND_URL = str(SETTINGS['services']['frontend']['public_url']).rstrip('/') if ('services' in SETTINGS and 'frontend' in SETTINGS['services'] and 'public_url' in SETTINGS['services']['frontend']) else DEFAULT_FRONTEND_URL
 
 MAX_PDF_PAGES = 250  # SHOULD MATCH FRONTEND - the maximum size of a PDF a user can upload.
 
