@@ -189,6 +189,11 @@ export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
         }
     }
 
+    function goToPrevStateWrapper(state) {
+        setListenClicked(false)
+        goToPrevState(state)
+    }
+
     const noWebSourcesFound = item.useWeb && item.meta && !JSON.parse(item.meta).sources?.length
     const usesInlineCitations = item.meta && JSON.parse(item.meta).inline_citations
 
@@ -278,7 +283,7 @@ export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
                     <div className={styles.aiResponseHeader}>
                         <div style={{'display': 'flex', 'gap': '5px', 'alignItems': 'center'}}>
                             {!isLoading && !isAnswering && item.prevStates?.length && item.attemptIndex > 1 ? (
-                                <div className="_touchableOpacity" onClick={() => {goToPrevState(item.attemptIndex - 1)}}>
+                                <div className="_touchableOpacity" onClick={() => {goToPrevStateWrapper(item.attemptIndex - 1)}}>
                                     {`◀`}
                                 </div>
                             ) : ""}
@@ -286,7 +291,7 @@ export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
                                 {`${item?.model ? item.model : 'AI Response'}${item.prevStates?.length ? (` (${item.attemptIndex || '1'}/${item.prevStates.length + 1})`) : ""}:`}
                             </div>
                             {!isLoading && !isAnswering && item.prevStates?.length && item.attemptIndex <= item.prevStates.length ? (
-                                <div className="_touchableOpacity" style={{'transform': 'scale(-1)'}} onClick={() => {goToPrevState(item.attemptIndex + 1)}}>
+                                <div className="_touchableOpacity" style={{'transform': 'scale(-1)'}} onClick={() => {goToPrevStateWrapper(item.attemptIndex + 1)}}>
                                     {'◀'}
                                     {/* Did you know that the left and right pointing unicode characters aren't the same size? Now you do! */}
                                 </div>
