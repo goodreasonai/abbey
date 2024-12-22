@@ -2,9 +2,11 @@ import os
 from ..configs.secrets import OPENAI_API_KEY, OPENAI_COMPATIBLE_KEY
 from ..configs.settings import SETTINGS
 import requests
+from ..utils import fix_openai_compatible_url
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY if OPENAI_API_KEY else ""
 from openai import OpenAI
 openai_client = OpenAI() if OPENAI_API_KEY else None
+import sys
 
 class Embed():
     def __init__(self, model, code) -> None:
@@ -44,6 +46,7 @@ class OpenAICompatibleEmbed(Embed):
     def embed(self, texts):
         texts = [y.replace("\n", " ") for y in texts]
         api_url = SETTINGS['openai_compatible']['url']
+        api_url = fix_openai_compatible_url(api_url)
         url = f'{api_url}/v1/embeddings'
         data = {
             'model': self.model,
@@ -102,11 +105,16 @@ EMBED_PROVIDERS = generate_embeds()
 
 def generate_default():
     default = SETTINGS['embeds']['default'] if 'default' in SETTINGS['embeds'] else ""
-    if default:
-        return default
-
     embeds = SETTINGS['embeds']['models']
+    if not len(embeds):
+        raise Exception("\n\nYOU MUST SPECIFY AT LEAST ONE EMBEDDING MODEL; SHUTTING DOWN BACKEND.")
     first_available = make_code_from_setting(embeds[0])
+    if default:
+        if default not in EMBED_PROVIDERS:
+            print(f"\n\nWARNING: a default you specified, '{default}', does not exist. Make sure you're using the correct code schema as specified in the README. Instead, '{first_available}' will be used as the default.\n\n", file=sys.stderr)
+        else:
+            return default
+
     return first_available
 
 DEFAULT_EMBEDDING_OPTION = generate_default()

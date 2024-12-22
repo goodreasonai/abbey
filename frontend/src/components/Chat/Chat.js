@@ -483,6 +483,7 @@ export default function Chat({id,
                 userSearchEngineOptions={userSearchEngineOptions}
                 userSearchEngineLoadingState={userSearchEngineLoadingState}
                 setUserSearchEngine={setUserSearchEngine}
+                assetId={id}
             />
         )
     }

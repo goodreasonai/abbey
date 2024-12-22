@@ -192,7 +192,7 @@ export default function Document({ manifestRow, objectSrc, mimetype, canEdit, sh
         'scan': {'disabled': mimetype != 'application/pdf'},
         'search': {'disabled': false},
         'quiz': {'disabled': !showQuiz},
-        'audio': {'disabled': !showRevise || HIDE_TTS},
+        'audio': {'disabled': !showRevise || HIDE_TTS || isMobile},
     }
 
     const showDocToolbar = !NO_DOC_TOP_MIMETYPES.includes(mimetype)

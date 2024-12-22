@@ -15,17 +15,20 @@ import Link from "next/link"
 import ChatSources from "./ChatSources"
 import { removeCitations } from "@/utils/text"
 import EditIcon from '../../../public/icons/EditIcon.png'
-import { HIDE_COLLECTIONS } from "@/config/config"
+import { HIDE_COLLECTIONS, HIDE_TTS } from "@/config/config"
 import MessageToolbar from "./MessageToolbar"
 import SendIcon from '../../../public/icons/SendIcon.png'
 import ExpandIcon from '../../../public/icons/ExpandIcon.png'
 import MinimizeIcon from '../../../public/icons/MinimizeIcon.png'
+import AudioControls from '../Audio/AudioControls';
+import SpeakerIcon from '../../../public/icons/SpeakerIcon.png'
+import { useIsMobile } from '@/utils/mobile';
 
 
 export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
                                     isLoading, suggestQuestions, suggestions, isAnswering, detached, userTextEnter,
                                     removeChat, syntheticId, toggleDetached, roundStates, setRoundStates,
-                                    invertColor, suggestLoadingState, suggestQuestion,
+                                    invertColor, suggestLoadingState, suggestQuestion, assetId,
                                     showFindMore, toggleUseWeb, index, onSourceButtonClick=undefined, setUserChatModel,
                                     setImages, selectedModel, extraButtons, goToPrevState, userModelLoadingState, userModelOptions,
                                     newVersion, allowOCR, scrollToBottom, selectedSearchEngine, userSearchEngineLoadingState, userSearchEngineOptions, setUserSearchEngine, ...props }){
@@ -35,6 +38,8 @@ export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
     const [findMoreAssets, setFindMoreAssets] = useState([])
     const [findMoreGroup, setFindMoreGroup] = useState(undefined)
     const [userExpanded, setUserExpanded] = useState(false)
+    const [listenClicked, setListenClicked] = useState(false)
+    const { isMobile } = useIsMobile()
 
     const onCitationClick = useCallback((citation) => {
         function handleGoToSourcePage(pageData) {
@@ -304,6 +309,15 @@ export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
                             <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center', ...extraBottomStyle}}>
                                 <div style={{'display': 'flex', 'alignItems': 'center', 'flex': '1', 'gap': '10px'}}>
                                     <CopyButton textToCopy={removeCitations(item.ai)} />
+                                    {!HIDE_TTS && !isMobile ? (  /* Audio doesn't work on mobile */
+                                        listenClicked ? (
+                                            <AudioControls assetId={assetId} iconSize={20} text={removeCitations(item.ai)} name={`chat_${index}`} />
+                                        ) : (
+                                            <Tooltip content={"Listen"}>
+                                                <MyImage className={"_touchableOpacity"} width={20} height={20} src={SpeakerIcon} alt={"Speaker"} onClick={() => setListenClicked(true)} />
+                                            </Tooltip>
+                                        )
+                                    ) : ""}
                                     {extraButtons.map((x, k) => {
                                         return (
                                             <div key={k} onClick={() => x.callback(item)}>

@@ -5,6 +5,7 @@ from ..exceptions import EmailFailed
 import requests
 import smtplib
 from email.message import EmailMessage
+import sys
 
 
 class Email():
@@ -157,7 +158,11 @@ def generate_default():
     services = SETTINGS['email']['services']
 
     if 'default' in SETTINGS['email']:
-        return SETTINGS['email']['default']
+        default =  SETTINGS['email']['default']
+        if default not in EMAIL_PROVIDERS:
+            print(f"\n\nWARNING: a default you specified, '{default}', does not exist. Make sure you're using the correct code schema as specified in the README. Instead, '{services[0]}' will be used as the default.\n\n", file=sys.stderr)
+        else:
+            return default
     
     return make_code_from_setting(services[0])  # first available 
 

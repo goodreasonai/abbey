@@ -16,18 +16,23 @@ try {
         envContent += `${name}='${escaped}'\n`
     }
 
+    // Tries to fix common mistakes when entering in URLs
+    function fixUrl(url){
+        return url.replace(/\/+$/, '');  // removes trailing slashes
+    }
+
     // Defaults to ports 5000 / 3000 and "backend" name for the service on the internal network.
     let public_backend_url = "http://localhost:5000"
     let public_frontend_url = "http://localhost:3000"
     let internal_backend_url = "http://backend:5000"
     if (settings.services?.backend?.public_url){
-        public_backend_url = settings.services?.backend?.public_url
+        public_backend_url = fixUrl(settings.services?.backend?.public_url)
     }
     if (settings.services?.frontend?.public_url){
-        public_frontend_url = settings.services?.frontend?.public_url
+        public_frontend_url = fixUrl(settings.services?.frontend?.public_url)
     }
     if (settings.services?.backend?.internal_url){
-        internal_backend_url = settings.services?.backend?.internal_url
+        internal_backend_url = fixUrl(settings.services?.backend?.internal_url)
     }
     addEnv('NEXT_PUBLIC_BACKEND_URL', public_backend_url)
     addEnv('NEXT_PUBLIC_ROOT_URL', public_frontend_url)
@@ -53,25 +58,41 @@ try {
         // Add any appropriate provider keys
         if (settings.auth?.providers?.length){
             for (const provider of settings.auth.providers){
-                if (provider == 'google'){
-                    addEnv('NEXT_PUBLIC_ENABLE_GOOGLE_AUTH', 1)
-                    addEnv('GOOGLE_CLIENT_ID', env['GOOGLE_CLIENT_ID'])
-                    addEnv('GOOGLE_SECRET', env['GOOGLE_SECRET'])
-                }
-                else if (provider == 'github'){
-                    addEnv('NEXT_PUBLIC_ENABLE_GITHUB_AUTH', 1)
-                    addEnv('GITHUB_CLIENT_ID', env['GITHUB_CLIENT_ID'])
-                    addEnv('GITHUB_SECRET', env['GITHUB_SECRET'])
-                }
-                else if (provider == 'keycloak'){
-                    addEnv('NEXT_PUBLIC_ENABLE_KEYCLOAK_AUTH', 1)
-                    addEnv('KEYCLOAK_PUBLIC_URL', env['KEYCLOAK_PUBLIC_URL'])
-                    if (env['KEYCLOAK_INTERNAL_URL']){
-                        addEnv('KEYCLOAK_INTERNAL_URL', env['KEYCLOAK_INTERNAL_URL'])
+                const lcProvider = provider.toLowerCase()
+                if (lcProvider == 'google'){
+                    if (!env['GOOGLE_CLIENT_ID'] || !env['GOOGLE_SECRET']){
+                        console.log("WARNING: No client id or secret found in .env despite Google being enabled for auth; you must acquire a client ID and secret to enable Google for auth.")
                     }
-                    addEnv('KEYCLOAK_REALM', env['KEYCLOAK_REALM'])
-                    addEnv('KEYCLOAK_SECRET', env['KEYCLOAK_SECRET'])
-                    addEnv('KEYCLOAK_CLIENT_ID', env['KEYCLOAK_CLIENT_ID'])
+                    else {
+                        addEnv('NEXT_PUBLIC_ENABLE_GOOGLE_AUTH', 1)
+                        addEnv('GOOGLE_CLIENT_ID', env['GOOGLE_CLIENT_ID'])
+                        addEnv('GOOGLE_SECRET', env['GOOGLE_SECRET'])
+                    }
+                }
+                else if (lcProvider == 'github'){
+                    if (!env['GITHUB_CLIENT_ID'] || !env['GITHUB_SECRET']){
+                        console.log("WARNING: No client id or secret found in .env despite GitHub being enabled for auth; you must acquire a client ID and secret to enable GitHub for auth.")
+                    }
+                    else {
+                        addEnv('NEXT_PUBLIC_ENABLE_GITHUB_AUTH', 1)
+                        addEnv('GITHUB_CLIENT_ID', env['GITHUB_CLIENT_ID'])
+                        addEnv('GITHUB_SECRET', env['GITHUB_SECRET'])
+                    }
+                }
+                else if (lcProvider == 'keycloak'){
+                    if (!env['KEYCLOAK_PUBLIC_URL'] || !env['KEYCLOAK_REALM'] || !env['KEYCLOAK_SECRET'] || !env['KEYCLOAK_CLIENT_ID']){
+                        console.log("WARNING: No url, realm, secret, or client id found for Keycloak; you must provide these in .env to enable Keycloak for auth.")
+                    }
+                    else {
+                        addEnv('NEXT_PUBLIC_ENABLE_KEYCLOAK_AUTH', 1)
+                        addEnv('KEYCLOAK_PUBLIC_URL', env['KEYCLOAK_PUBLIC_URL'])
+                        if (env['KEYCLOAK_INTERNAL_URL']){
+                            addEnv('KEYCLOAK_INTERNAL_URL', env['KEYCLOAK_INTERNAL_URL'])
+                        }
+                        addEnv('KEYCLOAK_REALM', env['KEYCLOAK_REALM'])
+                        addEnv('KEYCLOAK_SECRET', env['KEYCLOAK_SECRET'])
+                        addEnv('KEYCLOAK_CLIENT_ID', env['KEYCLOAK_CLIENT_ID'])
+                    }
                 }
             }
         }

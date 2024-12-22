@@ -198,7 +198,11 @@ def generate_default():
         return first_option.code
 
     if 'default' in SETTINGS['storage']:
-        return SETTINGS['storage']['default']
+        default = SETTINGS['storage']['default']
+        if default not in FS_PROVIDERS:
+            print(f"\n\nWARNING: a default you specified, '{default}', does not exist. Make sure you're using the correct code schema as specified in the README. Instead, '{first_option.code}' will be used as the default.\n\n", file=sys.stderr)
+        else:
+            return default
 
     return first_option.code  # Since there was something specified but no default, the first option is no longer local but something else.
 

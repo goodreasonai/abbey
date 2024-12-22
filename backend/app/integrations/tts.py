@@ -2,6 +2,7 @@ from .file_loaders import TextSplitter
 import os
 import requests
 import sys
+from ..utils import fix_openai_compatible_url
 from ..configs.settings import SETTINGS
 from ..configs.secrets import ELEVEN_LABS_API_KEY, OPENAI_API_KEY, OPENAI_COMPATIBLE_KEY
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY if OPENAI_API_KEY else ""
@@ -48,7 +49,7 @@ class TTS():
 
 class OpenAICompatibleBaseTTS(TTS):
     def __init__(self, url, key, voice, model, code, name, desc, traits, sample_url="") -> None:
-        self.url = url
+        self.url = fix_openai_compatible_url(url)
         self.key = key
         super().__init__(
             voice=voice,
@@ -238,7 +239,11 @@ def generate_default():
     voices = SETTINGS['tts']['voices']
 
     if 'default' in SETTINGS['tts']:
-        return SETTINGS['tts']['default']
+        default = SETTINGS['tts']['default']
+        if default not in TTS_PROVIDERS:
+            print(f"\n\nWARNING: a default you specified, '{default}', does not exist. Make sure you're using the correct code schema as specified in the README. Instead, '{make_code_from_setting(voices[0])}' will be used as the default.\n\n", file=sys.stderr)
+        else:
+            return default
     
     return make_code_from_setting(voices[0])  # first available 
 

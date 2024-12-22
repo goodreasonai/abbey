@@ -105,3 +105,14 @@ export function addCitations(objs) {
         };
     });
 }
+
+// https://boy.com/mypath --> "/mypath"
+export function extractPath(url) {
+    try {
+        const parsedUrl = new URL(url);
+        return parsedUrl.pathname;
+    } catch (error) {
+        console.error("Invalid URL:", error);
+        return null;
+    }
+}

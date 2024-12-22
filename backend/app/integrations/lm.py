@@ -1,9 +1,11 @@
 from ..configs.secrets import OPENAI_API_KEY, ANTHROPIC_API_KEY, OPENAI_COMPATIBLE_KEY
 from ..configs.settings import SETTINGS
 from ..utils import extract_from_base64_url
+from ..utils import fix_openai_compatible_url
 import os
 import requests
 import json
+import sys
 
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY if OPENAI_API_KEY else ""
 from openai import OpenAI
@@ -345,6 +347,7 @@ class OpenAICompatibleLM(LM):
             'stream': False
         }
         oai_compatible_url = SETTINGS['openai_compatible']['url']
+        oai_compatible_url = fix_openai_compatible_url(oai_compatible_url)
         url = f'{oai_compatible_url}/v1/chat/completions'
         response = requests.post(url, headers={'Authorization': f'Bearer {OPENAI_COMPATIBLE_KEY}'}, json=params, stream=False)
         response.raise_for_status()  # Raise an error for bad responses
@@ -373,6 +376,7 @@ class OpenAICompatibleLM(LM):
         }
 
         oai_compatible_url = SETTINGS['openai_compatible']['url']
+        oai_compatible_url = fix_openai_compatible_url(oai_compatible_url)
         url = f'{oai_compatible_url}/v1/chat/completions'
         response = requests.post(url, headers={'Authorization': f'Bearer {OPENAI_COMPATIBLE_KEY}'}, json=params, stream=True)
         response.raise_for_status()  # Raise an error for bad responses
@@ -460,6 +464,9 @@ def generate_defaults():
     to_return = {}
 
     lms = SETTINGS['lms']['models']
+    if not len(lms):
+        raise Exception("YOU MUST SELECT AT LEAST ONE LANGUAGE MODEL; SHUTTING DOWN BACKEND.")
+    
     first_available = make_code_from_setting(lms[0])
     longest_context = max(LM_PROVIDERS.values(), key=lambda x: x.context_length).code
     
@@ -471,6 +478,12 @@ def generate_defaults():
     to_return['LONG_CONTEXT_CHAT_MODEL'] = defaults['long_context'] if 'long_context' in defaults else longest_context  # Use specified else use default chat model
     to_return['FAST_LONG_CONTEXT_MODEL'] = defaults['fast_long_context'] if 'fast_long_context' in defaults else to_return['LONG_CONTEXT_CHAT_MODEL']  # Use specified else use long context model
     to_return['ALT_LONG_CONTEXT_MODEL'] = defaults['alt_long_context'] if 'alt_long_context' in defaults else to_return['LONG_CONTEXT_CHAT_MODEL']  # Use specified else use long context model
+
+    for key, value in to_return.items():
+        if value not in LM_PROVIDERS:
+            print(key)
+            print(f"\n\nWARNING: a default you specified, '{value}', does not exist. Make sure you're using the correct code schema as specified in the README. Instead, '{first_available}' will be used as the default.\n\n", file=sys.stderr)
+            to_return[key] = first_available
 
     return to_return
 
