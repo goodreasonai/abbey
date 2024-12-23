@@ -31,10 +31,10 @@ CUSTOM_AUTH_DB_NAME = secrets.CUSTOM_AUTH_DB_NAME or 'custom_auth'
 # TODO: make configurable
 # The backend process communicates with redis as a message passer; this code configures that connection.
 # Note that it uses both the redis protocol (not HTTP) as well as "redis" instead of localhost (due to docker compose)
-CELERY_RESULT_BACKEND = "redis://redis:6379/0"
-CELERY_BROKER_URL = "redis://redis:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+CELERY_BROKER_URL = "redis://localhost:6379/0"
 POOLER_CONNECTION_PARAMS = {
-    'host': 'redis',
+    'host': 'localhost',
     'port': 6379,
     'db': 1,  # Note that this is different from 0, the one used above for celery.
 }

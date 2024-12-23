@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import pickle
 import tiktoken
 from bs4 import BeautifulSoup
-import pyheif
+import pyheif  # type: ignore
 from PIL import Image
 
 

@@ -1,11 +1,24 @@
 # Context for running this is in the parent directory
-FROM usaiinc/abbey-backend:latest
+FROM ubuntu:20.04
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    supervisor \
+    redis-server \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 COPY backend/requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip3 install -r requirements.txt
+
+# Copy supervisor configuration
+COPY backend/supervisord.prod.conf /etc/supervisor/conf.d/supervisord.conf
+
 COPY backend /app
 
 EXPOSE 5000
 
-CMD ["gunicorn", "-k", "geventwebsocket.gunicorn.workers.GeventWebSocketWorker", "-w", "1", "-b", "0.0.0.0:5000", "app:create_app()"]
-
+# Use supervisor as the entry point
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

@@ -14,8 +14,6 @@ services:
       - PYTHONUNBUFFERED=true
     depends_on:
       - mysql
-      - redis
-      - db_pooler
 
   frontend:
     build:
@@ -39,56 +37,6 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
       - ./mysql-init:/docker-entrypoint-initdb.d
-
-  celery:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    command: celery -A app.worker.celery worker --loglevel=INFO
-    volumes:
-      - ./backend:/app
-      - ./settings.yml:/etc/abbey/settings.yml:ro
-      - ./.env:/etc/abbey/.env
-      - ./file-storage:/app/app/static
-    depends_on:
-      - mysql
-      - db_pooler
-      - redis
-
-  redis:
-      image: redis:latest
-      ports:
-        - "6379:6379"
-
-  db_pooler:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    command: python3 -m app.db_pooler
-    volumes:
-      - ./backend:/app
-      - ./settings.yml:/etc/abbey/settings.yml:ro
-      - ./.env:/etc/abbey/.env
-    depends_on:
-      - redis
-      - mysql
-
-  emailer:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    command: python3 -m app.email_process
-    volumes:
-      - ./backend:/app
-      - ./settings.yml:/etc/abbey/settings.yml:ro
-      - ./.env:/etc/abbey/.env
-      - ./file-storage:/app/app/static
-    depends_on:
-      - redis
-      - mysql
-      - db_pooler
-    profiles:
-      - email
 
 volumes:
   mysql-data:

@@ -11,9 +11,7 @@ services:
       - ./.env:/etc/abbey/.env
       - ./file-storage:/app/app/static
     depends_on:
-      - redis
       - mysql
-      - db_pooler
 
   # When making any code changes, you must rebuild the frontend.
   frontend:
@@ -33,57 +31,6 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
       - ./mysql-init:/docker-entrypoint-initdb.d
-
-  celery:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile.prod
-    command: celery -A app.worker.celery worker
-    volumes:
-      - ./backend:/app
-      - ./settings.yml:/etc/abbey/settings.yml:ro
-      - ./.env:/etc/abbey/.env
-      - ./file-storage:/app/app/static
-    depends_on:
-      - mysql
-      - db_pooler
-      - redis
-
-  redis:
-    image: redis:latest
-    ports:
-      - "6379:6379"
-
-  db_pooler:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile.prod
-    command: python3 -m app.db_pooler
-    volumes:
-      - ./backend:/app
-      - ./settings.yml:/etc/abbey/settings.yml:ro
-      - ./.env:/etc/abbey/.env
-      - ./file-storage:/app/app/static
-    depends_on:
-      - redis
-      - mysql
-
-  emailer:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile.prod
-    command: python3 -m app.email_process
-    volumes:
-      - ./backend:/app
-      - ./settings.yml:/etc/abbey/settings.yml:ro
-      - ./.env:/etc/abbey/.env
-      - ./file-storage:/app/app/static
-    depends_on:
-      - redis
-      - mysql
-      - db_pooler
-    profiles:
-      - email
 
 volumes:
   mysql-data:
