@@ -10,6 +10,7 @@ services:
       - ./settings.yml:/etc/abbey/settings.yml:ro
       - ./.env:/etc/abbey/.env
       - ./file-storage:/app/app/static
+      - ./backend/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
     environment:
       - PYTHONUNBUFFERED=true
     depends_on:
@@ -26,6 +27,17 @@ services:
       - ./settings.yml:/etc/abbey/settings.yml:ro
       - ./.env:/etc/abbey/.env:ro
       - /frontend-build/node_modules  # Any modifications to node_modules should be done from inside the container!
+
+  scraper:
+    build:
+      context: .
+      dockerfile: scraper/Dockerfile
+    volumes:
+      - ./scraper:/app
+      - ./.env:/etc/abbey/.env:ro
+      - ./scraper/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
+    ports:
+      - 5006:5006
 
   mysql:
     image: mysql:8
