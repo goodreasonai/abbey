@@ -104,52 +104,51 @@ def scrape():
         return jsonify({'success': False, 'error': 'URL was judged to be unsafe'}), 400
 
     wait = max(min(int(request.json.get('wait', 1000)), 5000), 0)  # Clamp between 0-5000ms
-    tmp = tempfile.NamedTemporaryFile(mode='w+', delete=False)
 
     html = None
     try:
-        result = scrape_task.apply_async(args=[url, tmp.name, wait], kwargs={}).get(timeout=60)  # 60 seconds
-        html = result
+        result = scrape_task.apply_async(args=[url, wait], kwargs={}).get(timeout=60)  # 60 seconds
+        html, screenshot_files = result
     except Exception as e:
         # If scrape_in_child uses too much memory, it seems to end up here.
         # however, if exit(0) is called, I find it doesn't.
         print(f"Exception raised from scraping process: {e}", file=sys.stderr, flush=True)
 
     successful = True if html else False
-    screenshot = None
+    screenshots = []
 
     if successful:
         # Read the screenshot file
-        size = os.path.getsize(tmp.name)        
-        with Image.open(tmp.name) as img:
-            if size >= MAX_SCREENSHOT_SIZE_MB * 1024:
-                # Calculate new dimensions while maintaining aspect ratio
-                ratio = min(MAX_SCREENSHOT_SIZE_MB * 1024 / size, 1.0)
-                new_width = int(img.width * ratio ** 0.5)
-                new_height = int(img.height * ratio ** 0.5)
+        for ss in screenshot_files:
+            size = os.path.getsize(ss)        
+            with Image.open(ss) as img:
+                if size >= MAX_SCREENSHOT_SIZE_MB * 1024:
+                    # Calculate new dimensions while maintaining aspect ratio
+                    ratio = min(MAX_SCREENSHOT_SIZE_MB * 1024 / size, 1.0)
+                    new_width = int(img.width * ratio ** 0.5)
+                    new_height = int(img.height * ratio ** 0.5)
+                    
+                    # Resize the image
+                    img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                    
+                    # Save to bytes
+                    buffer = io.BytesIO()
+                    img.save(buffer, format='PNG', optimize=True)
+                    screenshot_bytes = buffer.getvalue()
+                else:
+                    # If size is okay, just read the original
+                    with open(ss, 'rb') as f:
+                        screenshot_bytes = f.read()
                 
-                # Resize the image
-                img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                
-                # Save to bytes
-                buffer = io.BytesIO()
-                img.save(buffer, format='PNG', optimize=True)
-                screenshot_bytes = buffer.getvalue()
-            else:
-                # If size is okay, just read the original
-                with open(tmp.name, 'rb') as f:
-                    screenshot_bytes = f.read()
-            
-            screenshot = screenshot_bytes.hex()
-
-    tmp.close()
+                screenshots.append(screenshot_bytes.hex())
+            os.remove(ss)
     
     if successful:
         return jsonify({
             'success': True,
             'data': {
                 'html': html,
-                'screenshot': screenshot
+                'screenshots': screenshots
             }
         }), 200
 
