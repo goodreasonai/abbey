@@ -1,7 +1,6 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 import requests
 from .configs.settings import SETTINGS
-import sys
 
 # needs to be accessible outside app context, thus global
 # also: Celery needs this value for celery, but flask might need a slightly different value
