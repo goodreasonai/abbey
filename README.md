@@ -194,6 +194,8 @@ ollama:
   url: "http://host.docker.internal:11434"  # Replace with your URL
 
 openai_compatible:
+  # If your API has a path at the end, like "/openai", include it
+  # Otherwise, "/v1" will appended by default.
   url: "http://host.docker.internal:12345"  # Replace with your URL
 ```
 

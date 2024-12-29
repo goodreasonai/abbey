@@ -64,7 +64,7 @@ class OpenAICompatibleBaseTTS(TTS):
     def stream(self, txt, speed=1.0):
         speed = max(min(speed, 4.0), .25)  # based on API limitations
         
-        url = f"{self.url}/v1/audio/speech"
+        url = f"{self.url}/audio/speech"
         headers = {
             "Authorization": f'Bearer {self.key}',  # Replace with your API key
         }
