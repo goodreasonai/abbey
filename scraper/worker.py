@@ -63,7 +63,7 @@ def scrape_task(url, wait):
             """)
 
             # Calculate number of segments needed
-            num_segments = math.ceil(total_height / BROWSER_HEIGHT)
+            num_segments = min(math.ceil(total_height / BROWSER_HEIGHT), 5)  # Max 5 screenshots
 
             for i in range(num_segments):
                 tmp = tempfile.NamedTemporaryFile(mode='w+', delete=False)
