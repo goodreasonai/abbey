@@ -7,7 +7,7 @@ import os
 
 BACKEND_VERSION = '0.12.7'  # Viewable when a user goes to the root "/" endpoint of the backend
 
-AVAILABLE_TEMPLATES = ['document', 'folder', 'detached_chat', 'website', 'classroom', 'curriculum', 'quiz', 'text_editor', 'video', 'notebook', 'inf_quiz', 'section']  # could use the list in templates.py, but want to avoid imports here.
+AVAILABLE_TEMPLATES = ['document', 'folder', 'detached_chat', 'website', 'classroom', 'curriculum', 'quiz', 'text_editor', 'video', 'notebook', 'inf_quiz', 'section', 'crawler']  # could use the list in templates.py, but want to avoid imports here.
 
 # This extra ranking is done so that a user sees a consistent / sensible ordering of LM options
 LM_ORDER = [make_code_from_setting(x) for x in SETTINGS['lms']['models']]  # Order that a user would see in settings or a dropdown

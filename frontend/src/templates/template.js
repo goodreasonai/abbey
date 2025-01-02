@@ -13,6 +13,7 @@ import ClassroomIcon from '../../public/icons/ClassroomIcon.png'
 import DocumentIcon from '../../public/icons/DocumentIcon.png'
 import ChatIcon from '../../public/icons/ChatIcon.png'
 import FolderIcon from '../../public/icons/FolderIcon.png'
+import CrawlerIcon from '../../public/icons/CrawlerIcon.png'
 import NotebookIcon from '../../public/icons/NotebookIcon.png'
 import { CHROME_EXT_PROMO_LINK, MAX_PDF_PAGES, NAME } from "@/config/config"
 import Number from "@/components/form/Number"
@@ -42,6 +43,7 @@ import PanelSourceSelect from "@/components/PanelSourceSelect/PanelSourceSelect"
 import MarkdownViewer from "@/components/Markdown/MarkdownViewer"
 import Website from "@/components/Website/Website"
 import { getMimetypeFromResponse } from "@/utils/fileResponse"
+import Crawler from "@/components/Crawler/Crawler"
 
 
 class Template {
@@ -811,6 +813,29 @@ class InfiniteQuizTemplate extends Template {
     }
 }
 
+class CrawlerTemplate extends Template {
+    static code = "crawler";
+    static readableName = "Web Crawler"
+    static description = "Scrape websites en masse"
+    static icon = CrawlerIcon
+    static uploadable = true
+    static chattable = false
+    static primaryColor = '#61866f'
+    static summarizable = false
+    static noSignIn = false
+    static actionPhrase = "Create"
+
+    constructor(){
+        super()
+    }
+
+    Element({ assetManifestRow, canEdit }) {
+        return (
+            <Crawler manifestRow={assetManifestRow} canEdit={canEdit} />
+        )
+    }
+}
+
 export const TEMPLATES = [
     new DocumentTemplate(),
     new FolderTemplate(),
@@ -824,6 +849,7 @@ export const TEMPLATES = [
     new VideoTemplate(),
     new InfiniteQuizTemplate(),
     new SectionTemplate(),
+    new CrawlerTemplate(),
 ];
 
 

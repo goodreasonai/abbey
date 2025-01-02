@@ -11,6 +11,7 @@ from .video import Video
 from .infinite_quiz import InfiniteQuiz
 from .section import Section
 from .notebook import Notebook
+from .crawler import Crawler
 import sys
 
 # When adding a template, you must add an instantiation of it to the TEMPLATES list
@@ -27,6 +28,7 @@ TEMPLATES = [
     Video(),
     InfiniteQuiz(),
     Notebook(),
+    Crawler(),
     Section(),  # A derivative of Folder
 ]
 
