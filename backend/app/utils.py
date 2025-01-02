@@ -6,6 +6,7 @@ import tiktoken
 from bs4 import BeautifulSoup
 import pyheif  # type: ignore
 from PIL import Image
+from urllib.parse import urlparse
 
 
 def get_unique_id():
@@ -212,5 +213,10 @@ def fix_openai_compatible_url(url):
             if len(fixed_url) >= len(suffix):
                 if fixed_url[-len(suffix):] == suffix:
                     fixed_url = fixed_url[:-len(suffix)]
+        
+        parsed_url = urlparse(fixed_url)
+        if not parsed_url.path:  # If the URL doesn't have a path anymore, add /v1
+            fixed_url += "/v1"
+    # Add /v1 unless the URL is a 
 
     return fixed_url

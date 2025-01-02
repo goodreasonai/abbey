@@ -194,6 +194,8 @@ ollama:
   url: "http://host.docker.internal:11434"  # Replace with your URL
 
 openai_compatible:
+  # If your API has a path at the end, like "/openai", include it
+  # Otherwise, "/v1" will appended by default.
   url: "http://host.docker.internal:12345"  # Replace with your URL
 ```
 
@@ -289,6 +291,7 @@ Search engines are configured under `web` in `settings.yml`. They're used when y
 web:
   engines:
     - provider: "bing"  # required
+      market: "en-US"  # optional, defaults to en-US (specific to the bing API)
 
     # TO USE SEARXNG, MAKE SURE YOUR SEARXNG SETTINGS ARE CORRECT - SEE [BELOW](#searxng)
     - provider: "searxng"

@@ -47,7 +47,7 @@ class OpenAICompatibleEmbed(Embed):
         texts = [y.replace("\n", " ") for y in texts]
         api_url = SETTINGS['openai_compatible']['url']
         api_url = fix_openai_compatible_url(api_url)
-        url = f'{api_url}/v1/embeddings'
+        url = f'{api_url}/embeddings'
         data = {
             'model': self.model,
             'input': texts
