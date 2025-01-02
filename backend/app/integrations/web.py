@@ -23,13 +23,14 @@ class SearchResult():
 
 
 class SearchEngine():
-    def __init__(self, engine, code, name, desc, traits, use_pdf) -> None:
+    def __init__(self, engine, code, name, desc, traits, use_pdf, market) -> None:
         self.engine = engine
         self.code = code
         self.name = name
         self.desc = desc
         self.traits = traits
         self.use_pdf = use_pdf
+        self.market = market
 
     def search(self, query, max_n=10):
         raise Exception(f"Search not implemented for search engine with code '{self.code}'")
@@ -49,7 +50,8 @@ class Bing(SearchEngine):
     
     def search(self, query, max_n=10):
         endpoint = "https://api.bing.microsoft.com/v7.0/search"
-        mkt = 'en-US'
+        # Refer here for bing market codes:  https://learn.microsoft.com/en-us/bing/search-apis/bing-web-search/reference/market-codes
+        mkt = 'en-US' if not self.market else self.market
         params = { 'q': query, 'mkt': mkt }
         headers = { 'Ocp-Apim-Subscription-Key': BING_API_KEY }
         response = requests.get(endpoint, headers=headers, params=params)
@@ -68,6 +70,8 @@ class Bing(SearchEngine):
 class SearXNG(SearchEngine):
 
     def search(self, query, max_n=10):
+        # TODO: add support for different market/language etc codes
+        
         params = {'q': query, 'format': 'json'}
         url = SETTINGS['searxng']['url']
         if self.engine:
@@ -134,13 +138,15 @@ def generate_engines():
         traits = option['traits'] if 'traits' in option else ""
         desc = option['desc'] if 'desc' in option else (f"The search engine {engine} is provided by {provider}." if engine else "")
         use_pdf = option['use_pdf'] if 'use_pdf' in option else False
+        market = option['market'] if 'market' in option else None
         obj = provider_class(
             engine=engine,
             code=code,
             name=name,
             desc=desc,
             traits=traits,
-            use_pdf=use_pdf
+            use_pdf=use_pdf,
+            market=market
         )
         to_return[code] = obj
     return to_return

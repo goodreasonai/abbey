@@ -291,6 +291,7 @@ Search engines are configured under `web` in `settings.yml`. They're used when y
 web:
   engines:
     - provider: "bing"  # required
+      market: "en-US"  # optional, defaults to en-US (specific to the bing API)
 
     # TO USE SEARXNG, MAKE SURE YOUR SEARXNG SETTINGS ARE CORRECT - SEE [BELOW](#searxng)
     - provider: "searxng"
