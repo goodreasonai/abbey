@@ -353,7 +353,7 @@ class Classroom(Template):
         db.commit()
 
     @needs_db
-    def upload(self, user: User, asset_id, is_editing, asset_title="", using_auto_title=False, using_auto_desc=False, db=None):
+    def upload(self, user: User, asset_id, asset_title="", using_auto_title=False, using_auto_desc=False, db=None):
         
         student_objects_string = request.form.get('students')
 

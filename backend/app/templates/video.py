@@ -216,7 +216,7 @@ class Video(Template):
 
 
     @needs_db
-    def upload(self, user: User, asset_id, is_editing, asset_title="", using_auto_title=False, using_auto_desc=False, no_commit=True, db=None):
+    def upload(self, user: User, asset_id, asset_title="", using_auto_title=False, using_auto_desc=False, no_commit=True, db=None):
         url = request.form.get('url')
         try:
             transcribe_and_upload(asset_id, url, asset_title, db=db, no_commit=True)

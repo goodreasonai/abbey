@@ -185,9 +185,6 @@ def upload(user: User):
     if template not in allowed_templates:
         return MyResponse(False, reason="User not allowed to upload this template.", status=403).to_json()
 
-    # a dumb trick
-    is_editing = not (not asset_id)
-
     db = get_db()
 
     # Make sure user is allowed to upload another asset
@@ -201,14 +198,14 @@ def upload(user: User):
         if not group:
             return MyResponse(False, reason=f"Group {group_id} not found", status=404).to_json()
 
-    ok, message = upload_asset(user, asset_id, title, llm_description, preview_desc, template, author, is_editing, group_id=group_id, no_commit=True, db=db)
+    ok, message = upload_asset(user, asset_id, title, llm_description, preview_desc, template, author, group_id=group_id, no_commit=True, db=db)
 
     if not ok:
         return MyResponse(False, reason=message).to_json()
 
     # Template specific
     tmp: Template = get_template_by_code(template)
-    ok, tmp_message = tmp.upload(user, message, is_editing, asset_title=title, using_auto_desc=using_auto_desc, using_auto_title=using_auto_title, db=db, no_commit=True)
+    ok, tmp_message = tmp.upload(user, message, asset_title=title, using_auto_desc=using_auto_desc, using_auto_title=using_auto_title, db=db, no_commit=True)
 
     # On the same connection, this should be OK
     asset_row = get_asset(user, message, db=db, no_commit=True)

@@ -75,15 +75,13 @@ class Document(Template):
         return prompt
 
     @needs_db
-    def upload(self, user: User, asset_id, is_editing, asset_title="", using_auto_title=False, using_auto_desc=False, db=None):
+    def upload(self, user: User, asset_id, asset_title="", using_auto_title=False, using_auto_desc=False, db=None):
         
         PDF_TOO_LONG_ERROR = "Pdf too long"  # Must match frontend
         
         # No file, but we're editing, so don't delete existing file
         # There's nothing to do atm!
-        if is_editing and (not request.files or not request.files.get('files')):
-            pass
-        elif (not request.files or not request.files.get('files')):
+        if (not request.files or not request.files.get('files')):
             # Create a blank markdown file
             path, from_key = upload_asset_file(asset_id, None, 'md', use_data="Edit me")
             add_asset_resource(asset_id, MAIN_FILE, from_key, path, asset_title, db=db, no_commit=True)

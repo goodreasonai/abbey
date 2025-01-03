@@ -440,6 +440,7 @@ def get_asset_resource(asset_id, name, db=None):
 
 
 # Not permissioned!
+# You probably want to use upload_asset_file before calling this.
 @needs_db
 def add_asset_resource(asset_id, name, from_loc, path, title, db=None):
     sql = """
@@ -608,40 +609,15 @@ def delete_asset(asset_row, db=None):
 # NOTE: DOES NOT ADD PERMISSIONS
 # Returns False, "reason" or True, asset_id
 @needs_db
-def upload_asset(user: User, asset_id, title, llm_description, preview_desc, template, author, is_editing, group_id=None, db=None):
+def upload_asset(user: User, asset_id, title, llm_description, preview_desc, template, author, group_id=None, db=None):
     curr = db.cursor()
-    # This means we're editing rather than just uploading
-    if is_editing:
-        # Update asset in asset manifest
+    sql = """
+    INSERT INTO assets (`creator_id`, `title`, `lm_desc`, `preview_desc`, `template`, `author`, `group_id`)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """
 
-        # This will ensure edit permissioning
-        edited_asset = get_asset(user, asset_id, needs_edit_permission=True, db=db)
-
-        if not edited_asset:
-            return False, "Can't find asset to edit"
-        
-        creator = edited_asset['creator_id'] # creator doesn't change if a user w/ edit perms edits an asset
-
-        sql = """
-        UPDATE assets
-        SET creator_id = %s, 
-            title = %s, 
-            lm_desc = %s, 
-            preview_desc = %s, 
-            template = %s, 
-            author = %s,
-            group_id = %s
-        WHERE id = %s;
-        """
-        curr.execute(sql, (creator, title, llm_description, preview_desc, template, author, group_id, asset_id))
-    else:
-        sql = """
-        INSERT INTO assets (`creator_id`, `title`, `lm_desc`, `preview_desc`, `template`, `author`, `group_id`)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """
-    
-        curr.execute(sql, (user.user_id, title, llm_description, preview_desc, template, author, group_id))
-        asset_id = curr.lastrowid
+    curr.execute(sql, (user.user_id, title, llm_description, preview_desc, template, author, group_id))
+    asset_id = curr.lastrowid
 
     return True, asset_id
 

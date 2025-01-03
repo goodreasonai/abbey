@@ -123,7 +123,7 @@ class Website(Template):
 
     # remember, could also be editing!
     @needs_db
-    def upload(self, user: User, asset_id, is_editing, asset_title="", using_auto_title=False, using_auto_desc=False, no_commit=False, db=None):
+    def upload(self, user: User, asset_id, asset_title="", using_auto_title=False, using_auto_desc=False, no_commit=False, db=None):
         url = request.form.get("url")
         if not url:
             return False, "No url specified"

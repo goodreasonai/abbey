@@ -27,7 +27,7 @@ class Deprecated(Template):
         return temp_file.name
 
     @needs_db
-    def upload(self, user: User, asset_id, is_editing, asset_title="", using_auto_title=False, using_auto_desc=False, db=None):
+    def upload(self, user: User, asset_id, asset_title="", using_auto_title=False, using_auto_desc=False, db=None):
         return True, asset_id
 
     @needs_db

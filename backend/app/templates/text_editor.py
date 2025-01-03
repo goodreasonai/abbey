@@ -188,7 +188,7 @@ class TextEditor(Template):
         self.make_retriever_on_upload = False
 
     @needs_db
-    def upload(self, user: User, asset_id, is_editing, asset_title="", using_auto_title=False, using_auto_desc=False, no_commit=True, db=None):
+    def upload(self, user: User, asset_id, asset_title="", using_auto_title=False, using_auto_desc=False, no_commit=True, db=None):
         text = request.form.get('text', "This is your document. There are many like it, but this one is yours!")
         # Make default text
         path, from_key = upload_asset_file(asset_id, None, 'html', use_data=text)
