@@ -124,6 +124,9 @@ def create_app():
     from .templates import notebook
     app.register_blueprint(notebook.bp)
 
+    from .templates import crawler
+    app.register_blueprint(crawler.bp)
+
     from . import feed
     app.register_blueprint(feed.bp)
 

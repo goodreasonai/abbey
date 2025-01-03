@@ -16,6 +16,11 @@ def upload_asset_file(asset_id, path, ext, use_data=None):
     return db_path, fs.code
 
 
+def replace_asset_file(from_key, path, tmp_path, use_data=None):
+    fs: FileStorage = FS_PROVIDERS[from_key]
+    db_path = fs.upload_file(None, tmp_path, None, remote_path=path, use_data=use_data)
+    return db_path, fs.code
+
 def upload_retriever(resource_id, file_path, retriever_type_name):
     suggested_path = ["retriever_storage", str(resource_id['id']), retriever_type_name]
     fs: FileStorage = FS_PROVIDERS[DEFAULT_STORAGE_OPTION]

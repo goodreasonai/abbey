@@ -15,7 +15,7 @@ class FileStorage():
     # The suggested path list is a way for the user of the fn to specify a suggested organization scheme (i.e., retrievers are given their own folder). It's given as a list, like ['asset_resources'] or ['asset_110', 'asset_resources']
     # ext does not come with a dot
     # If use_data is set, it means ignore the temp_path and upload the value of use_data as the data
-    def upload_file(self, suggested_path_list, temp_path, ext, use_data=None):
+    def upload_file(self, suggested_path_list, temp_path, ext, remote_path=None, use_data=None):
         raise Exception(f"Upload file not implemented for file storage with code '{self.code}'")
     
     # tempfile_path = the path where you want to download the file to. remote_path = the path in the storage interface.
@@ -24,7 +24,7 @@ class FileStorage():
 
     def delete_file(self, remote_path):
         raise Exception(f"Delete file not implemented for file storage with code {self.code}")
-
+        
 
 class S3(FileStorage):
     def __init__(self, code):
@@ -32,19 +32,28 @@ class S3(FileStorage):
             print(f"Warning: s3 bucket not initialized; attempts to use s3 will fail. Refer to README for correct configuration.", file=sys.stderr)
         super().__init__(code)
 
-    def upload_file(self, suggested_path_list, temp_path, ext, use_data=None):
-        S3_BUCKET_NAME = SETTINGS['s3']['bucket']
+    def upload_file(self, suggested_path_list, temp_path, ext, remote_path=None, use_data=None):
+        # If remote_path is specified, use the defined path to upload
+        bucket_name, key = None, None
+        if remote_path:
+            bucket_name, key = self._get_bucket_and_key_from_path(remote_path)
+        # Otherwise, create a new one
+        else:
+            bucket_name = SETTINGS['s3']['bucket']
+            s3_id = get_unique_id()
+            key = "/".join(suggested_path_list) + "/" + str(s3_id) + "." + ext
+
         session = boto3.session.Session()
         s3 = session.client('s3', aws_access_key_id=AWS_ACCESS_KEY, aws_secret_access_key=AWS_SECRET_KEY)
-        s3_id = get_unique_id()
-        key = "/".join(suggested_path_list) + "/" + str(s3_id) + "." + ext
+        
         if use_data is not None:
-            s3.put_object(Bucket=S3_BUCKET_NAME, Key=key, Body=use_data)
+            s3.put_object(Bucket=bucket_name, Key=key, Body=use_data)
         else:
             if not temp_path:
                 raise Exception("No path specified to upload file from, and use_data not set.")
-            s3.upload_file(temp_path, S3_BUCKET_NAME, key)
-        db_path = S3_BUCKET_NAME + "/" + key
+            s3.upload_file(temp_path, bucket_name, key)
+        
+        db_path = bucket_name + "/" + key
         return db_path
 
     def _get_bucket_and_key_from_path(self, path):
@@ -87,19 +96,24 @@ class S3(FileStorage):
 
 class LocalStorage(FileStorage):
 
-    def upload_file(self, suggested_path_list, temp_path, ext, use_data=None):
+    def upload_file(self, suggested_path_list, temp_path, ext, remote_path=None, use_data=None):
         from .. import LOCAL_STORAGE_PATH  # Avoiding global variable bugs
         
-        # Create a unique ID for the file
-        local_id = get_unique_id()
-        
-        # Construct the directory path and ensure it exists
-        dir_path = os.path.join(LOCAL_STORAGE_PATH, *suggested_path_list)
-        os.makedirs(dir_path, exist_ok=True)
-        
-        # Construct the full path for the file
-        file_name = f"{local_id}.{ext}"
-        file_path = os.path.join(dir_path, file_name)
+        file_path = None
+        if remote_path:
+            file_path = os.path.join(LOCAL_STORAGE_PATH, remote_path)
+        else:
+            pass
+            # Create a unique ID for the file
+            local_id = get_unique_id()
+            
+            # Construct the directory path and ensure it exists
+            dir_path = os.path.join(LOCAL_STORAGE_PATH, *suggested_path_list)
+            os.makedirs(dir_path, exist_ok=True)
+            
+            # Construct the full path for the file
+            file_name = f"{local_id}.{ext}"
+            file_path = os.path.join(dir_path, file_name)
         
         if use_data is not None:
             # Check if use_data is a string and encode it to bytes
