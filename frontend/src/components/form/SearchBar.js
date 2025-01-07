@@ -7,7 +7,7 @@ import { useState, useEffect, useRef } from 'react'
 import styles from './Form.module.css'
 
 
-export default function SearchBar({ value, setValue, getSearchResults, handleSearch, placeholder="Search...", textFieldStyle={}, searchOnErase=true, textFieldStretch=false, autoFocus=false, textInputStyle={}, size="large", ...props }) {
+export default function SearchBar({ value, setValue, getSearchResults, handleSearch, placeholder="Search...", textFieldStyle={}, searchOnErase=true, textFieldStretch=false, autoFocus=false, textInputStyle={}, size="large", containerStretch=true, ...props }) {
 
     const [autoFillOptions, setAutoFillOptions] = useState([]);
     const searchDropdownRef = useRef(null);
@@ -126,7 +126,7 @@ export default function SearchBar({ value, setValue, getSearchResults, handleSea
     let extraBorderRadiusStyle = value ? {'borderTopRightRadius': '0px', 'borderBottomRightRadius': '0px'} : {}  // for the magnifying glass while there's an erase icon
 
     return (
-        <div style={{'display': 'flex', 'alignItems': 'stretch', 'flex': '1'}} {...props}>
+        <div style={{'display': 'flex', 'alignItems': 'stretch', ...(containerStretch ? {'flex': '1'} : {})}} {...props}>
             <div style={{'position': 'relative', 'flexGrow': '1', 'maxWidth': textFieldStretch ? 'unset' : '20em', 'display': 'flex', 'flexDirection': 'column'}}>
                 <ControlledInputText
                     autoFocus={autoFocus}
