@@ -14,27 +14,37 @@ def get_unique_id():
     return ''.join(random.choice(characters) for _ in range(10))
 
 
+EXT_TO_MIMETYPE = {
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'txt': 'text/plain',
+    'pdf': 'application/pdf',
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'md': 'text/markdown',
+    'epub': 'application/epub+zip',
+    'html': 'text/html',
+    'ahtml': 'abbey/html'
+}
+
 def mimetype_from_ext(ext):
-    if ext == 'doc':
-        return 'application/msword'
-    elif ext == 'docx':
-        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    elif ext == 'txt':
-        return 'text/plain'
-    elif ext == 'pdf':
-        return 'application/pdf'
-    elif ext == 'xlsx':
-        return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    elif ext == 'md':
-        return 'text/markdown'
-    elif ext == 'epub':
-        return 'application/epub+zip'
-    elif ext == 'html':
-        return 'text/html'
-    elif ext == 'ahtml':
-        return 'abbey/html'
-    
-    return 'application/octet-stream'
+    if ext in EXT_TO_MIMETYPE:
+        return EXT_TO_MIMETYPE[ext]
+    else:
+        return 'application/octet-stream'
+
+
+def ext_from_mimetype(mimetype):
+    inv_map = {v: k for k, v in EXT_TO_MIMETYPE.items()}
+    if mimetype in inv_map:
+        return inv_map[mimetype]
+    else:
+        return ""
+
+
+def get_mimetype_from_content_type_header(header):
+    parts = header.split(';')
+    mime_type = parts[0].strip()
+    return mime_type
 
 
 # Returns without '.'

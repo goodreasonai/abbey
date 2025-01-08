@@ -4,7 +4,7 @@ from ..auth import User
 import sqlite3
 import tempfile
 import os
-from ..asset_actions import add_asset_resource, get_asset_resource
+from ..asset_actions import add_asset_resource, get_asset_resource, get_asset
 from ..storage_interface import download_file, replace_asset_file, upload_asset_file
 from ..configs.str_constants import MAIN_FILE
 from flask_cors import cross_origin
@@ -33,6 +33,8 @@ def create_and_upload_database(asset_id):
                 scraped_at DATETIME,      
                 title TEXT,
                 author TEXT,
+                text TEXT,
+                content_type TEXT,
                 url TEXT
             )
         """
@@ -108,6 +110,9 @@ class CrawlerDB():
 @token_optional
 def get_manifest(user: User):
     asset_id = request.args.get('id')
+    asset_row = get_asset(user, asset_id)
+    if not asset_row:
+        return MyResponse(False, status=404, reason="Asset not found")
 
     limit = int(request.args.get('limit', 30))
     if limit > 500:
@@ -135,6 +140,22 @@ def get_manifest(user: User):
     conn.close()  # Very important
 
     return MyResponse(True, {'results': results, 'total': total}).to_json()
+
+
+@bp.route('/scrape', methods=('GET',))
+@cross_origin()
+@token_optional
+def scrape_one_site(user: User):
+    asset_id = request.args.get('id')
+    asset_row = get_asset(user, asset_id)
+    if not asset_row:
+        return MyResponse(False, status=404, reason="Asset not found")
+
+    # Scrape the site
+
+    # Lock and add to the database
+
+    # Return the new row
 
 
 class Crawler(Template):

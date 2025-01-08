@@ -11,7 +11,9 @@ import json
 from .template import Template
 from ..storage_interface import upload_asset_file, delete_resources
 from ..asset_actions import get_asset, has_asset_title_been_updated, replace_asset_resource, has_asset_desc_been_updated
-from ..web import scrape
+from ..web import scrape_with_requests, ScrapeResponse, ScrapeMetadata, get_metadata_from_scrape
+from ..utils import get_mimetype_from_content_type_header
+from ..utils import ext_from_mimetype
 from ..configs.str_constants import MAIN_FILE
 import tempfile
 
@@ -57,39 +59,51 @@ def insert_meta_author(asset_id, author, db=None, no_commit=False):
 
 @needs_db
 def scrape_and_upload(url, asset_id, asset_title, use_html=None, ignore_title=False, no_commit=False, db=None):
-    response = scrape(url, use_html=use_html, just_text=True, reduce_whitespace=True)
-    if not response['success']:
-        return False, response['reason']
+    response: ScrapeResponse = scrape_with_requests(url, use_html=use_html, just_text=True, reduce_whitespace=True)
+    if not response.success:
+        return False, f"The scrape failed with status {response.status}"
 
-    path, from_key = upload_asset_file(asset_id, None, response['ext'], use_data=response['data'])
+    if 'content-type' not in response.headers:
+        return False, "There was no content type header"
+    
+    mime = get_mimetype_from_content_type_header(response.headers['content-type'])
+    ext = ext_from_mimetype(mime)
+
+    if not ext:
+        return False, f"Mimetype {mime} not understood"
+
+    path, from_key = upload_asset_file(asset_id, None, ext, use_data=response.data)
     curr = db.cursor()
 
     replace_asset_resource(asset_id, MAIN_FILE, from_key, path, asset_title, no_commit=no_commit, db=db)
 
     insert_meta_url(asset_id, url)
-    if 'favicon' in response and response['favicon']:
-        insert_meta_favicon(asset_id, response['favicon'], db=db, no_commit=no_commit)
-    if 'description' in response and response['description']:
-        insert_meta_description(asset_id, response['description'], db=db, no_commit=no_commit)
+
+    meta: ScrapeMetadata = get_metadata_from_scrape(response)
+    
+    if meta.favicon_url:
+        insert_meta_favicon(asset_id, meta.favicon_url, db=db, no_commit=no_commit)
+    if meta.desc:
+        insert_meta_description(asset_id, meta.desc, db=db, no_commit=no_commit)
         if not has_asset_desc_been_updated(asset_id, db=db, no_commit=True):
             sql = """
             UPDATE assets SET `preview_desc` = %s WHERE id = %s
             """
-            curr.execute(sql, (response['description'], asset_id))
-    if 'author' in response and response['author']:
-        insert_meta_author(asset_id, response['author'], db=db, no_commit=no_commit)
+            curr.execute(sql, (meta.desc, asset_id))
+    if meta.author:
+        insert_meta_author(asset_id, meta.author, db=db, no_commit=no_commit)
         sql = """
         UPDATE assets SET `author` = %s WHERE id = %s
         """
-        curr.execute(sql, (response['author'], asset_id))
-    if 'image_url' in response and response['image_url']:
-        insert_meta_image_url(asset_id, response['image_url'], db=db, no_commit=no_commit)
+        curr.execute(sql, (meta.author, asset_id))
+    if meta.preview_image_url:
+        insert_meta_image_url(asset_id, meta.preview_image_url, db=db, no_commit=no_commit)
 
-    if not ignore_title and  'title' in response and not has_asset_title_been_updated(asset_id, db=db, no_commit=True):
+    if not ignore_title and meta.title and not has_asset_title_been_updated(asset_id, db=db, no_commit=True):
         sql = """
         UPDATE assets SET title = %s WHERE id = %s
         """
-        curr.execute(sql, (response['title'], asset_id))
+        curr.execute(sql, (meta.title, asset_id))
     
     return True, asset_id
 
