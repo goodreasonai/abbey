@@ -10,6 +10,8 @@ import Loading from "../Loading/Loading"
 
 export default function Crawler({ manifestRow, canEdit }) {
     
+    const { getToken } = Auth.useAuth()
+    
     const [websites, setWebsites] = useState([])
     const [websitesLoadState, setWebsitesLoadState] = useState(0)
 
@@ -42,7 +44,25 @@ export default function Crawler({ manifestRow, canEdit }) {
     async function addWebsite(){
         try {
             setAddWebsiteLoadingState(1)
-            // TODO
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + "/crawler/add"
+            const data = {
+                'id': manifestRow?.id,
+                'url': addWebsiteURL
+            }
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                    'Content-Type': 'application/json'
+                },
+                'method': 'POST',
+                'body': JSON.stringify(data)
+            })
+            if (!response.ok){
+                throw Error("Response was not OK")
+            }
+            const myJson = await response.json()
+            const newRow = myJson['result']
+            setWebsites([newRow, ...websites])
             setAddWebsiteLoadingState(2)
         }
         catch(e) {
@@ -53,6 +73,7 @@ export default function Crawler({ manifestRow, canEdit }) {
 
     function clearWebsiteModal() {
         setAddWebsiteURL("")
+        setAddWebsiteLoadingState(0)
         setAddWebsiteModalOpen(false)
     }
 
@@ -75,16 +96,23 @@ export default function Crawler({ manifestRow, canEdit }) {
                     Add URL
                     <div>
                         <ControlledInputText
-                            value={setAddWebsiteURL}
+                            value={addWebsiteURL}
                             setValue={setAddWebsiteURL}
                         />
                     </div>
-                    <div>
-                        <SyntheticButton
-                            value={"Add"}
-                            onClick={() => addWebsite()}
-                        />
-                    </div>
+                    {addWebsiteLoadingState == 1 ? (
+                        <Loading text="" />
+                    ) : (
+                        <div>
+                            <SyntheticButton
+                                value={"Add"}
+                                onClick={() => addWebsite()}
+                            />
+                        </div>
+                    )}
+                    {addWebsiteLoadingState == 2 ? (
+                        "Added website"
+                    ) : ""}
                 </div>
             </Modal>
         </div>
@@ -106,7 +134,7 @@ export default function Crawler({ manifestRow, canEdit }) {
     }, [])
 
     function makeRow(item, i) {
-        return <TableRow assetId={manifestRow?.id} item={item} i={i} tableCols={tableCols} />
+        return <TableRow assetId={manifestRow?.id} setItem={(x) => setWebsites(websites.map((old) => old.id == x.id ? x : old))} item={item} i={i} tableCols={tableCols} />
     }
 
     return (

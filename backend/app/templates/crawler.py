@@ -11,6 +11,10 @@ from flask_cors import cross_origin
 from ..auth import token_optional
 from flask import Blueprint, request
 from ..template_response import MyResponse
+from ..web import ScrapeMetadata, ScrapeResponse, scrape_with_requests, get_metadata_from_scrape
+from ..utils import get_mimetype_from_content_type_header, ext_from_mimetype
+from ..db import with_lock, get_db
+from ..integrations.file_loaders import get_loader, TextSplitter, RawChunk
 import os
 
 
@@ -52,6 +56,10 @@ def create_and_upload_database(asset_id):
         # Delete the temporary database file
         if os.path.exists(db_path):
             os.remove(db_path)
+
+
+def get_crawler_lock_name(asset_id):
+    return f"{asset_id}_crawler"
 
 
 # Wrapers around db functions
@@ -142,20 +150,110 @@ def get_manifest(user: User):
     return MyResponse(True, {'results': results, 'total': total}).to_json()
 
 
-@bp.route('/scrape', methods=('GET',))
+@bp.route('/add', methods=('POST',))
+@cross_origin()
+@token_optional
+def add_url(user: User):
+    asset_id = request.json.get('id')
+    asset_row = get_asset(user, asset_id)
+    if not asset_row:
+        return MyResponse(False, status=404, reason="Asset not found").to_json()
+
+    url = request.json.get('url')
+
+    db = get_db()
+    # Lock and add to the database
+    @with_lock(get_crawler_lock_name(asset_id), db)
+    def add_to_db():
+        crawler = CrawlerDB(asset_id)
+        sql = """
+            INSERT INTO websites (`url`)
+            VALUES (?)
+        """
+        crawler.execute(sql, (url,))
+
+        sql = """
+            SELECT * FROM websites
+            WHERE rowid = last_insert_rowid();
+        """
+        res = crawler.execute(sql)
+        updated = res.fetchone()
+        
+        crawler.commit()
+        crawler.close()
+
+        return updated
+    
+    new_row = add_to_db()    
+    db.close()
+
+    return MyResponse(True, {'result': new_row}).to_json()
+
+
+@bp.route('/scrape', methods=('POST',))
 @cross_origin()
 @token_optional
 def scrape_one_site(user: User):
-    asset_id = request.args.get('id')
+    asset_id = request.json.get('id')
     asset_row = get_asset(user, asset_id)
     if not asset_row:
-        return MyResponse(False, status=404, reason="Asset not found")
+        return MyResponse(False, status=404, reason="Asset not found").to_json()
+
+    item = request.json.get('item')
+
+    if 'id' not in item or 'url' not in item:
+        return MyResponse(False, status=400, reason="Item not valid").to_json()
 
     # Scrape the site
-
+    scrape: ScrapeResponse = scrape_with_requests(item['url'])
+    content_type = get_mimetype_from_content_type_header(scrape.headers['content-type']) if 'content-type' in scrape.headers else None
+    meta: ScrapeMetadata = get_metadata_from_scrape(scrape)
+    ext = ext_from_mimetype(content_type)
+    tmp = tempfile.NamedTemporaryFile(delete=False)
+    tmp.write(scrape.data)
+    MAX_TEXT_LENGTH = 100_000  # in characters
+    text = ""
+    try:
+        loader = get_loader(ext, tmp.name)
+        splitter = TextSplitter(max_chunk_size=1024)
+        splits = loader.load_and_split(splitter)
+        for x in splits:
+            x: RawChunk
+            if len(text) + len(x.page_content) < MAX_TEXT_LENGTH:
+                text += x.page_content
+    finally:
+        os.remove(tmp.name)
+    db = get_db()
     # Lock and add to the database
+    @with_lock(get_crawler_lock_name(asset_id), db)
+    def add_to_db():
+        crawler = CrawlerDB(asset_id)
+        sql = """
+            UPDATE websites
+            SET `title`=?,
+                `author`=?,
+                `text`=?,
+                `content_type`=?,
+                `scraped_at`=CURRENT_TIMESTAMP
+            WHERE `id`=?
+        """
+        crawler.execute(sql, (meta.title, meta.author, text, content_type, item['id']))
 
-    # Return the new row
+        sql = """
+            SELECT * FROM websites WHERE `id`=?
+        """
+        res = crawler.execute(sql, (item['id'],))
+        updated = res.fetchone()
+        
+        crawler.commit()
+        crawler.close()
+
+        return updated
+    
+    new_row = add_to_db()    
+    db.close()
+
+    return MyResponse(True, {'result': new_row}).to_json()
 
 
 class Crawler(Template):

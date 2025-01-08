@@ -240,6 +240,7 @@ class MarkdownLoader(FileLoader):
         for split in splitsville:
             yield RawChunk(split, {})
 
+
 # NOTE: banned filetypes are stored again on the frontend, so changes here should be reflected there as well!
 DISALLOWED_DOC_EXTENTIONS = ['pages', 'rtf', 'epub', 'key', 'mp4', 'mov', 'mpeg', 'flv', 'ico']
 def get_loader(filetype, path):
