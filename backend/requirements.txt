@@ -31,3 +31,4 @@ pillow
 pyheif
 pyyaml
 apscheduler
+requests-toolbelt

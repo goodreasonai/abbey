@@ -59,3 +59,5 @@ BING_API_KEY = os.environ.get('BING_API_KEY')
 
 PROXY_URL_HTTP = os.environ.get('PROXY_URL_HTTP')
 PROXY_URL_HTTPS = os.environ.get('PROXY_URL_HTTPS')
+
+SCRAPER_API_KEY = os.environ.get("SCRAPER_API_KEY")

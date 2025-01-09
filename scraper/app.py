@@ -7,9 +7,8 @@ import ipaddress
 import socket
 from urllib.parse import urlparse
 import os
-from worker import scrape_task 
-from PIL import Image
-import io
+from worker import scrape_task
+import json
 
 
 app = Flask(__name__)
@@ -27,9 +26,8 @@ The scrape workers are limited in their memory usage to 3 GB, of which there may
 """
 
 # For optional API key
-DOTENV_PATH = '/etc/abbey/.env'
-load_dotenv(DOTENV_PATH)  # Load in environment variables
-SCRAPER_API_KEY = os.environ.get("SCRAPER_API_KEY")  # For requests to the scraper
+load_dotenv()  # Load in API keys
+SCRAPER_API_KEYS = [value for key, value in os.environ.items() if key.startswith('SCRAPER_API_KEY')]
 
 MAX_SCREENSHOT_SIZE_MB = 500
 
@@ -91,69 +89,73 @@ def url_is_safe(url: str, allowed_schemes=None) -> bool:
 
 @app.route('/scrape', methods=('POST',))
 def scrape():
-    if SCRAPER_API_KEY:
-        user_key = request.headers.get('x-access-token')
-        if user_key != SCRAPER_API_KEY:
-            return jsonify({'success': False, 'error': 'Invalid API key'}), 301
+    if len(SCRAPER_API_KEYS):
+        auth_header = request.headers.get('Authorization')
+        if auth_header is None:
+            return jsonify({"error": "Authorization header is missing"}), 401
+
+        if not auth_header.startswith('Bearer '):
+            return jsonify({"error": "Invalid authorization header format"}), 401
+
+        user_key = auth_header.split(' ')[1]
+        if user_key not in SCRAPER_API_KEYS:
+            return jsonify({'error': 'Invalid API key'}), 301
 
     url = request.json.get('url')
 
     if not url:
-        return jsonify({'success': False, 'error': 'No URL provided'}), 400
+        return jsonify({'error': 'No URL provided'}), 400
     if not url_is_safe(url):
-        return jsonify({'success': False, 'error': 'URL was judged to be unsafe'}), 400
+        return jsonify({'error': 'URL was judged to be unsafe'}), 400
 
     wait = max(min(int(request.json.get('wait', 1000)), 5000), 0)  # Clamp between 0-5000ms
 
-    html = None
+    content_file = None
     try:
-        result = scrape_task.apply_async(args=[url, wait], kwargs={}).get(timeout=60)  # 60 seconds
-        html, screenshot_files = result
+        status, headers, content_file, screenshot_files, metadata = scrape_task.apply_async(args=[url, wait], kwargs={}).get(timeout=60)  # 60 seconds
+        headers = {str(k).lower(): v for k, v in headers.items()}  # make headers all lowercase (they're case insensitive)
     except Exception as e:
         # If scrape_in_child uses too much memory, it seems to end up here.
         # however, if exit(0) is called, I find it doesn't.
         print(f"Exception raised from scraping process: {e}", file=sys.stderr, flush=True)
 
-    successful = True if html else False
-    screenshots = []
+    successful = True if content_file else False
 
     if successful:
-        # Read the screenshot file
-        for ss in screenshot_files:
-            size = os.path.getsize(ss)        
-            with Image.open(ss) as img:
-                if size >= MAX_SCREENSHOT_SIZE_MB * 1024:
-                    # Calculate new dimensions while maintaining aspect ratio
-                    ratio = min(MAX_SCREENSHOT_SIZE_MB * 1024 / size, 1.0)
-                    new_width = int(img.width * ratio ** 0.5)
-                    new_height = int(img.height * ratio ** 0.5)
-                    
-                    # Resize the image
-                    img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                    
-                    # Save to bytes
-                    buffer = io.BytesIO()
-                    img.save(buffer, format='PNG', optimize=True)
-                    screenshot_bytes = buffer.getvalue()
-                else:
-                    # If size is okay, just read the original
-                    with open(ss, 'rb') as f:
-                        screenshot_bytes = f.read()
-                
-                screenshots.append(screenshot_bytes.hex())
-            os.remove(ss)
-    
-    if successful:
-        return jsonify({
-            'success': True,
-            'data': {
-                'html': html,
-                'screenshots': screenshots
-            }
-        }), 200
+        boundary = 'Boundary712sAM12MVaJff23NXJ'  # typed out some random digits
+        # Generate a mixed multipart response
+        # See details on the standard here: https://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
+        def stream():
+            # Start with headers and status as json
+            yield f"--{boundary}\r\nContent-Type: application/json\r\n\r\n".encode()  # beginning of content
+            yield json.dumps({
+                'status': status,
+                'headers': headers,
+                'metadata': metadata
+            })
+            yield "\r\n".encode()  # end of content
+
+            # Give content as it was received
+            yield f"--{boundary}\r\nContent-Type: {headers['content-type']}\r\n\r\n".encode()  # beginning of content
+            with open(content_file, 'rb') as content:
+                for line in content:
+                    yield line
+            yield "\r\n".encode()  # end of content
+
+            # Give screenshot images
+            for ss in enumerate(screenshot_files):
+                yield f"--{boundary}\r\nContent-Type: image/jpeg\r\n\r\n".encode()  # beginning of content
+                with open(ss, 'rb') as content:
+                    for line in content:
+                        yield line
+                yield "\r\n".encode()  # end of content
+            
+            # End boundary
+            yield f"--{boundary}--\r\n".encode()
+
+        return stream(), 200, {'Content-Type': f'multipart/mixed; boundary="{boundary}"'}
 
     else:
         return jsonify({
-            'success': False,
             'error': "This is a generic error message; sorry about that."
         }), 500

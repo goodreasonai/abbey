@@ -12,6 +12,11 @@ from .user import get_user_search_engine_code
 from .auth import User
 from .utils import ntokens_to_nchars, get_token_estimate, get_mimetype_from_content_type_header, ext_from_mimetype
 import tempfile
+from .configs.settings import SETTINGS
+from .configs.secrets import SCRAPER_API_KEY
+from .exceptions import ScraperUnavailable
+import json
+from requests_toolbelt.multipart.decoder import MultipartDecoder
 
 
 class WebChunk(Chunk):
@@ -40,7 +45,7 @@ class ScrapeResponse():
     status: int
     url: str
     headers: dict
-    data: str
+    data: bytes  # bytes!!!
     def __init__(self, success, status, url, headers, data=""):
         self.success = success
         self.status = status
@@ -157,7 +162,7 @@ def scrape_with_requests(url, use_html=None, just_text=False, reduce_whitespace=
             website_data = response.content
             resp_headers = response.headers
         else:
-            website_data = use_html
+            website_data = use_html.encode('utf-8')
             resp_headers = {'content-type': 'text/html'}
 
         return ScrapeResponse(True, status, url, resp_headers, data=website_data)
@@ -170,6 +175,53 @@ def scrape_with_requests(url, use_html=None, just_text=False, reduce_whitespace=
             return ScrapeResponse(False, status=status_code, url=url, headers=headers)
         else:
             return ScrapeResponse(False, status=None, url=url, headers={})
+
+
+def scrape_with_service(url):
+    if 'scraper'  not in SETTINGS:
+        raise ScraperUnavailable()
+
+    scraper_url = "http://scraper:5006"  # default url
+    if SETTINGS['scraper'] and 'url' in SETTINGS['scraper']:
+        scraper_url = SETTINGS['scraper']['url']
+    headers = {
+        'Authorization': f'Bearer {SCRAPER_API_KEY}'
+    }
+    data = {
+        'url': url
+    }
+    try:
+        response = requests.post(scraper_url + '/scrape', json=data, headers=headers, timeout=30)
+        response.raise_for_status()
+        decoder = MultipartDecoder.from_response(response)
+
+        status = None
+        headers = None
+        content = None
+        for i, part in enumerate(decoder.parts):
+            if i == 0:
+                json_part = json.loads(part.content)
+                status = json_part['status']
+                headers = json_part['headers']
+            if i == 1:
+                content = part.content
+        
+        return ScrapeResponse(True, status, url, headers, content)
+    except requests.RequestException as e:
+        if e.response:
+            status_code = e.response.status_code
+            headers = e.response.headers
+            my_json = None
+            try:
+                my_json = e.response.json()
+                print(f"Error scraping: status={status_code}, error={my_json['error']}", file=sys.stderr)
+            except:
+                print(e, file=sys.stderr)
+
+            return ScrapeResponse(False, status=status_code, url=url, headers=headers)
+        else:
+            return ScrapeResponse(False, status=None, url=url, headers={})
+
 
 
 def get_web_chunks(user: User, search_query, available_context, max_n=5):

@@ -34,7 +34,6 @@ services:
       dockerfile: scraper/Dockerfile
     volumes:
       - ./scraper:/app
-      - ./.env:/etc/abbey/.env:ro
       - ./scraper/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
     ports:
       - 5006:5006

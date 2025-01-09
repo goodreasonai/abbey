@@ -11,10 +11,12 @@ from flask_cors import cross_origin
 from ..auth import token_optional
 from flask import Blueprint, request
 from ..template_response import MyResponse
-from ..web import ScrapeMetadata, ScrapeResponse, scrape_with_requests, get_metadata_from_scrape
+from ..web import ScrapeMetadata, ScrapeResponse, scrape_with_requests, scrape_with_service, get_metadata_from_scrape
 from ..utils import get_mimetype_from_content_type_header, ext_from_mimetype
 from ..db import with_lock, get_db
 from ..integrations.file_loaders import get_loader, TextSplitter, RawChunk
+from ..exceptions import ScraperUnavailable
+import sys
 import os
 
 
@@ -205,7 +207,12 @@ def scrape_one_site(user: User):
         return MyResponse(False, status=400, reason="Item not valid").to_json()
 
     # Scrape the site
-    scrape: ScrapeResponse = scrape_with_requests(item['url'])
+    try:
+        scrape: ScrapeResponse = scrape_with_service(item['url'])
+    except ScraperUnavailable:
+        print("Scraper service unavailable; falling back to request scrape.", file=sys.stderr)
+        scrape: ScrapeResponse = scrape_with_requests(item['url'])
+
     content_type = get_mimetype_from_content_type_header(scrape.headers['content-type']) if 'content-type' in scrape.headers else None
     meta: ScrapeMetadata = get_metadata_from_scrape(scrape)
     ext = ext_from_mimetype(content_type)

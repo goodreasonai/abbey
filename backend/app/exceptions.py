@@ -26,3 +26,10 @@ class EmailFailed(Exception):
         if response_text:
             full_message += f"\nFailed to send email using API.\n\nHere was the response: \"{response_text}\""
         super().__init__(full_message)
+
+class ScraperUnavailable(Exception):
+    def __init__(self, message="") -> None:
+        true_message = str(message)
+        if not true_message:
+            true_message = "There is no scraper service configured in settings"
+        super().__init__(true_message)
