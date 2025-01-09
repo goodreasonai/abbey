@@ -209,19 +209,14 @@ def scrape_with_service(url):
         return ScrapeResponse(True, status, url, headers, content)
     except requests.RequestException as e:
         if e.response:
-            status_code = e.response.status_code
-            headers = e.response.headers
-            my_json = None
             try:
                 my_json = e.response.json()
-                print(f"Error scraping: status={status_code}, error={my_json['error']}", file=sys.stderr)
+                message = my_json['error']
+                print(f"Error scraping: {message}", file=sys.stderr)
             except:
                 print(e, file=sys.stderr)
 
-            return ScrapeResponse(False, status=status_code, url=url, headers=headers)
-        else:
-            return ScrapeResponse(False, status=None, url=url, headers={})
-
+        return ScrapeResponse(False, status=None, url=url, headers={})
 
 
 def get_web_chunks(user: User, search_query, available_context, max_n=5):

@@ -213,6 +213,9 @@ def scrape_one_site(user: User):
         print("Scraper service unavailable; falling back to request scrape.", file=sys.stderr)
         scrape: ScrapeResponse = scrape_with_requests(item['url'])
 
+    if not scrape.success:
+        return MyResponse(False, {'scrape_status': scrape.status, 'headers': scrape.headers}, status=500, reason=f"Scrape was not success").to_json()
+
     content_type = get_mimetype_from_content_type_header(scrape.headers['content-type']) if 'content-type' in scrape.headers else None
     meta: ScrapeMetadata = get_metadata_from_scrape(scrape)
     ext = ext_from_mimetype(content_type)
