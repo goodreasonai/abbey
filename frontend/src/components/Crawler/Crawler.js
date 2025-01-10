@@ -6,6 +6,8 @@ import ControlledInputText from "../form/ControlledInputText"
 import styles from './Crawler.module.css'
 import { Auth } from "@/auth/auth"
 import Loading from "../Loading/Loading"
+import MyImage from "../MyImage/MyImage"
+import fileResponse from "@/utils/fileResponse"
 
 
 export default function Crawler({ manifestRow, canEdit }) {
@@ -177,6 +179,7 @@ function TableRow({ assetId, item, setItem, i, tableCols }) {
 
     const { getToken } = Auth.useAuth()
     const [scrapeLoading, setScrapeLoading] = useState(0)
+    const [reveal, setReveal] = useState(false)
 
     async function scrapeSite(item, i) {
         try {
@@ -210,34 +213,89 @@ function TableRow({ assetId, item, setItem, i, tableCols }) {
     }
 
     return (
-        <div style={{'display': 'flex'}}>
-            {tableCols.map((x) => {
-                let inner = item[x.key]
-                if (x.key == 'url'){
-                    inner = (<a target="_blank" href={item[x.key]}>{item[x.key]}</a>)
-                }
-                else if (x.key == 'scraped_at'){
-                    if (item[x.key]){
-                        inner = "Scraped"
+        <div>
+            <div style={{'display': 'flex'}}>
+                {tableCols.map((x) => {
+                    let inner = item[x.key]
+                    if (x.key == 'url'){
+                        inner = (<a target="_blank" href={item[x.key]}>{item[x.key]}</a>)
                     }
-                    else if (scrapeLoading == 1){
-                        inner = (
-                            <Loading text="" />
-                        )
-                    }
-                    else {
-                        inner = (
-                            <div style={{'display': 'flex', 'alignItems': 'center'}}>
-                                <div className={styles.tableButton} onClick={() => scrapeSite(item, i)}>
-                                    Scrape
+                    else if (x.key == 'scraped_at'){
+                        if (item[x.key]){
+                            if (item.website_data){
+                                inner = (
+                                    <div className="_clickable" onClick={() => setReveal(!reveal)} style={{'display': 'flex', 'alignItems': 'center', 'gap': '5px'}}>
+                                        <div>
+                                            Click Me
+                                        </div>
+                                    </div>
+                                )
+                            }
+                            else {
+                                inner = "Scraped"
+                            }
+                        }
+                        else if (scrapeLoading == 1){
+                            inner = (
+                                <Loading text="" />
+                            )
+                        }
+                        else {
+                            inner = (
+                                <div style={{'display': 'flex', 'alignItems': 'center'}}>
+                                    <div className={styles.tableButton} onClick={() => scrapeSite(item, i)}>
+                                        Scrape
+                                    </div>
                                 </div>
-                            </div>
-                        )
+                            )
+                        }
+                    }
+                    return (
+                        <div style={{'flex': x.flex}}>
+                            {inner}
+                        </div>
+                    )
+                })}
+            </div>
+            {item.website_data ? (
+                <Modal
+                    title={"Scrape"}
+                    isOpen={reveal}
+                    close={() => setReveal(false)}
+                >
+                    <ScrapePreview item={item} assetId={assetId} />
+                </Modal>
+            ) : ""}
+        </div>
+    )
+}
+
+function ScrapePreview({ assetId, item }){
+    const { getToken } = Auth.useAuth()
+    const websiteData = JSON.parse(item.website_data)
+    return (
+        <div>
+            {websiteData.map((dataItem) => {
+
+                async function downloadData(){
+                    try {
+                        const url = process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/files?id=${assetId}&name=${dataItem.resource_id}`
+                        const response = await fetch(url, {
+                            'headers': {
+                                'x-access-token': await getToken(),
+                            },
+                            'method': 'GET'
+                        })
+                        await fileResponse(response)
+                    }
+                    catch(e) {
+                        console.log(e)
                     }
                 }
+
                 return (
-                    <div style={{'flex': x.flex}}>
-                        {inner}
+                    <div className="_clickable" onClick={() => downloadData()}>
+                        Download
                     </div>
                 )
             })}

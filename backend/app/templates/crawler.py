@@ -4,15 +4,15 @@ from ..auth import User
 import sqlite3
 import tempfile
 import os
-from ..asset_actions import add_asset_resource, get_asset_resource, get_asset
+from ..asset_actions import add_asset_resource, get_asset_resource, get_asset, get_asset_resource_by_id
 from ..storage_interface import download_file, replace_asset_file, upload_asset_file
 from ..configs.str_constants import MAIN_FILE
 from flask_cors import cross_origin
 from ..auth import token_optional
 from flask import Blueprint, request
-from ..template_response import MyResponse
+from ..template_response import MyResponse, response_from_resource
 from ..web import ScrapeMetadata, ScrapeResponse, scrape_with_requests, scrape_with_service, get_metadata_from_scrape
-from ..utils import get_mimetype_from_content_type_header, ext_from_mimetype
+from ..utils import get_mimetype_from_content_type_header, ext_from_mimetype, get_extension_from_path, mimetype_from_ext
 from ..db import with_lock, get_db
 from ..integrations.file_loaders import get_loader, TextSplitter, RawChunk
 from ..exceptions import ScraperUnavailable
@@ -43,6 +43,19 @@ def create_and_upload_database(asset_id):
                 content_type TEXT,
                 url TEXT
             )
+        """
+        cursor.execute(sql)
+        sql = """
+            CREATE TABLE website_data (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                website_id INTEGER,  /* Foreign key to websites */
+                data_type TEXT,  /* Like 'screenshot' or 'data' */
+                resource_id INTEGER  /* Key into asset_resources */
+            )
+        """
+        cursor.execute(sql)
+        sql = """
+            CREATE INDEX website_id_index ON website_data(website_id);
         """
         cursor.execute(sql)
         # Commit the changes
@@ -142,7 +155,17 @@ def get_manifest(user: User):
     
     # Actual query
     sql = """
-        SELECT * FROM websites ORDER BY `created_at` DESC LIMIT ? OFFSET ?
+       SELECT 
+            websites.*, 
+            COALESCE(json_group_array(json_object(
+                'data_type', website_data.data_type,
+                'resource_id', website_data.resource_id
+            )), '[]') AS website_data
+        FROM websites
+        LEFT JOIN website_data ON websites.id = website_data.website_id
+        GROUP BY websites.id
+        ORDER BY websites.created_at DESC
+        LIMIT ? OFFSET ?
     """
     res = conn.execute(sql, (limit, offset))
     results = res.fetchall()
@@ -223,6 +246,7 @@ def scrape_one_site(user: User):
     tmp.write(scrape.data)
     MAX_TEXT_LENGTH = 100_000  # in characters
     text = ""
+    db = get_db()
     try:
         loader = get_loader(ext, tmp.name)
         splitter = TextSplitter(max_chunk_size=1024)
@@ -231,37 +255,58 @@ def scrape_one_site(user: User):
             x: RawChunk
             if len(text) + len(x.page_content) < MAX_TEXT_LENGTH:
                 text += x.page_content
-    finally:
-        os.remove(tmp.name)
-    db = get_db()
-    # Lock and add to the database
-    @with_lock(get_crawler_lock_name(asset_id), db)
-    def add_to_db():
-        crawler = CrawlerDB(asset_id)
-        sql = """
-            UPDATE websites
-            SET `title`=?,
-                `author`=?,
-                `text`=?,
-                `content_type`=?,
-                `scraped_at`=CURRENT_TIMESTAMP
-            WHERE `id`=?
-        """
-        crawler.execute(sql, (meta.title, meta.author, text, content_type, item['id']))
+        # Lock and add to the database
+        @with_lock(get_crawler_lock_name(asset_id), db)
+        def add_to_db():
+            crawler = CrawlerDB(asset_id)
+            sql = """
+                UPDATE websites
+                SET `title`=?,
+                    `author`=?,
+                    `text`=?,
+                    `content_type`=?,
+                    `scraped_at`=CURRENT_TIMESTAMP
+                WHERE `id`=?
+            """
+            crawler.execute(sql, (meta.title, meta.author, text, content_type, item['id']))
 
-        sql = """
-            SELECT * FROM websites WHERE `id`=?
-        """
-        res = crawler.execute(sql, (item['id'],))
-        updated = res.fetchone()
+            # Upload and insert the data
+            path, from_val = upload_asset_file(asset_id, tmp.name, ext)
+            assoc_file_id = add_asset_resource(asset_id, 'website', from_val, path, None, db=db)
+
+            sql = """
+                INSERT INTO website_data (`website_id`, `data_type`, `resource_id`)
+                VALUES (?, ?, ?)
+            """
+            crawler.execute(sql, (item['id'], 'data', assoc_file_id))
+
+            # Get currently entry including the resources
+            # Meant to mimic an entry returned in /manifest
+            sql = """
+                SELECT
+                    websites.*,
+                    COALESCE(json_group_array(json_object(
+                        'data_type', website_data.data_type,
+                        'resource_id', website_data.resource_id
+                    )), '[]') AS website_data
+                FROM websites
+                LEFT JOIN website_data ON websites.id = website_data.website_id
+                WHERE websites.id=?
+                GROUP BY websites.id
+            """
+            res = crawler.execute(sql, (item['id'],))
+            updated = res.fetchone()
+            
+            crawler.commit()
+            crawler.close()
+
+            return updated
         
-        crawler.commit()
-        crawler.close()
-
-        return updated
-    
-    new_row = add_to_db()    
-    db.close()
+        new_row = add_to_db()    
+    finally:
+        if os.path.exists(tmp.name):
+            os.remove(tmp.name)
+        db.close()
 
     return MyResponse(True, {'result': new_row}).to_json()
 
@@ -278,3 +323,35 @@ class Crawler(Template):
         # Create the initial sqlite database file and store it
         create_and_upload_database(asset_id)
         return True, asset_id
+    
+    @needs_db
+    def get_file(self, user, asset_id, only_headers=False, rec_calls=[], name=None, ret_resp=True, db=None):
+
+        if name is None:
+            return None
+        
+        try:
+            name = int(name)
+        except:
+            raise Exception("Crawler files are accessed via resource IDs rather than names")
+        
+        res = get_asset_resource_by_id(asset_id, name, db=db)
+        if not res and ret_resp:
+            response_status = 404
+            return MyResponse(False, reason=f"No file found for asset with id {asset_id}", status=response_status).to_json()
+        elif not res:
+            return None
+
+        ext = get_extension_from_path(None, res['path'])
+        mimetype = mimetype_from_ext(ext)
+        
+        if ret_resp:
+            real_title = res['title'] or "file"
+            return response_from_resource(res, mimetype, filename=real_title+ "." +ext, only_headers=only_headers)
+        
+        # Returning file path
+        ext = get_extension_from_path(None, res['path'])
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix="."+ext)
+        download_file(temp_file.name, res)
+        return temp_file.name
+

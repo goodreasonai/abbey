@@ -440,6 +440,20 @@ def get_asset_resource(asset_id, name, db=None):
 
 
 # Not permissioned!
+# Like get_asset_resource but uses the resource id and the asset id instead of the name
+@needs_db
+def get_asset_resource_by_id(asset_id, resource_id, db=None):
+    sql = """
+    SELECT * FROM asset_resources
+    WHERE `asset_id`=%s AND `id`=%s
+    """
+    curr = db.cursor()
+    curr.execute(sql, (asset_id, resource_id))
+    res = curr.fetchone()
+    return res
+
+
+# Not permissioned!
 # You probably want to use upload_asset_file before calling this.
 @needs_db
 def add_asset_resource(asset_id, name, from_loc, path, title, db=None):

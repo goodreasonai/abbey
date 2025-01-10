@@ -17,8 +17,11 @@ def get_unique_id():
 EXT_TO_MIMETYPE = {
     'doc': 'application/msword',
     'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'ppt': 'application/vnd.ms-powerpoint',
+    'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     'txt': 'text/plain',
     'pdf': 'application/pdf',
+    'xls': 'application/vnd.ms-excel',
     'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'md': 'text/markdown',
     'epub': 'application/epub+zip',
