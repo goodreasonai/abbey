@@ -10,7 +10,7 @@ from .integrations.web import SearchEngine, SearchResult, SEARCH_PROVIDERS
 from .integrations.file_loaders import get_loader, TextSplitter, RawChunk
 from .user import get_user_search_engine_code
 from .auth import User
-from .utils import ntokens_to_nchars, get_token_estimate, get_mimetype_from_content_type_header, ext_from_mimetype
+from .utils import ntokens_to_nchars, get_token_estimate, get_mimetype_from_headers, ext_from_mimetype, get_filename_from_headers, guess_filename_from_url, ext_from_mimetype
 import tempfile
 from .configs.settings import SETTINGS
 from .configs.secrets import SCRAPER_API_KEY
@@ -97,9 +97,15 @@ def get_metadata_from_scrape(scrape: ScrapeResponse):
     meta = ScrapeMetadata()
     if not scrape.success:
         return meta
-    if 'content-type' not in scrape.headers:
-        return meta
-    if get_mimetype_from_content_type_header(scrape.headers['content-type']) != 'text/html':
+    content_type = get_mimetype_from_headers(scrape.headers)
+    if content_type != 'text/html':
+        filename = get_filename_from_headers(scrape.headers)
+        if filename:
+            meta.title = filename
+        else:
+            ext = ext_from_mimetype(content_type)
+            if ext:
+                meta.title = guess_filename_from_url(scrape.url, ext)
         return meta
     
     soup = BeautifulSoup(scrape.data, 'html.parser')
@@ -251,7 +257,7 @@ def get_web_chunks(user: User, search_query, available_context, max_n=5):
         text = ""
         if scrape_result.success:
             if scrape_result.data and 'content-type' in scrape_result.headers:
-                mimetype = get_mimetype_from_content_type_header(scrape_result.headers['content-type'])
+                mimetype = get_mimetype_from_headers(scrape_result.headers)
                 ext = ext_from_mimetype(mimetype)
                 if not ext:
                     continue

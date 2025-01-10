@@ -7,6 +7,8 @@ from bs4 import BeautifulSoup
 import pyheif  # type: ignore
 from PIL import Image
 from urllib.parse import urlparse
+import re
+import os
 
 
 def get_unique_id():
@@ -44,10 +46,47 @@ def ext_from_mimetype(mimetype):
         return ""
 
 
-def get_mimetype_from_content_type_header(header):
-    parts = header.split(';')
-    mime_type = parts[0].strip()
-    return mime_type
+def get_filename_from_headers(headers):
+    if 'content-disposition' in headers:
+        content_disposition = headers['content-disposition']
+        match = re.search(r'filename="([^"]+)"', content_disposition, flags=re.IGNORECASE)
+        filename = match.group(1) if match else None
+        return filename
+    return None
+
+
+def get_mimetype_from_headers(headers):
+    """
+    1. If Content-Type is not 'application/octet-stream', trust it.
+    2. Otherwise, look at Content-Disposition for filename; guess by extension.
+    """
+
+    if 'content-type' in headers:
+        raw_content_type = headers['content-type'].lower()
+        if not raw_content_type.startswith('application/octet-stream'):
+            return raw_content_type.split(';', 1)[0].strip()
+
+    # Step 2: Content-Disposition -> filename -> guess by extension
+    filename = get_filename_from_headers(headers)
+    if filename:
+        _, ext = os.path.splitext(filename)
+        ext = ext.lower().lstrip('.')  # e.g., "pdf"
+        if ext in EXT_TO_MIMETYPE:
+            return EXT_TO_MIMETYPE[ext]
+
+    return None
+
+
+# For a URL that returns a file with a particular extensions, tries to see if it get guess the name of the file
+def guess_filename_from_url(url, extension):
+    # Build a regex that looks for "someName.<extension>" 
+    # followed by either the end of the string or a URL delimiter (&, ?, #).
+    pattern = re.compile(
+        rf'([^/?#&]+\.{extension})(?=$|[?&#])',  # e.g. something.pdf(?=$|[?&#])
+        re.IGNORECASE
+    )
+    match = pattern.search(url)
+    return match.group(1) if match else None
 
 
 # Returns without '.'

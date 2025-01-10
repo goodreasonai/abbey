@@ -12,7 +12,7 @@ from ..auth import token_optional
 from flask import Blueprint, request
 from ..template_response import MyResponse, response_from_resource
 from ..web import ScrapeMetadata, ScrapeResponse, scrape_with_requests, scrape_with_service, get_metadata_from_scrape
-from ..utils import get_mimetype_from_content_type_header, ext_from_mimetype, get_extension_from_path, mimetype_from_ext
+from ..utils import ext_from_mimetype, get_extension_from_path, mimetype_from_ext, get_mimetype_from_headers
 from ..db import with_lock, get_db
 from ..integrations.file_loaders import get_loader, TextSplitter, RawChunk
 from ..exceptions import ScraperUnavailable
@@ -239,7 +239,7 @@ def scrape_one_site(user: User):
     if not scrape.success:
         return MyResponse(False, {'scrape_status': scrape.status, 'headers': scrape.headers}, status=500, reason=f"Scrape was not success").to_json()
 
-    content_type = get_mimetype_from_content_type_header(scrape.headers['content-type']) if 'content-type' in scrape.headers else None
+    content_type = get_mimetype_from_headers(scrape.headers)
     meta: ScrapeMetadata = get_metadata_from_scrape(scrape)
     ext = ext_from_mimetype(content_type)
     tmp = tempfile.NamedTemporaryFile(delete=False)

@@ -12,10 +12,9 @@ from .template import Template
 from ..storage_interface import upload_asset_file, delete_resources
 from ..asset_actions import get_asset, has_asset_title_been_updated, replace_asset_resource, has_asset_desc_been_updated
 from ..web import scrape_with_requests, ScrapeResponse, ScrapeMetadata, get_metadata_from_scrape
-from ..utils import get_mimetype_from_content_type_header
-from ..utils import ext_from_mimetype
+from ..utils import ext_from_mimetype, get_mimetype_from_headers
 from ..configs.str_constants import MAIN_FILE
-import tempfile
+
 
 bp = Blueprint('website', __name__, url_prefix="/website")
 
@@ -66,7 +65,7 @@ def scrape_and_upload(url, asset_id, asset_title, use_html=None, ignore_title=Fa
     if 'content-type' not in response.headers:
         return False, "There was no content type header"
     
-    mime = get_mimetype_from_content_type_header(response.headers['content-type'])
+    mime = get_mimetype_from_headers(response.headers)
     ext = ext_from_mimetype(mime)
 
     if not ext:
