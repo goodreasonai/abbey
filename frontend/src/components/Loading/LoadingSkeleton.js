@@ -3,6 +3,7 @@ import styles from './LoadingSkeleton.module.css'
 /*
 Explanation of the type argument: the type determines the look and feel of a loading skeleton. They are presets.
 - default: like an assets table row by row gray thing
+- default-small: default but narrower
 - horizontal: like an assets table recently viewed, horizontally spaced rectangles
 - green-pills: like a table of flex-wrap:wrap'ed LinkedSelectorItems
 - grid: evenly spaced, with wrap, 2 wide.
@@ -19,6 +20,10 @@ export default function LoadingSkeleton({ numResults=10, type='default', classNa
     if (type == 'default'){
         containerClassName = styles.container
         itemClassName = styles.loadingRow
+    }
+    else if (type == 'default-small'){
+        containerClassName = styles.containerSmall
+        itemClassName = styles.loadingRowSmall
     }
     else if (type == 'horizontal'){
         containerClassName = styles.containerHorizontal

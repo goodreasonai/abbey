@@ -12,7 +12,7 @@ from .integrations.file_loaders import get_loader, TextSplitter
 from .utils import make_json_serializable, ntokens_to_nchars, get_extension_from_path
 import tempfile
 import warnings
-from .storage_interface import delete_resources, download_file, upload_retriever
+from .storage_interface import download_file, upload_retriever
 import os
 import pickle
 from .db import needs_special_db, get_db
@@ -662,15 +662,16 @@ class ResourceRetriever():
         # Delete the bad/old ones...
         if len(to_del) > 0:
             sql = f"""
-            DELETE FROM asset_retrieval_storage
+            SELECT * FROM asset_retrieval_storage
             WHERE `resource_id`=%s
             AND JSON_EXTRACT(`metadata`, '$.retriever_type_name') LIKE %s
             AND `id` IN ({','.join([str(x['id']) for x in to_del])})
             """
             curr.execute(sql, (self.resource_manifest['id'], f'"{self.retriever_type_name}"'))
+            safe_to_del = curr.fetchall()
+            from .asset_actions import delete_asset_retrieval_resources
+            delete_asset_retrieval_resources(safe_to_del, db=db, no_commit=True)
             db.commit(close_cursors=False, close=False)
-
-            delete_resources(to_del)
         
         if res:
             # There's an existing one in storage

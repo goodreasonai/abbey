@@ -9,7 +9,7 @@ from ..db import get_db, needs_db
 from ..template_response import MyResponse
 import json
 from .template import Template
-from ..storage_interface import upload_asset_file, delete_resources
+from ..storage_interface import upload_asset_file
 from ..asset_actions import get_asset, has_asset_title_been_updated, replace_asset_resource, has_asset_desc_been_updated
 from ..web import scrape_with_requests, ScrapeResponse, ScrapeMetadata, get_metadata_from_scrape
 from ..utils import ext_from_mimetype, get_mimetype_from_headers

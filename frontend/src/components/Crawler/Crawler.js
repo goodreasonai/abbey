@@ -7,7 +7,9 @@ import styles from './Crawler.module.css'
 import { Auth } from "@/auth/auth"
 import Loading from "../Loading/Loading"
 import MyImage from "../MyImage/MyImage"
-import fileResponse from "@/utils/fileResponse"
+import fileResponse, { getExtFromMimetype } from "@/utils/fileResponse"
+import { formatTimestampSmall } from "@/utils/time"
+import DeleteIcon from '../../../public/icons/DeleteIcon.png'
 
 
 export default function Crawler({ manifestRow, canEdit }) {
@@ -65,7 +67,9 @@ export default function Crawler({ manifestRow, canEdit }) {
             const myJson = await response.json()
             const newRow = myJson['result']
             setWebsites([newRow, ...websites])
+            setAddWebsiteURL("")
             setAddWebsiteLoadingState(2)
+            clearWebsiteModal()
         }
         catch(e) {
             console.log(e)
@@ -95,26 +99,30 @@ export default function Crawler({ manifestRow, canEdit }) {
                 isOpen={addWebsiteModalOpen}
                 close={() => clearWebsiteModal()}>
                 <div>
-                    Add URL
-                    <div>
-                        <ControlledInputText
-                            value={addWebsiteURL}
-                            setValue={setAddWebsiteURL}
-                        />
-                    </div>
-                    {addWebsiteLoadingState == 1 ? (
-                        <Loading text="" />
-                    ) : (
-                        <div>
-                            <SyntheticButton
-                                value={"Add"}
-                                onClick={() => addWebsite()}
+                    <div style={{'display': 'flex', 'gap': '10px'}}>
+                        <div style={{'flex': '1'}}>
+                            <ControlledInputText
+                                value={addWebsiteURL}
+                                setValue={setAddWebsiteURL}
+                                placeholder="https://example.com/my-page"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        addWebsite();
+                                    }
+                                }}
                             />
                         </div>
-                    )}
-                    {addWebsiteLoadingState == 2 ? (
-                        "Added website"
-                    ) : ""}
+                        {addWebsiteLoadingState == 1 ? (
+                            <Loading text="" />
+                        ) : (
+                            <div>
+                                <SyntheticButton
+                                    value={"Add"}
+                                    onClick={() => addWebsite()}
+                                />
+                            </div>
+                        )}
+                    </div>
                 </div>
             </Modal>
         </div>
@@ -129,14 +137,45 @@ export default function Crawler({ manifestRow, canEdit }) {
 
     const tableCols = useMemo(() => {
         return [
-            {'title': 'Title', 'key': 'title', 'flex': 1},
-            {'title': 'URL', 'key': 'url', 'flex': 1},
-            {'title': '', 'key': 'scraped_at', 'flex': 1}
+            {'title': 'Added', 'key': 'created_at', 'flex': 2},
+            {'title': 'URL', 'key': 'url', 'flex': 6},
+            {'title': 'Title', 'key': 'title', 'flex': 6},
+            {'title': 'Content', 'key': 'content_type', 'flex': 2},
+            {'title': 'Scrape', 'key': '_scrape', 'flex': 6},
+            {'title': 'Visited', 'key': 'scraped_at', 'flex': 2},
+            {'title': '', 'key': 'delete', 'flex': 1},
         ]
     }, [])
 
+    async function removeRow(item){
+        try {
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/crawler/remove'
+            const data = {
+                'id': manifestRow?.id,
+                'row_id': item.id
+            }
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                    'Content-Type': 'application/json'
+                },
+                'method': 'POST',
+                'body': JSON.stringify(data)
+            })
+            if (!response.ok){
+                throw Error("Response was not OK")
+            }
+            setWebsites((prev) => prev.filter((x) => x.id != item.id))  // prev and filter used to prevent issues when two are called at the same time
+            return true
+        }
+        catch(e) {
+            console.log(e)
+        }
+        return false  // means an error occurred, so the website won't be deleted
+    }
+
     function makeRow(item, i) {
-        return <TableRow assetId={manifestRow?.id} setItem={(x) => setWebsites(websites.map((old) => old.id == x.id ? x : old))} item={item} i={i} tableCols={tableCols} />
+        return <TableRow assetId={manifestRow?.id} setItem={(x) => setWebsites(websites.map((old) => old.id == x.id ? x : old))} item={item} i={i} isFirst={ i == 0} isLast={i == websites?.length - 1} tableCols={tableCols} removeRow={() => removeRow(item)} />
     }
 
     return (
@@ -149,13 +188,14 @@ export default function Crawler({ manifestRow, canEdit }) {
                 makeRow={makeRow}
                 limit={resultLimit}
                 getUrl={getUrl}
-                loadingSkeleton={'default'}
+                loadingSkeleton={'default-small'}
                 searchable={true}
                 tableHeader={(<TableHeader cols={tableCols} />)}
                 gap={'0px'}
                 searchBarContainerStyle={searchBarContainerStyle}
                 searchBarStyle={{'width': '300px'}}
                 rightOfSearchBar={rightOfSearchBar}
+                flexWrap="noWrap"
             />
         </div>
     )
@@ -163,23 +203,39 @@ export default function Crawler({ manifestRow, canEdit }) {
 
 function TableHeader({ cols }) {
     return (
-        <div style={{'display': 'flex'}}>
-            {cols.map((item) => {
-                return (
-                    <div style={{'flex': item.flex}}>
-                        {item.title}
-                    </div>
-                )
-            })}
+        <div className={styles.tableHeader}>
+            <div style={{'display': 'flex'}}>
+                {cols.map((item) => {
+                    return (
+                        <div style={{'flex': item.flex}}>
+                            {item.title}
+                        </div>
+                    )
+                })}
+            </div>
         </div>
     )
 }
 
-function TableRow({ assetId, item, setItem, i, tableCols }) {
+function TableRow({ assetId, item, setItem, i, tableCols, isFirst, isLast, removeRow }) {
 
     const { getToken } = Auth.useAuth()
     const [scrapeLoading, setScrapeLoading] = useState(0)
+    const [downloadLoadState, setDownloadLoadState] = useState(0)
     const [reveal, setReveal] = useState(false)
+    const [deleteLoadState, setDeleteLoadState] = useState(0)
+
+    async function clickRemoveRow(){
+        setDeleteLoadState(1)
+        const removed = await removeRow()
+        if (removed){
+            setDeleteLoadState(2)
+        }
+        else {
+            // set up a message in the future maybe
+            setDeleteLoadState(3)
+        }
+    }
 
     async function scrapeSite(item, i) {
         try {
@@ -212,28 +268,66 @@ function TableRow({ assetId, item, setItem, i, tableCols }) {
         }
     }
 
+    async function downloadData(resourceId){
+        try {
+            setDownloadLoadState(1)
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/files?id=${assetId}&name=${resourceId}`
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                },
+                'method': 'GET'
+            })
+            await fileResponse(response)
+            setDownloadLoadState(2)
+        }
+        catch(e) {
+            setDownloadLoadState(3)
+            console.log(e)
+        }
+    }
+
     return (
-        <div>
+        <div className={`${styles.rowContainer} ${isFirst ? styles.rowContainerFirst : ''} ${isLast ? styles.rowContainerLast : ''} ${i % 2 ? styles.rowContainerOdd : ''}`}>
             <div style={{'display': 'flex'}}>
                 {tableCols.map((x) => {
                     let inner = item[x.key]
                     if (x.key == 'url'){
-                        inner = (<a target="_blank" href={item[x.key]}>{item[x.key]}</a>)
+                        inner = (<a className={styles.urlLink} target="_blank" href={item[x.key]}>{item[x.key]}</a>)
                     }
-                    else if (x.key == 'scraped_at'){
-                        if (item[x.key]){
-                            if (item.website_data){
-                                inner = (
-                                    <div className="_clickable" onClick={() => setReveal(!reveal)} style={{'display': 'flex', 'alignItems': 'center', 'gap': '5px'}}>
-                                        <div>
-                                            Click Me
+                    else if (x.key == 'created_at'){
+                        inner = formatTimestampSmall(item[x.key])
+                    }
+                    else if (x.key == 'content_type'){
+                        if (item.website_data){
+                            const websiteData = JSON.parse(item.website_data)
+                            const mainData = websiteData.filter((x) => x.data_type == 'data')
+                            if (mainData.length){
+                                const ext = getExtFromMimetype(item[x.key])
+                                inner = downloadLoadState == 1 ? (
+                                    <Loading text="" />
+                                ) : (
+                                    <div style={{'display': 'flex'}}>
+                                        <div className={styles.downloadLink} onClick={() => downloadData(mainData[0].resource_id)}>
+                                            {ext}
                                         </div>
                                     </div>
                                 )
                             }
-                            else {
-                                inner = "Scraped"
-                            }
+                        }
+                        else {
+                            inner = ""
+                        }
+                    }
+                    else if (x.key == '_scrape'){
+                        if (item['scraped_at']){
+                            inner = (
+                                <div style={{'display': 'flex', 'alignItems': 'center'}}>
+                                    <div className={styles.tableButton} onClick={() => setReveal(!reveal)}>
+                                        View
+                                    </div>
+                                </div>
+                            )
                         }
                         else if (scrapeLoading == 1){
                             inner = (
@@ -250,8 +344,27 @@ function TableRow({ assetId, item, setItem, i, tableCols }) {
                             )
                         }
                     }
+                    else if (x.key == 'scraped_at'){
+                        inner = item['scraped_at'] ? (
+                            <div>
+                                {formatTimestampSmall(item['scraped_at'])}
+                            </div>
+                        ) : ""
+                    }
+                    else if (x.key == 'delete'){
+                        inner =  (
+                            <div style={{'display': 'flex', 'justifyContent': 'flex-end', 'alignItems': 'center'}}>
+                                {deleteLoadState == 1 ? (
+                                    <Loading text="" />
+                                ) : (
+                                    <MyImage className={"_clickable"} src={DeleteIcon} width={20} height={20} onClick={() => clickRemoveRow()} alt={"Delete"} />
+                                )}
+                            </div>
+                        )
+                    }
+
                     return (
-                        <div style={{'flex': x.flex}}>
+                        <div style={{'flex': x.flex}} className="_clamped1">
                             {inner}
                         </div>
                     )

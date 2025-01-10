@@ -46,16 +46,18 @@ export default function ControlledTable({ items, setItems, loadingState, setLoad
 
     async function getItems(page){
         setLoadingState(1)
+        const oldCurrPage = currPage
         try {
+            setCurrPage(page)
             let myJson = await makeRequest(page)
             setItems(myJson[resultsKey])
-            setCurrPage(page)
             if (totalKey){
                 setNumResults(myJson[totalKey])
             }
             setLoadingState(2)
         }
         catch (e) {
+            setCurrPage(oldCurrPage)
             console.log(e)
             setLoadingState(3)
         }
@@ -112,8 +114,10 @@ export default function ControlledTable({ items, setItems, loadingState, setLoad
         return [[], 0]
     }
 
+    let showTableHeader = true
     let display = ""
     if (!items || items.length == 0 || loadingState < 2){
+        showTableHeader = false
         if (loadingState == 1 || loadingState == 0){
             if (loadingSkeleton){
                 display = (
@@ -125,7 +129,6 @@ export default function ControlledTable({ items, setItems, loadingState, setLoad
                     <Loading />
                 )
             }
-            
         }
         else {
             display = (
@@ -170,9 +173,11 @@ export default function ControlledTable({ items, setItems, loadingState, setLoad
                     </div>
             ) : ""}
             {paginated && doublePaginated && items && numResults > limit ? <Pagination getPage={getItems} currPage={currPage} numPages={Math.ceil(numResults / limit)} /> : ""}
-            {tableHeader}
-            <div style={{'display': 'flex', 'flexDirection': flexDirection, 'gap': gap, 'flexWrap': flexWrap}}>
-                {display}
+            <div>
+                {showTableHeader ? tableHeader : ""}
+                <div style={{'display': 'flex', 'flexDirection': flexDirection, 'gap': gap, 'flexWrap': flexWrap}}>
+                    {display}
+                </div>
             </div>
             <div style={paginationContainerStyle}>
                 {paginated && items && numResults > limit ? <Pagination getPage={getItems} currPage={currPage} numPages={Math.ceil(numResults / limit)} /> : ""}

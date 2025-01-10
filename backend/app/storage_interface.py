@@ -21,6 +21,7 @@ def replace_asset_file(from_key, path, tmp_path, use_data=None):
     db_path = fs.upload_file(None, tmp_path, None, remote_path=path, use_data=use_data)
     return db_path, fs.code
 
+
 def upload_retriever(resource_id, file_path, retriever_type_name):
     suggested_path = ["retriever_storage", str(resource_id['id']), retriever_type_name]
     fs: FileStorage = FS_PROVIDERS[DEFAULT_STORAGE_OPTION]
@@ -42,7 +43,8 @@ def upload_media(file_path, ext):
     return db_path, fs.code
 
 
-def delete_resources(asset_resources):
+# Notably does not delete anything from the database (same goes with everything else here)
+def delete_resources_from_storage(asset_resources):
     for res in asset_resources:
         fs: FileStorage = FS_PROVIDERS[res['from']]
         fs.delete_file(res['path'])

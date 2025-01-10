@@ -1,11 +1,9 @@
-from ..storage_interface import delete_resources
 from ..configs.user_config import MAX_PDF_PAGES
 from ..exceptions import PdfTooLongError
 from ..db import needs_db
 from ..utils import get_extension_from_path, remove_ext, is_valid_email
-from ..asset_actions import upload_asset, set_sources
-
-from ..auth import get_permissioning_string, User, token_required, token_optional
+from ..asset_actions import upload_asset, set_sources, delete_asset_resources
+from ..auth import get_permissioning_string, User, token_required
 from ..db import get_db
 from ..template_response import MyResponse
 import os
@@ -195,7 +193,7 @@ class Folder(Template):
                 # Can do this because we're using the same connection
                 for id in asset_ids:
                     reses = tmp.get_asset_resources(user, id, new_conn=True)  # new conn avoids issue with db committing unexpectedly
-                    delete_resources(reses)
+                    delete_asset_resources(reses)
                     
             inside_file_desc = f"Document inside {asset_title}"
             totals = []

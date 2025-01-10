@@ -36,6 +36,24 @@
     border-radius: var(--medium-border-radius);
 }
 
+/* Default Small */
+
+.containerSmall {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.loadingRowSmall {
+    min-height: 30px;
+
+    background: linear-gradient(90deg, var(--light-highlight), var(--light-primary), var(--light-highlight));
+    background-size: 500px 100%; 
+    animation: shimmer 5s infinite linear;
+    width: 100%;  /* Pretty arbitrary, but recall that these are almost always asset rows, which are long. */
+    border-radius: var(--medium-border-radius);
+}
+
 /* Horizontal */
 
 .containerHorizontal {

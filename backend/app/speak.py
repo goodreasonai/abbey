@@ -14,7 +14,7 @@ from .activity import make_log
 from .db import get_db, needs_db
 from .configs.str_constants import SPEAK_ACTIVITY
 import tempfile
-from .storage_interface import upload_media, download_file
+from .storage_interface import upload_media, download_file, delete_resources_from_storage
 from .asset_actions import get_asset
 import hashlib
 import json
@@ -40,11 +40,25 @@ def save_audio_media(fname, asset_id, name, text="", ext="mp3", model_code=DEFAU
         'text_hash': text_hash,
         'model_code': model_code
     }
+    # Media files must be unique to (asset_id, name) so we delete any old one if it exists!
+    sql = """
+        SELECT * FROM media_data
+        WHERE `asset_id`=%s AND `name`=%s
+    """
+    curr = db.cursor()
+    curr.execute(sql, (asset_id, name))
+    existing = curr.fetchall()
+    if existing and len(existing):
+        delete_resources_from_storage(existing)
+        sql = """
+            DELETE FROM media_data
+            WHERE `asset_id`=%s AND `name`=%s
+        """
+        curr.execute(sql, (asset_id, name))
     sql = """
         INSERT INTO media_data (`asset_id`, `name`, `media_type`, `extension`, `from`, `path`, `metadata`)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
-    curr = db.cursor()
     curr.execute(sql, (asset_id, name, 'audio', ext, from_, path, json.dumps(metadata)))
     db.commit()
 

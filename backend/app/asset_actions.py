@@ -1,11 +1,10 @@
-from .storage_interface import delete_resources
 from .exceptions import NoCreateError, UserIsNoneError
 from .auth import SynthUser, User
 from .configs.user_config import ALLOW_PUBLIC_UPLOAD
 import json
 from .auth import get_permissioning_string
 from .db import get_db, needs_db, with_lock, needs_special_db, ProxyDB, PooledCursor
-from .retriever import consistency_check, Retriever
+from .retriever import Retriever
 from .configs.secrets import DB_TYPE
 from .configs.str_constants import CHAT_CONTEXT, SUMMARY_APPLY_JOB, SUMMARY_PAIRWISE_JOB, HAS_EDITED_ASSET_TITLE, HAS_EDITED_ASSET_DESC, PROTECTED_METADATA_KEYS, RETRIEVAL_SOURCE, BOOK_ORDER, RETRIEVAL_SOURCE
 from .jobs import complete_job, job_error_wrapper, start_job
@@ -18,7 +17,7 @@ from .worker import task_apply, task_general
 import pickle
 from .reducer import Reducer
 import tempfile
-from .storage_interface import upload_asset_file
+from .storage_interface import upload_asset_file, delete_resources_from_storage
 import os
 
 # DO NOT IMPORT ANYTHING FROM templates.py (if needed, do dynamic import)
@@ -454,6 +453,22 @@ def get_asset_resource_by_id(asset_id, resource_id, db=None):
 
 
 # Not permissioned!
+# Like get_asset_resource_by_id but gets multiple
+@needs_db
+def get_asset_resources_by_id(asset_id, resource_ids, db=None):
+    # Ensure resource_ids is a tuple or list to use with the IN clause
+    sql = """
+    SELECT * FROM asset_resources
+    WHERE `asset_id`=%s AND `id` IN %s
+    """
+    curr = db.cursor()
+    # Pass resource_ids as a tuple to match the parameterized query
+    curr.execute(sql, (asset_id, tuple(resource_ids)))
+    res = curr.fetchall()  # Use fetchall to get all matching records
+    return res
+
+
+# Not permissioned!
 # You probably want to use upload_asset_file before calling this.
 @needs_db
 def add_asset_resource(asset_id, name, from_loc, path, title, db=None):
@@ -468,6 +483,28 @@ def add_asset_resource(asset_id, name, from_loc, path, title, db=None):
 
 
 @needs_db
+def delete_asset_resources(resources, db: ProxyDB=None):
+    delete_resources_from_storage(resources)
+    curr = db.cursor()
+    sql = """
+        DELETE FROM asset_resources
+        WHERE `id` IN %s
+    """
+    curr.execute(sql, [tuple([x['id'] for x in resources])])
+
+
+@needs_db
+def delete_asset_retrieval_resources(resources, db: ProxyDB=None):
+    delete_resources_from_storage(resources)
+    sql = """
+        DELETE FROM asset_retrieval_storage
+        WHERE `id` IN %s
+    """
+    curr = db.cursor()
+    curr.execute(sql, [tuple([x['id'] for x in resources])])
+
+
+@needs_db
 def replace_asset_resource(asset_id, name, from_loc, path, title, no_commit=False, db=None):
     curr = db.cursor()
     sql = f"""
@@ -477,13 +514,7 @@ def replace_asset_resource(asset_id, name, from_loc, path, title, no_commit=Fals
     curr.execute(sql, (asset_id, name))
     results = curr.fetchall()
     if results and len(results):
-        delete_resources(results)
-
-    sql = f"""
-    DELETE FROM asset_resources
-    WHERE `asset_id` = %s AND `name` = %s
-    """
-    curr.execute(sql, (asset_id, name))
+        delete_asset_resources(results)
 
     return add_asset_resource(asset_id, name, from_loc, path, title, no_commit=no_commit, db=db)
 
@@ -519,14 +550,7 @@ def delete_asset(asset_row, db=None):
     """
     curr.execute(sql, (asset_id,))
     results = curr.fetchall()
-    delete_resources(results)
-
-    # Delete asset resources (including on AWS)
-    sql = """
-    DELETE FROM `asset_resources`
-    WHERE `asset_id` = %s
-    """
-    curr.execute(sql, (asset_id,))
+    delete_asset_resources(results)
 
     # Delete metadata
     sql = """
@@ -535,7 +559,7 @@ def delete_asset(asset_row, db=None):
     """
     curr.execute(sql, (asset_id,))
     
-    # Delete asset manifest rowR
+    # Delete asset manifest row
     # Delete asset permissions
 
     sql = """
@@ -551,13 +575,7 @@ def delete_asset(asset_row, db=None):
     """
     curr.execute(sql, (asset_id,))
     results = curr.fetchall()
-    delete_resources(results)
-
-    sql = """
-    DELETE FROM `asset_retrieval_storage`
-    WHERE `asset_id` = %s
-    """
-    curr.execute(sql, (asset_id,))
+    delete_asset_retrieval_resources(results)
     
     # NOTE: jobs resources are also attached to asset, so don't need to separately delete
     # However, we do not need to get rid of associated jobs storage
@@ -596,7 +614,7 @@ def delete_asset(asset_row, db=None):
     """
     curr.execute(sql, (asset_id,))
     results = curr.fetchall()
-    delete_resources(results)
+    delete_resources_from_storage(results)
 
     sql = """
     DELETE FROM `media_data`

@@ -4,7 +4,7 @@ from ..auth import User
 import sqlite3
 import tempfile
 import os
-from ..asset_actions import add_asset_resource, get_asset_resource, get_asset, get_asset_resource_by_id
+from ..asset_actions import add_asset_resource, get_asset_resource, get_asset, get_asset_resource_by_id, get_asset_resources_by_id, delete_asset_resources
 from ..storage_interface import download_file, replace_asset_file, upload_asset_file
 from ..configs.str_constants import MAIN_FILE
 from flask_cors import cross_origin
@@ -32,6 +32,7 @@ def create_and_upload_database(asset_id):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
 
+        # You should modify /manifest and add appropriate columns if you modify this
         sql = """
             CREATE TABLE websites (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -152,11 +153,16 @@ def get_manifest(user: User):
     """
     res = conn.execute(sql)
     total = res.fetchone()['_total']
-    
     # Actual query
     sql = """
        SELECT 
-            websites.*, 
+            websites.id,
+            websites.created_at,
+            websites.scraped_at,
+            websites.title,
+            websites.author,
+            websites.content_type,
+            websites.url,
             COALESCE(json_group_array(json_object(
                 'data_type', website_data.data_type,
                 'resource_id', website_data.resource_id
@@ -174,6 +180,60 @@ def get_manifest(user: User):
 
     return MyResponse(True, {'results': results, 'total': total}).to_json()
 
+
+@bp.route('/remove', methods=('POST',))
+@cross_origin()
+@token_optional
+def remove_website(user: User):
+    asset_id = request.json.get('id')
+    asset_row = get_asset(user, asset_id)
+    if not asset_row:
+        return MyResponse(False, status=404, reason="Asset not found").to_json()
+
+    row_id = request.json.get('row_id')
+
+    db = get_db()
+    try:
+        # Lock and remove from the database
+        @with_lock(get_crawler_lock_name(asset_id), db)
+        def remove_from_db():
+            crawler = CrawlerDB(asset_id)
+
+            # Note the associated website data and remove their resources from the global db
+            # Remove the websites entry and websites data entries
+
+            sql = """
+                SELECT * FROM website_data
+                WHERE `website_id` = ?;
+            """
+            res = crawler.execute(sql, (row_id,))
+            website_data_rows = res.fetchall()
+
+            # Remove associated resources
+            resource_ids = [x['resource_id'] for x in website_data_rows]
+            asset_resources = get_asset_resources_by_id(asset_id, resource_ids, db=db)
+            delete_asset_resources(asset_resources)
+            
+            sql = """
+                DELETE FROM websites
+                WHERE `id`=?
+            """
+            crawler.execute(sql, (row_id,))
+
+            sql = """
+                DELETE FROM website_data
+                WHERE `website_id`=?
+            """
+            crawler.execute(sql, (row_id,))
+
+            crawler.commit()
+            crawler.close()
+        
+        remove_from_db()    
+    finally:
+        db.close()
+
+    return MyResponse(True).to_json()
 
 @bp.route('/add', methods=('POST',))
 @cross_origin()

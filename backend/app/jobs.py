@@ -1,7 +1,7 @@
 from .db import get_db, needs_special_db
-from .storage_interface import delete_resources
 import json
 import sys
+
 
 @needs_special_db(consistent_conn=True)
 def mark_job_error(job_id, db=None):
@@ -241,13 +241,14 @@ def delete_job(asset_id, job_id, db=None):
 
     # Check if we need to remove something from S3
     if job['resource_id']:
+        from .asset_actions import delete_asset_resources
         sql = """
-        SELECT * FROM asset_resources
-        WHERE `id`=%s
+            SELECT * FROM asset_resources
+            WHERE `id`=%s
         """
         curr.execute(sql, (job['resource_id'],))
         resource = curr.fetchone()
-        delete_resources([resource])
+        delete_asset_resources([resource])
 
     sql = """
     DELETE FROM jobs

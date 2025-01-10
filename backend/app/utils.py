@@ -16,6 +16,7 @@ def get_unique_id():
     return ''.join(random.choice(characters) for _ in range(10))
 
 
+# There's a frontend analog to this you should update as well (in utils fileResponse)
 EXT_TO_MIMETYPE = {
     'doc': 'application/msword',
     'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

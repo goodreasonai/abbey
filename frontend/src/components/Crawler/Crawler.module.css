@@ -12,3 +12,46 @@
 .tableButton:hover {
     background-color: var(--light-highlight);
 }
+
+.urlLink:hover {
+    text-decoration: underline;
+}
+
+.downloadLink {
+    cursor: pointer;
+}
+
+.downloadLink:hover {
+    text-decoration: underline;
+}
+
+.rowContainer {
+    font-family: var(--font-body);
+    padding: 5px 10px;
+    border: 1px solid var(--light-border);
+    border-bottom-width: 0px;
+}
+
+.rowContainerFirst {
+    border-top-left-radius: var(--medium-border-radius);
+    border-top-right-radius: var(--medium-border-radius);
+}
+
+.rowContainerLast {
+    border-bottom-width: 1px;
+    border-bottom-left-radius: var(--medium-border-radius);
+    border-bottom-right-radius: var(--medium-border-radius);
+}
+
+.rowContainerOdd {
+    background-color: var(--light-primary);
+}
+
+.tableHeader {
+    border-radius: var(--medium-border-radius);
+    border: 1px solid var(--light-border);
+    background-color: var(--light-primary);
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    font-weight: bold;
+}

@@ -2,7 +2,7 @@ from .db import get_db, needs_special_db, ProxyDB
 import pickle
 import numpy as np
 import tempfile
-from .storage_interface import download_file, upload_inter_asset_retriever, delete_resources
+from .storage_interface import download_file, upload_inter_asset_retriever, delete_resources_from_storage
 import sys
 from .integrations.embed import EMBED_PROVIDERS, Embed
 import os
@@ -63,7 +63,7 @@ class InterAssetRetriever():
             path, res_from = upload_inter_asset_retriever(fname)
             if prev_to_del:
                 # Delete previous, in case we're doing a replacement (as for consistency)
-                delete_resources([prev_to_del])
+                delete_resources_from_storage([prev_to_del])
                 sql = """
                 DELETE FROM inter_asset_retrieval_storage
                 WHERE `group_id`=%s
