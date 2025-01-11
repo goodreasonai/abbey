@@ -55,3 +55,18 @@
     padding: 5px 10px;
     font-weight: bold;
 }
+
+.screenshotContainer {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.screenshot {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Options: cover, contain, fill, scale-down, none */
+}
