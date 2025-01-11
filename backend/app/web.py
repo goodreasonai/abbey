@@ -17,6 +17,7 @@ from .configs.secrets import SCRAPER_API_KEY
 from .exceptions import ScraperUnavailable
 import json
 from requests_toolbelt.multipart.decoder import MultipartDecoder
+import os
 
 
 class WebChunk(Chunk):
@@ -40,32 +41,153 @@ class WebChunk(Chunk):
         return regular
 
 
+class ScrapeMetadata():
+    def __init__(self):
+        self.author: str = ""
+        self.desc: str = ""
+        self.title: str = ""
+        self.preview_image_url: str = ""
+        self.favicon_url: str = ""
+        self.content_type: str = ""
+
+
+class ScrapeDataConsumer:
+    def __init__(self, data_path):
+        self.data_path = data_path
+
+    def __enter__(self):
+        # Returning the path to the data file
+        return self.data_path
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Remove the temporary file when done
+        if os.path.exists(self.data_path):
+            os.remove(self.data_path)
+
+
 class ScrapeResponse():
     success: bool
     status: int
     url: str
     headers: dict
-    data: bytes  # bytes!!!
-    def __init__(self, success, status, url, headers, data=""):
+    data_path: str
+    screenshot_paths: list
+    metadata: ScrapeMetadata
+    def __init__(self, success, status, url, headers):
         self.success = success
         self.status = status
         self.url = url
+        self.screenshot_paths = []
         self.headers = {str(k).lower(): v for k, v in headers.items()} if headers else {}
-        self.data = data
+        self._determine_content_type()
+
+    def _determine_content_type(self):
+        meta = ScrapeMetadata()
+        meta.content_type = get_mimetype_from_headers(self.headers)
+        if meta.content_type != 'text/html':
+            filename = get_filename_from_headers(self.headers)
+            if filename:
+                meta.title = filename
+            else:
+                ext = ext_from_mimetype(meta.content_type)
+                if ext:
+                    meta.title = guess_filename_from_url(self.url, ext)
+        self.metadata = meta
+
+    def _set_metadata_from_html(self, content):
+        soup = BeautifulSoup(content, 'html.parser')
+
+        # TITLE: Get title if exists
+        if soup.title.string:
+            self.metadata.title = soup.title.string
+
+        # DESCRIPTION: Check the open graph description first, then meta description
+        og_description = soup.find('meta', attrs={'property': 'og:description', 'content': True})
+        if og_description:
+            self.metadata.desc = og_description['content']
+        else:
+            # Fallback to meta description
+            meta_description = soup.find('meta', attrs={'name': 'description', 'content': True})
+            if meta_description:
+                self.metadata.desc = meta_description['content']
+        
+        # AUTHOR: Check Open Graph author first
+        og_author = soup.find('meta', attrs={'property': 'og:author', 'content': True})
+        if og_author:
+            self.metadata.author = og_author['content']
+        else:
+            # Fallback to meta author if og:description not found
+            meta_author = soup.find('meta', attrs={'name': 'author', 'content': True})
+            if meta_author:
+                self.metadata.author = meta_author['content']
+
+        # PREVIEW IMAGE
+        og_image = soup.find('meta', attrs={'property': 'og:image', 'content': True})
+        if og_image:
+            self.metadata.preview_image_url = og_image['content']
+        else:
+            # Fallback to Twitter image if og:image not found
+            twitter_image = soup.find('meta', attrs={'name': 'twitter:image', 'content': True})
+            if twitter_image:
+                self.metadata.preview_image_url = twitter_image['content']
+
+        # FAVICON
+        favicon = soup.find('link', rel=lambda x: x and x.lower() in ['icon', 'shortcut icon'])
+        favicon_url = favicon['href'] if favicon and favicon.has_attr('href') else None
+        if favicon_url:
+            # Resolving the favicon URL against the base URL
+            self.metadata.favicon_url = urljoin(self.url, favicon_url)
 
 
-class ScrapeMetadata():
-    author: str
-    desc: str
-    title: str
-    preview_image_url: str
-    favicon_url: str
-    def __init__(self, author="", desc="", title="", preview_image_url="", favicon_url=""):
-        self.author = author
-        self.desc = desc
-        self.title = title
-        self.preview_image_url = preview_image_url
-        self.favicon_url = favicon_url
+    def set_data(self, content):
+        try:
+            if self.metadata.content_type == 'text/html':
+                self._set_metadata_from_html(content)
+            tmp = tempfile.NamedTemporaryFile(delete=False)
+            tmp.write(content)
+            self.data_path = tmp.name
+        finally:
+            tmp.close()
+
+    def add_screenshot(self, content):
+        try:
+            tmp = tempfile.NamedTemporaryFile(delete=False)
+            tmp.write(content)
+            self.screenshot_paths.append(tmp.name)
+        finally:
+            tmp.close()
+
+    def consume_data(self):
+        # Designed to be used like...
+        # with scrape.consume_data() as data_path:
+        #     # ... do stuff with data_path
+        # And removes the file when done.
+        if not self.data_path:
+            raise Exception("There is no scraped data")
+        curr_data_path = self.data_path
+        self.data_path = None
+        return ScrapeDataConsumer(curr_data_path)
+    
+    def consume_screenshot(self):
+        if not len(self.screenshot_paths):
+            raise Exception("There are no more screenshots")
+        this_path = self.screenshot_paths[0]
+        self.screenshot_paths = self.screenshot_paths[1:]
+        return ScrapeDataConsumer(this_path)
+
+    def __del__(self):
+        # Ensure the temporary file is deleted when the object is destroyed
+        try:
+            if self.data_path and os.path.exists(self.data_path):
+                print(f"Scrape response data being removed in garbage collection; this is a sign of buggy code. Scraped URL was '{self.url}'.")
+                os.remove(self.data_path)
+            if len(self.screenshot_paths):
+                print(f"Scrape response screnshots being removed in garbage collection; this is a sign of buggy code. Scraped URL was '{self.url}'.")
+                for ss in self.screenshot_paths:
+                    if os.path.exists(ss):
+                        os.remove(ss)
+        except Exception as e:
+            print(f"Error cleaning up ScrapeResponse for '{self.url}' during object deletion: {e}")
 
 
 class CustomMarkdownConverter(MarkdownConverter):
@@ -93,67 +215,6 @@ class CustomMarkdownConverter(MarkdownConverter):
         return f'`{text}`'
 
 
-def get_metadata_from_scrape(scrape: ScrapeResponse):
-    meta = ScrapeMetadata()
-    if not scrape.success:
-        return meta
-    content_type = get_mimetype_from_headers(scrape.headers)
-    if content_type != 'text/html':
-        filename = get_filename_from_headers(scrape.headers)
-        if filename:
-            meta.title = filename
-        else:
-            ext = ext_from_mimetype(content_type)
-            if ext:
-                meta.title = guess_filename_from_url(scrape.url, ext)
-        return meta
-    
-    soup = BeautifulSoup(scrape.data, 'html.parser')
-    
-    # TITLE: Get title if exists
-    if soup.title.string:
-        meta.title = soup.title.string
-
-    # DESCRIPTION: Check the open graph description first, then meta description
-    og_description = soup.find('meta', attrs={'property': 'og:description', 'content': True})
-    if og_description:
-        meta.desc = og_description['content']
-    else:
-        # Fallback to meta description
-        meta_description = soup.find('meta', attrs={'name': 'description', 'content': True})
-        if meta_description:
-            meta.desc = meta_description['content']
-    
-    # AUTHOR: Check Open Graph author first
-    og_author = soup.find('meta', attrs={'property': 'og:author', 'content': True})
-    if og_author:
-        meta.author = og_author['content']
-    else:
-        # Fallback to meta author if og:description not found
-        meta_author = soup.find('meta', attrs={'name': 'author', 'content': True})
-        if meta_author:
-            meta.author = meta_author['content']
-
-    # PREVIEW IMAGE
-    og_image = soup.find('meta', attrs={'property': 'og:image', 'content': True})
-    if og_image:
-        meta.preview_image_url = og_image['content']
-    else:
-        # Fallback to Twitter image if og:image not found
-        twitter_image = soup.find('meta', attrs={'name': 'twitter:image', 'content': True})
-        if twitter_image:
-            meta.preview_image_url = twitter_image['content']
-
-    # FAVICON
-    favicon = soup.find('link', rel=lambda x: x and x.lower() in ['icon', 'shortcut icon'])
-    favicon_url = favicon['href'] if favicon and favicon.has_attr('href') else None
-    if favicon_url:
-        # Resolving the favicon URL against the base URL
-        meta.favicon_url = urljoin(scrape.url, favicon_url)
-
-    return meta
-
-
 def scrape_with_requests(url, use_html=None, just_text=False, reduce_whitespace=False):
     try:
         if not use_html:
@@ -171,7 +232,9 @@ def scrape_with_requests(url, use_html=None, just_text=False, reduce_whitespace=
             website_data = use_html.encode('utf-8')
             resp_headers = {'content-type': 'text/html'}
 
-        return ScrapeResponse(True, status, url, resp_headers, data=website_data)
+        resp = ScrapeResponse(True, status, url, resp_headers)
+        resp.set_data(website_data)
+        return resp
 
     except requests.RequestException as e:
         print(e, file=sys.stderr)
@@ -201,18 +264,21 @@ def scrape_with_service(url):
         response.raise_for_status()
         decoder = MultipartDecoder.from_response(response)
 
-        status = None
-        headers = None
-        content = None
+        resp = None
         for i, part in enumerate(decoder.parts):
-            if i == 0:
+            if i == 0:  # First is some JSON
                 json_part = json.loads(part.content)
                 status = json_part['status']
                 headers = json_part['headers']
-            if i == 1:
-                content = part.content
+                resp = ScrapeResponse(False, status, url, headers)
+            elif i == 1:  # Next is the actual content of the
+                resp.success = True
+                resp.set_data(part.content)
+            else:  # Other parts are screenshots, if they exist
+                resp.add_screenshot(part.content)
         
-        return ScrapeResponse(True, status, url, headers, content)
+        return resp
+
     except requests.RequestException as e:
         if e.response:
             try:
@@ -256,44 +322,36 @@ def get_web_chunks(user: User, search_query, available_context, max_n=5):
         scrape_result: ScrapeResponse
         text = ""
         if scrape_result.success:
-            if scrape_result.data and 'content-type' in scrape_result.headers:
-                mimetype = get_mimetype_from_headers(scrape_result.headers)
-                ext = ext_from_mimetype(mimetype)
-                if not ext:
-                    continue
-
+            with scrape_result.consume_data() as data_path:
                 # Use a slightly different strategy for making the chunk for html compared to other things
-                if ext == 'html':
+                if scrape_result.metadata.content_type == 'text/html':
+                    data = None
+                    with open(data_path, 'r') as fhand:
+                        data = fhand.read()
                     # Instead of simply truncating, we do the middle of the page, which is better for websites (nav bar + footer ...)
                     # Uses len for speed
-                    soup = BeautifulSoup(scrape_result.data, 'html.parser')
+                    soup = BeautifulSoup(data, 'html.parser')
                     text = soup.get_text()
                     truncate_chars = ntokens_to_nchars(per_source_max_tokens)
                     opening_i = max((len(text) // 2) - truncate_chars // 2, 0)
                     ending_i = truncate_chars + opening_i
                     text = text[opening_i:ending_i]
                 else:
-                    try:
-                        tmp = tempfile.NamedTemporaryFile(delete=False)
-                        tmp.write(scrape_result.data)
-                        loader = get_loader(ext, tmp.name)
-                        raw_chunks = loader.load_and_split(TextSplitter(max_chunk_size=ntokens_to_nchars(250), length_function=len))
-                        for raw_chunk in raw_chunks:
-                            raw_chunk: RawChunk
-                            ntoks = get_token_estimate(raw_chunk.page_content)  # very accurate estimate
-                            if cum_toks + ntoks > per_source_max_tokens:
-                                break
-                            text += raw_chunk.page_content
-                            cum_toks += ntoks
-                    finally:
-                        tmp.close()
-            else:
-                continue
+                    cum_toks = 0
+                    loader = get_loader(ext_from_mimetype(scrape_result.metadata.content_type), data_path)
+                    raw_chunks = loader.load_and_split(TextSplitter(max_chunk_size=ntokens_to_nchars(250), length_function=len))
+                    for raw_chunk in raw_chunks:
+                        raw_chunk: RawChunk
+                        ntoks = get_token_estimate(raw_chunk.page_content)  # very accurate estimate
+                        if cum_toks + ntoks > per_source_max_tokens:
+                            break
+                        text += raw_chunk.page_content
+                        cum_toks += ntoks
         else:
             continue
         
         url = scrape_result.url
-        meta: ScrapeMetadata = get_metadata_from_scrape(scrape_result)
+        meta: ScrapeMetadata = scrape_result.metadata
         image = meta.preview_image_url
         favicon = meta.favicon_url
         title = meta.title

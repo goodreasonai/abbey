@@ -171,6 +171,7 @@ def scrape_task(url, wait):
                 'original': o_size,
                 'compressed': c_size
             }
+            compressed_screenshot_files.append(tmp.name)
         except Exception as e:
             for css in compressed_screenshot_files:
                 os.remove(css)
@@ -179,5 +180,7 @@ def scrape_task(url, wait):
             raise e
         finally:
             os.remove(ss)
+
+    print(f"Number of screenshot files: {len(compressed_screenshot_files)}", file=sys.stderr)
 
     return status, headers, content_file, compressed_screenshot_files, metadata

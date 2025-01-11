@@ -143,7 +143,7 @@ def scrape():
             yield "\r\n".encode()  # end of content
 
             # Give screenshot images
-            for ss in enumerate(screenshot_files):
+            for ss in screenshot_files:
                 yield f"--{boundary}\r\nContent-Type: image/jpeg\r\n\r\n".encode()  # beginning of content
                 with open(ss, 'rb') as content:
                     for line in content:

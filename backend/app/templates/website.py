@@ -11,8 +11,8 @@ import json
 from .template import Template
 from ..storage_interface import upload_asset_file
 from ..asset_actions import get_asset, has_asset_title_been_updated, replace_asset_resource, has_asset_desc_been_updated
-from ..web import scrape_with_requests, ScrapeResponse, ScrapeMetadata, get_metadata_from_scrape
-from ..utils import ext_from_mimetype, get_mimetype_from_headers
+from ..web import scrape_with_requests, ScrapeResponse, ScrapeMetadata
+from ..utils import ext_from_mimetype
 from ..configs.str_constants import MAIN_FILE
 
 
@@ -62,23 +62,19 @@ def scrape_and_upload(url, asset_id, asset_title, use_html=None, ignore_title=Fa
     if not response.success:
         return False, f"The scrape failed with status {response.status}"
 
-    if 'content-type' not in response.headers:
-        return False, "There was no content type header"
-    
-    mime = get_mimetype_from_headers(response.headers)
-    ext = ext_from_mimetype(mime)
-
+    ext = ext_from_mimetype(response.metadata.content_type)
     if not ext:
-        return False, f"Mimetype {mime} not understood"
+        return False, f"Mimetype {response.metadata.content_type} not understood"
 
-    path, from_key = upload_asset_file(asset_id, None, ext, use_data=response.data)
-    curr = db.cursor()
+    with response.consume_data() as data_path:
+        path, from_key = upload_asset_file(asset_id, data_path, ext)
+        curr = db.cursor()
 
     replace_asset_resource(asset_id, MAIN_FILE, from_key, path, asset_title, no_commit=no_commit, db=db)
 
     insert_meta_url(asset_id, url)
 
-    meta: ScrapeMetadata = get_metadata_from_scrape(response)
+    meta: ScrapeMetadata = response.metadata
     
     if meta.favicon_url:
         insert_meta_favicon(asset_id, meta.favicon_url, db=db, no_commit=no_commit)

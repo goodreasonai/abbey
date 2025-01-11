@@ -11,7 +11,7 @@ from flask_cors import cross_origin
 from ..auth import token_optional
 from flask import Blueprint, request
 from ..template_response import MyResponse, response_from_resource
-from ..web import ScrapeMetadata, ScrapeResponse, scrape_with_requests, scrape_with_service, get_metadata_from_scrape
+from ..web import ScrapeMetadata, ScrapeResponse, scrape_with_requests, scrape_with_service
 from ..utils import ext_from_mimetype, get_extension_from_path, mimetype_from_ext, get_mimetype_from_headers
 from ..db import with_lock, get_db
 from ..integrations.file_loaders import get_loader, TextSplitter, RawChunk
@@ -300,15 +300,13 @@ def scrape_one_site(user: User):
         return MyResponse(False, {'scrape_status': scrape.status, 'headers': scrape.headers}, status=500, reason=f"Scrape was not success").to_json()
 
     content_type = get_mimetype_from_headers(scrape.headers)
-    meta: ScrapeMetadata = get_metadata_from_scrape(scrape)
-    ext = ext_from_mimetype(content_type)
-    tmp = tempfile.NamedTemporaryFile(delete=False)
-    tmp.write(scrape.data)
+    meta: ScrapeMetadata = scrape.metadata
+    ext = ext_from_mimetype(meta.content_type)
     MAX_TEXT_LENGTH = 100_000  # in characters
     text = ""
     db = get_db()
-    try:
-        loader = get_loader(ext, tmp.name)
+    with scrape.consume_data() as data_path:
+        loader = get_loader(ext, data_path)
         splitter = TextSplitter(max_chunk_size=1024)
         splits = loader.load_and_split(splitter)
         for x in splits:
@@ -331,7 +329,7 @@ def scrape_one_site(user: User):
             crawler.execute(sql, (meta.title, meta.author, text, content_type, item['id']))
 
             # Upload and insert the data
-            path, from_val = upload_asset_file(asset_id, tmp.name, ext)
+            path, from_val = upload_asset_file(asset_id, data_path, ext)
             assoc_file_id = add_asset_resource(asset_id, 'website', from_val, path, None, db=db)
 
             sql = """
@@ -339,6 +337,19 @@ def scrape_one_site(user: User):
                 VALUES (?, ?, ?)
             """
             crawler.execute(sql, (item['id'], 'data', assoc_file_id))
+
+            # Upload any screenshots available
+            while len(scrape.screenshot_paths):
+                with scrape.consume_screenshot() as ss_path:
+                    # Upload and insert the data
+                    path, from_val = upload_asset_file(asset_id, ss_path, 'jpg')
+                    assoc_file_id = add_asset_resource(asset_id, 'website', from_val, path, None, db=db)
+
+                    sql = """
+                        INSERT INTO website_data (`website_id`, `data_type`, `resource_id`)
+                        VALUES (?, ?, ?)
+                    """
+                    crawler.execute(sql, (item['id'], 'screenshot', assoc_file_id))
 
             # Get currently entry including the resources
             # Meant to mimic an entry returned in /manifest
@@ -362,11 +373,7 @@ def scrape_one_site(user: User):
 
             return updated
         
-        new_row = add_to_db()    
-    finally:
-        if os.path.exists(tmp.name):
-            os.remove(tmp.name)
-        db.close()
+        new_row = add_to_db()
 
     return MyResponse(True, {'result': new_row}).to_json()
 
