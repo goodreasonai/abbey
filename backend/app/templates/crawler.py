@@ -328,6 +328,23 @@ def scrape_one_site(user: User):
             """
             crawler.execute(sql, (meta.title, meta.author, text, content_type, item['id']))
 
+            # Does old scrape data exist?
+            # If so, delete from storage, asset_resources, and from the crawler db
+            sql = """
+                SELECT * FROM website_data
+                WHERE `website_id`=?
+            """
+            res = crawler.execute(sql, (item['id'],))
+            existing_data = res.fetchall()
+            if len(existing_data):
+                resources = get_asset_resources_by_id(asset_id, [x['resource_id'] for x in existing_data], db=db)
+                delete_asset_resources(resources, db=db)
+                sql = """
+                    DELETE FROM website_data
+                    WHERE `website_id`=?
+                """
+                crawler.execute(sql, (item['id'],))
+
             # Upload and insert the data
             path, from_val = upload_asset_file(asset_id, data_path, ext)
             assoc_file_id = add_asset_resource(asset_id, 'website', from_val, path, None, db=db)

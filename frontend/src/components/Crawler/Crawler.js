@@ -10,6 +10,8 @@ import MyImage from "../MyImage/MyImage"
 import fileResponse, { getExtFromMimetype, readFileAsBase64 } from "@/utils/fileResponse"
 import { formatTimestampSmall } from "@/utils/time"
 import DeleteIcon from '../../../public/icons/DeleteIcon.png'
+import Tooltip from "../Tooltip/Tooltip"
+import RestartIcon from '../../../public/icons/RestartIcon.png'
 
 
 export default function Crawler({ manifestRow, canEdit }) {
@@ -237,7 +239,7 @@ function TableRow({ assetId, item, setItem, i, tableCols, isFirst, isLast, remov
         }
     }
 
-    async function scrapeSite(item, i) {
+    async function scrapeSite(item) {
         try {
             setScrapeLoading(1)
             const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/crawler/scrape'
@@ -314,7 +316,7 @@ function TableRow({ assetId, item, setItem, i, tableCols, isFirst, isLast, remov
                             if (mainData.length){
                                 const ext = getExtFromMimetype(item[x.key])
                                 inner = downloadLoadState == 1 ? (
-                                    <Loading text="" />
+                                    <Loading size={15} text="" />
                                 ) : (
                                     <div style={{'display': 'flex'}}>
                                         <div className={styles.downloadLink} onClick={() => downloadData(mainData[0].resource_id)}>
@@ -331,10 +333,17 @@ function TableRow({ assetId, item, setItem, i, tableCols, isFirst, isLast, remov
                     else if (x.key == '_scrape'){
                         if (item['scraped_at']){
                             inner = (
-                                <div style={{'display': 'flex', 'alignItems': 'center'}}>
+                                <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '5px'}}>
                                     <div className={styles.tableButton} onClick={() => setReveal(!reveal)}>
                                         View
                                     </div>
+                                    {scrapeLoading == 1 ? (
+                                        <Loading text="" />
+                                    ) : (
+                                        <Tooltip content={"Redo Scrape"}>
+                                            <MyImage className={"_touchableOpacity"} src={RestartIcon} width={15} height={15} alt={"Restart"} onClick={() => scrapeSite(item)} />
+                                        </Tooltip>
+                                    )}
                                 </div>
                             )
                         }
@@ -346,7 +355,7 @@ function TableRow({ assetId, item, setItem, i, tableCols, isFirst, isLast, remov
                         else {
                             inner = (
                                 <div style={{'display': 'flex', 'alignItems': 'center'}}>
-                                    <div className={styles.tableButton} onClick={() => scrapeSite(item, i)}>
+                                    <div className={styles.tableButton} onClick={() => scrapeSite(item)}>
                                         Scrape
                                     </div>
                                 </div>
