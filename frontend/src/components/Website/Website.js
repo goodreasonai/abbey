@@ -25,19 +25,17 @@ export default function Website({ manifestRow, canEdit }) {
         async function getDocData(){
             setDataLoadingState(1)
             try{
-                const url = process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/files?id=${manifestRow['id']}`
-                const response = await fetch(url, {
-                    'headers': {
+                const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/x-ray?id=${manifestRow['id']}`, {
+                    method: 'GET',
+                    headers: {
                         'x-access-token': await getToken(),
                     },
-                    'method': 'GET'
-                })
+                });
                 const blob = await response.blob()
                 const mimetype = getMimetypeFromResponse(response)
                 const data = await dataConverters[mimetype](blob)  // using dataConverters so we can handle html, markdown, or text (whatever it is)
                 setMimetype(mimetype)
                 setScrapedData(data)
-                setEditingData(data)
                 setDataLoadingState(2)
             }
             catch(e) {
@@ -85,18 +83,11 @@ export default function Website({ manifestRow, canEdit }) {
                         </div>
                     </SmartHeightWrapper>
                     
-                ) : (canEdit ? (
-                    <RichTextSavingEditor
-                        manifestRow={manifestRow}
-                        setState={setDataSaveState}
-                        setSave={setScrapedData}
-                        value={scrapedData}
-                    />
                 ) : (
                     <RichTextViewer
                         content={scrapedData}
                     />
-                ))}
+                )}
             </div>
             <Sidebar manifestRow={manifestRow} />
         </div>

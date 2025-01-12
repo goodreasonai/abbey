@@ -58,7 +58,7 @@ def insert_meta_author(asset_id, author, db=None, no_commit=False):
 
 @needs_db
 def scrape_and_upload(url, asset_id, asset_title, use_html=None, ignore_title=False, no_commit=False, db=None):
-    response: ScrapeResponse = scrape_with_requests(url, use_html=use_html, just_text=True, reduce_whitespace=True)
+    response: ScrapeResponse = scrape_with_requests(url, use_html=use_html)
     if not response.success:
         return False, f"The scrape failed with status {response.status}"
 

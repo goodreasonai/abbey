@@ -80,6 +80,7 @@ class ScrapeResponse():
         self.screenshot_paths = []
         self.headers = {str(k).lower(): v for k, v in headers.items()} if headers else {}
         self._determine_content_type()
+        self.data_path = None
 
     def _determine_content_type(self):
         meta = ScrapeMetadata()
@@ -215,7 +216,7 @@ class CustomMarkdownConverter(MarkdownConverter):
         return f'`{text}`'
 
 
-def scrape_with_requests(url, use_html=None, just_text=False, reduce_whitespace=False):
+def scrape_with_requests(url, use_html=None):
     try:
         if not use_html:
             headers = {
@@ -299,7 +300,7 @@ def get_web_chunks(user: User, search_query, available_context, max_n=5):
     # Scrape each site in parallel
     scrape_responses = []
     with ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_search_result = {executor.submit(scrape_with_requests, result.url, just_text=True, reduce_whitespace=True): result for result in results}
+        future_to_search_result = {executor.submit(scrape_with_requests, result.url): result for result in results}
         for future in as_completed(future_to_search_result):
             res = future_to_search_result[future]
             try:
