@@ -12,7 +12,9 @@ import { formatTimestampSmall } from "@/utils/time"
 import DeleteIcon from '../../../public/icons/DeleteIcon.png'
 import Tooltip from "../Tooltip/Tooltip"
 import RestartIcon from '../../../public/icons/RestartIcon.png'
+import { extractSiteWithPath } from "@/utils/text"
 
+const TABLE_COL_GAP='10px'
 
 export default function Crawler({ manifestRow, canEdit }) {
     
@@ -206,7 +208,7 @@ export default function Crawler({ manifestRow, canEdit }) {
 function TableHeader({ cols }) {
     return (
         <div className={styles.tableHeader}>
-            <div style={{'display': 'flex'}}>
+            <div style={{'display': 'flex', 'gap': TABLE_COL_GAP}}>
                 {cols.map((item) => {
                     return (
                         <div style={{'flex': item.flex}} key={item.key}>
@@ -300,11 +302,17 @@ function TableRow({ assetId, item, setItem, i, tableCols, isFirst, isLast, remov
 
     return (
         <div className={`${styles.rowContainer} ${isFirst ? styles.rowContainerFirst : ''} ${isLast ? styles.rowContainerLast : ''} ${i % 2 ? styles.rowContainerOdd : ''}`} {...props}>
-            <div style={{'display': 'flex'}}>
+            <div style={{'display': 'flex', 'gap': TABLE_COL_GAP}}>
                 {tableCols.map((x) => {
                     let inner = item[x.key]
                     if (x.key == 'url'){
-                        inner = (<a className={styles.urlLink} target="_blank" href={item[x.key]}>{item[x.key]}</a>)
+                        const shortenedUrl = extractSiteWithPath(item[x.key])
+                        inner = (<a className={styles.urlLink} target="_blank" href={item[x.key]}>{shortenedUrl}</a>)
+                    }
+                    else if (x.key == 'title'){
+                        inner = (
+                            <span title={item[x.key]}>{item[x.key]}</span>
+                        )
                     }
                     else if (x.key == 'created_at'){
                         inner = formatTimestampSmall(item[x.key])
