@@ -59,6 +59,11 @@ export function extractSiteWithPath(fullUrl) {
         if (host.startsWith('www.')) {
             host = host.slice(4);
         }
+
+        // Check if path is just a single slash
+        if (path === '/') {
+            path = ''; // Remove the trailing slash if there's no path
+        }
         
         return host + path;
     

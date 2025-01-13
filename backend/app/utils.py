@@ -9,6 +9,7 @@ from PIL import Image
 from urllib.parse import urlparse
 import re
 import os
+from urllib.parse import unquote
 
 
 def get_unique_id():
@@ -80,13 +81,15 @@ def get_mimetype_from_headers(headers):
 
 # For a URL that returns a file with a particular extensions, tries to see if it get guess the name of the file
 def guess_filename_from_url(url, extension):
+    
     # Build a regex that looks for "someName.<extension>" 
     # followed by either the end of the string or a URL delimiter (&, ?, #).
+    decoded_url = unquote(url)  # Handles special characters like %20
     pattern = re.compile(
         rf'([^/?#&]+\.{extension})(?=$|[?&#])',  # e.g. something.pdf(?=$|[?&#])
         re.IGNORECASE
     )
-    match = pattern.search(url)
+    match = pattern.search(decoded_url)
     return match.group(1) if match else None
 
 

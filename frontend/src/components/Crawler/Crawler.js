@@ -75,7 +75,7 @@ export default function Crawler({ manifestRow, canEdit }) {
             }
             const myJson = await response.json()
             const newRow = myJson['result']
-            setWebsites((prev) => {return [...prev.filter((x) => x.id != newRow.id), newRow] })
+            setWebsites((prev) => {return [newRow, ...prev.filter((x) => x.id != newRow.id)] })
             setAddWebsiteURL("")
             setAddWebsiteLoadingState(2)
             clearWebsiteModal()
@@ -101,7 +101,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                     </div>
                 )}
                 style={{'display': 'flex'}}
-                onClick={() => setShowRight(true)}
+                onClick={() => setAddWebsiteModalOpen(true)}
             />
             <Modal
                 title={"Add URL"}
