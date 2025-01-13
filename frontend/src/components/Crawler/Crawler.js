@@ -13,6 +13,7 @@ import DeleteIcon from '../../../public/icons/DeleteIcon.png'
 import Tooltip from "../Tooltip/Tooltip"
 import RestartIcon from '../../../public/icons/RestartIcon.png'
 import { extractSiteWithPath } from "@/utils/text"
+import SlidingPage from "../SlidingPage/SlidingPage"
 
 const TABLE_COL_GAP='10px'
 
@@ -26,6 +27,10 @@ export default function Crawler({ manifestRow, canEdit }) {
     const [addWebsiteModalOpen, setAddWebsiteModalOpen] = useState(false)
     const [addWebsiteLoadingState, setAddWebsiteLoadingState] = useState(0)
     const [addWebsiteURL, setAddWebsiteURL] = useState("")
+    
+    const [showRight, setShowRight] = useState(false)
+    const [rightViewCode, setRightViewCode] = useState("")
+    const [rightViewData, setRightViewData] = useState(undefined)
 
     const resultLimit = 20
 
@@ -96,7 +101,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                     </div>
                 )}
                 style={{'display': 'flex'}}
-                onClick={() => setAddWebsiteModalOpen(true)}
+                onClick={() => setShowRight(true)}
             />
             <Modal
                 title={"Add URL"}
@@ -178,30 +183,62 @@ export default function Crawler({ manifestRow, canEdit }) {
         return false  // means an error occurred, so the website won't be deleted
     }
 
+    // The way this works is:
+    // if we want to show a React component in the right,
+    // you set the rightVieWCode to correspond with the correct hook
+    // and that hook will take the rightViewData as a prop.
+    function slideToRight(rightViewCode, rightViewData){
+        setRightViewCode(rightViewCode)
+        setRightViewData(rightViewData)
+        setShowRight(true)
+    }
+
+    function slideToLeft(){
+        // Notably, leave data and code as is so that during the transition, it's fully displayed
+        // Also allows memoizing the data for back and forth moves
+        setShowRight(false)
+    }
+
+    let rightElement = ""
+    if (rightViewCode == 'scrape'){
+        rightElement = (
+            <div onClick={() => slideToLeft()}>
+                This is a scrape of the site with url {rightViewData.url}
+            </div>
+        )
+    }
+
+
     function makeRow(item, i) {
-        return <TableRow key={i} assetId={manifestRow?.id} setItem={(x) => setWebsites((prev) => prev.map((old) => old.id == x.id ? x : old))} item={item} i={i} isFirst={ i == 0} isLast={i == websites?.length - 1} tableCols={tableCols} removeRow={() => removeRow(item)} />
+        return <TableRow key={i} slideToRight={slideToRight} assetId={manifestRow?.id} setItem={(x) => setWebsites((prev) => prev.map((old) => old.id == x.id ? x : old))} item={item} i={i} isFirst={ i == 0} isLast={i == websites?.length - 1} tableCols={tableCols} removeRow={() => removeRow(item)} />
     }
 
     return (
-        <div>
-            <ControlledTable
-                items={websites}
-                setItems={setWebsites}
-                loadingState={websitesLoadState}
-                setLoadingState={setWebsitesLoadState}
-                makeRow={makeRow}
-                limit={resultLimit}
-                getUrl={getUrl}
-                loadingSkeleton={'default-small'}
-                searchable={true}
-                tableHeader={(<TableHeader cols={tableCols} />)}
-                gap={'0px'}
-                searchBarContainerStyle={searchBarContainerStyle}
-                searchBarStyle={{'width': '300px'}}
-                rightOfSearchBar={rightOfSearchBar}
-                flexWrap="noWrap"
-            />
-        </div>
+        <SlidingPage 
+            showRight={showRight}
+            main={(
+                <div style={{'padding': 'var(--std-margin-top) var(--std-margin)'}}>
+                    <ControlledTable
+                        items={websites}
+                        setItems={setWebsites}
+                        loadingState={websitesLoadState}
+                        setLoadingState={setWebsitesLoadState}
+                        makeRow={makeRow}
+                        limit={resultLimit}
+                        getUrl={getUrl}
+                        loadingSkeleton={'default-small'}
+                        searchable={true}
+                        tableHeader={(<TableHeader cols={tableCols} />)}
+                        gap={'0px'}
+                        searchBarContainerStyle={searchBarContainerStyle}
+                        searchBarStyle={{'width': '300px'}}
+                        rightOfSearchBar={rightOfSearchBar}
+                        flexWrap="noWrap"
+                    />
+                </div>
+            )}
+            right={rightElement}
+        />
     )
 }
 
@@ -221,7 +258,7 @@ function TableHeader({ cols }) {
     )
 }
 
-function TableRow({ assetId, item, setItem, i, tableCols, isFirst, isLast, removeRow, ...props }) {
+function TableRow({ assetId, item, setItem, i, tableCols, isFirst, isLast, removeRow, slideToRight, ...props }) {
 
     const { getToken } = Auth.useAuth()
     const [scrapeLoading, setScrapeLoading] = useState(0)
@@ -342,7 +379,7 @@ function TableRow({ assetId, item, setItem, i, tableCols, isFirst, isLast, remov
                         if (item['scraped_at']){
                             inner = (
                                 <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '5px'}}>
-                                    <div className={styles.tableButton} onClick={() => setReveal(!reveal)}>
+                                    <div className={styles.tableButton} onClick={() => slideToRight('scrape', item)}>
                                         View
                                     </div>
                                     {scrapeLoading == 1 ? (
