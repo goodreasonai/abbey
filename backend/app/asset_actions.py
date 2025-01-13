@@ -457,15 +457,18 @@ def get_asset_resource_by_id(asset_id, resource_id, db=None):
 @needs_db
 def get_asset_resources_by_id(asset_id, resource_ids, db=None):
     # Ensure resource_ids is a tuple or list to use with the IN clause
-    sql = """
-    SELECT * FROM asset_resources
-    WHERE `asset_id`=%s AND `id` IN %s
-    """
-    curr = db.cursor()
-    # Pass resource_ids as a tuple to match the parameterized query
-    curr.execute(sql, (asset_id, tuple(resource_ids)))
-    res = curr.fetchall()  # Use fetchall to get all matching records
-    return res
+    if len(resource_ids):
+        sql = """
+            SELECT * FROM asset_resources
+            WHERE `asset_id`=%s AND `id` IN %s
+        """
+        curr = db.cursor()
+        # Pass resource_ids as a tuple to match the parameterized query
+        curr.execute(sql, (asset_id, tuple(resource_ids)))
+        res = curr.fetchall()  # Use fetchall to get all matching records
+        return res
+    else:
+        return []
 
 
 # Not permissioned!
@@ -484,24 +487,26 @@ def add_asset_resource(asset_id, name, from_loc, path, title, db=None):
 
 @needs_db
 def delete_asset_resources(resources, db: ProxyDB=None):
-    delete_resources_from_storage(resources)
-    curr = db.cursor()
-    sql = """
-        DELETE FROM asset_resources
-        WHERE `id` IN %s
-    """
-    curr.execute(sql, [tuple([x['id'] for x in resources])])
+    if len(resources):
+        delete_resources_from_storage(resources)
+        curr = db.cursor()
+        sql = """
+            DELETE FROM asset_resources
+            WHERE `id` IN %s
+        """
+        curr.execute(sql, [tuple([x['id'] for x in resources])])
 
 
 @needs_db
 def delete_asset_retrieval_resources(resources, db: ProxyDB=None):
-    delete_resources_from_storage(resources)
-    sql = """
-        DELETE FROM asset_retrieval_storage
-        WHERE `id` IN %s
-    """
-    curr = db.cursor()
-    curr.execute(sql, [tuple([x['id'] for x in resources])])
+    if len(resources):
+        delete_resources_from_storage(resources)
+        sql = """
+            DELETE FROM asset_retrieval_storage
+            WHERE `id` IN %s
+        """
+        curr = db.cursor()
+        curr.execute(sql, [tuple([x['id'] for x in resources])])
 
 
 @needs_db

@@ -59,6 +59,43 @@ def create_and_upload_database(asset_id):
             CREATE INDEX website_id_index ON website_data(website_id);
         """
         cursor.execute(sql)
+
+        # Now create the virtual table for fts5 search + triggers to keep it in sync.
+        sql = """
+            CREATE VIRTUAL TABLE IF NOT EXISTS websites_fts5 USING fts5(
+                website_id UNINDEXED,
+                title,
+                author,
+                text
+            );
+        """
+        cursor.execute(sql)
+        sql = """
+            CREATE TRIGGER IF NOT EXISTS after_websites_insert
+            AFTER INSERT ON websites
+            BEGIN
+                INSERT INTO websites_fts5 (website_id, title, author, text) VALUES (NEW.id, NEW.title, NEW.author, NEW.text);
+            END;
+        """
+        cursor.execute(sql)
+        sql = """
+            CREATE TRIGGER IF NOT EXISTS after_websites_update
+            AFTER UPDATE ON websites
+            BEGIN
+                DELETE FROM websites_fts5 WHERE website_id = OLD.id;
+                INSERT INTO websites_fts5 (website_id, title, author, text) VALUES (NEW.id, NEW.title, NEW.author, NEW.text);
+            END;
+        """
+        cursor.execute(sql)
+        sql = """
+            CREATE TRIGGER IF NOT EXISTS after_websites_delete
+            AFTER DELETE ON websites
+            BEGIN
+                DELETE FROM websites_fts5 WHERE website_id = OLD.id;
+            END;
+        """
+        cursor.execute(sql)
+
         # Commit the changes
         conn.commit()
 
@@ -144,17 +181,23 @@ def get_manifest(user: User):
 
     offset = request.args.get('offset', 0)
 
+    # See specification of an "fts5 string" here: https://www.sqlite.org/fts5.html#full_text_query_syntax
+    # Note that quotes are doubled up
+    raw_query = request.args.get('query', "")
+    escaped_query = raw_query.replace('"', '""')
+    query = f'"{escaped_query}"'
+
     conn = CrawlerDB(asset_id)
 
     # Query to get the total number of results
     # Annoyingly run the query twice to get a "total"
-    sql = """
-        SELECT COUNT(*) as _total FROM websites
+    sql = f"""
+        SELECT COUNT(*) as _total FROM websites_fts5 {'WHERE websites_fts5 MATCH ?' if raw_query else ""}
     """
-    res = conn.execute(sql)
+    res = conn.execute(sql, (query,)) if raw_query else conn.execute(sql)
     total = res.fetchone()['_total']
     # Actual query
-    sql = """
+    sql = f"""
        SELECT 
             websites.id,
             websites.created_at,
@@ -167,13 +210,15 @@ def get_manifest(user: User):
                 'data_type', website_data.data_type,
                 'resource_id', website_data.resource_id
             )), '[]') AS website_data
-        FROM websites
+        FROM websites_fts5
+        LEFT JOIN websites ON websites.id = websites_fts5.website_id
         LEFT JOIN website_data ON websites.id = website_data.website_id
+        {'WHERE websites_fts5 MATCH ?' if raw_query else ""}
         GROUP BY websites.id
         ORDER BY websites.created_at DESC
         LIMIT ? OFFSET ?
     """
-    res = conn.execute(sql, (limit, offset))
+    res = conn.execute(sql, (query, limit, offset)) if raw_query else conn.execute(sql, (limit, offset))
     results = res.fetchall()
 
     conn.close()  # Very important

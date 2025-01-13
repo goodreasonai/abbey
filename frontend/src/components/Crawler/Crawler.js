@@ -68,7 +68,7 @@ export default function Crawler({ manifestRow, canEdit }) {
             }
             const myJson = await response.json()
             const newRow = myJson['result']
-            setWebsites([newRow, ...websites])
+            setWebsites((prev) => {return [...prev.filter((x) => x.id != newRow.id), newRow] })
             setAddWebsiteURL("")
             setAddWebsiteLoadingState(2)
             clearWebsiteModal()
@@ -177,7 +177,7 @@ export default function Crawler({ manifestRow, canEdit }) {
     }
 
     function makeRow(item, i) {
-        return <TableRow key={i} assetId={manifestRow?.id} setItem={(x) => setWebsites(websites.map((old) => old.id == x.id ? x : old))} item={item} i={i} isFirst={ i == 0} isLast={i == websites?.length - 1} tableCols={tableCols} removeRow={() => removeRow(item)} />
+        return <TableRow key={i} assetId={manifestRow?.id} setItem={(x) => setWebsites((prev) => prev.map((old) => old.id == x.id ? x : old))} item={item} i={i} isFirst={ i == 0} isLast={i == websites?.length - 1} tableCols={tableCols} removeRow={() => removeRow(item)} />
     }
 
     return (
