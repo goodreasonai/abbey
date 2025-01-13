@@ -1,9 +1,7 @@
 import requests
-from markdownify import MarkdownConverter
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from .retriever import Chunk
-import re
 from urllib.parse import urljoin
 import sys
 from .integrations.web import SearchEngine, SearchResult, SEARCH_PROVIDERS
@@ -189,31 +187,6 @@ class ScrapeResponse():
                         os.remove(ss)
         except Exception as e:
             print(f"Error cleaning up ScrapeResponse for '{self.url}' during object deletion: {e}")
-
-
-class CustomMarkdownConverter(MarkdownConverter):
-    def convert(self, soup, strip=None):
-        if strip is not None:
-            for tag in strip:
-                for element in soup.find_all(tag):
-                    element.decompose()
-            html = str(soup)
-        return super().convert(html)
-    
-    def convert_iframe(self, el, text, convert_as_inline):
-        # Extract the 'src' attribute from the iframe
-        src = el.get('src')
-        if src:
-            return f'\n\n[Click to View Embedded Content]({src})\n\n'
-        return ''
-    
-    def convert_pre(self, el, text, convert_as_inline):
-        # Custom handling for <pre> tags
-        return f'\n```\n{text}\n```\n'
-
-    def convert_code(self, el, text, convert_as_inline):
-        # Custom handling for <code> tags
-        return f'`{text}`'
 
 
 def scrape_with_requests(url, use_html=None):

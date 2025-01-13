@@ -17,7 +17,6 @@ redis
 watchdog
 beautifulsoup4
 html2text
-markdownify
 flask-socketio
 gevent-websocket
 anthropic
