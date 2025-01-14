@@ -14,6 +14,8 @@ import Tooltip from "../Tooltip/Tooltip"
 import RestartIcon from '../../../public/icons/RestartIcon.png'
 import { extractSiteWithPath } from "@/utils/text"
 import SlidingPage from "../SlidingPage/SlidingPage"
+import ScrapePreview from "./ScrapePreview"
+import SmartHeightWrapper from "../SmartHeightWrapper/SmartHeightWrapper"
 
 const TABLE_COL_GAP='10px'
 
@@ -119,6 +121,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                                         addWebsite();
                                     }
                                 }}
+                                autoFocus={true}
                             />
                         </div>
                         {addWebsiteLoadingState == 1 ? (
@@ -202,43 +205,49 @@ export default function Crawler({ manifestRow, canEdit }) {
     let rightElement = ""
     if (rightViewCode == 'scrape'){
         rightElement = (
-            <div onClick={() => slideToLeft()}>
-                This is a scrape of the site with url {rightViewData.url}
-            </div>
+            <ScrapePreview assetId={manifestRow?.id} item={rightViewData?.item} slideToLeft={slideToLeft} />
         )
     }
-
 
     function makeRow(item, i) {
         return <TableRow key={i} slideToRight={slideToRight} assetId={manifestRow?.id} setItem={(x) => setWebsites((prev) => prev.map((old) => old.id == x.id ? x : old))} item={item} i={i} isFirst={ i == 0} isLast={i == websites?.length - 1} tableCols={tableCols} removeRow={() => removeRow(item)} />
     }
 
     return (
-        <SlidingPage 
-            showRight={showRight}
-            main={(
-                <div style={{'padding': 'var(--std-margin-top) var(--std-margin)'}}>
-                    <ControlledTable
-                        items={websites}
-                        setItems={setWebsites}
-                        loadingState={websitesLoadState}
-                        setLoadingState={setWebsitesLoadState}
-                        makeRow={makeRow}
-                        limit={resultLimit}
-                        getUrl={getUrl}
-                        loadingSkeleton={'default-small'}
-                        searchable={true}
-                        tableHeader={(<TableHeader cols={tableCols} />)}
-                        gap={'0px'}
-                        searchBarContainerStyle={searchBarContainerStyle}
-                        searchBarStyle={{'width': '300px'}}
-                        rightOfSearchBar={rightOfSearchBar}
-                        flexWrap="noWrap"
-                    />
-                </div>
-            )}
-            right={rightElement}
-        />
+        <SmartHeightWrapper>
+            <div style={{'padding': 'var(--std-margin-top) var(--std-margin)', 'height': '100%', 'width': '100%'}}>
+                <SlidingPage 
+                    showRight={showRight}
+                    main={(
+                        <ControlledTable
+                            items={websites}
+                            setItems={setWebsites}
+                            loadingState={websitesLoadState}
+                            setLoadingState={setWebsitesLoadState}
+                            makeRow={makeRow}
+                            limit={resultLimit}
+                            getUrl={getUrl}
+                            loadingSkeleton={'default-small'}
+                            searchable={true}
+                            tableHeader={(<TableHeader cols={tableCols} />)}
+                            gap={'0px'}
+                            searchBarContainerStyle={searchBarContainerStyle}
+                            searchBarStyle={{'width': '300px'}}
+                            rightOfSearchBar={rightOfSearchBar}
+                            flexWrap="noWrap"
+                            scroll={true}
+                            customNoResults={(
+                                <div style={{'height': '100%', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center', 'fontSize': '1.15rem'}}>
+                                    Nothing yet.
+                                </div>
+                            )}
+                            customDisplayWrapperStyle={{'borderRadius': 'var(--medium-border-radius)', 'overflow': 'hidden', 'border': '1px solid var(--light-border)', 'backgroundColor': 'var(--light-primary)'}}
+                        />
+                    )}
+                    right={rightElement}
+                />
+            </div>
+        </SmartHeightWrapper>
     )
 }
 
@@ -263,7 +272,6 @@ function TableRow({ assetId, item, setItem, i, tableCols, isFirst, isLast, remov
     const { getToken } = Auth.useAuth()
     const [scrapeLoading, setScrapeLoading] = useState(0)
     const [downloadLoadState, setDownloadLoadState] = useState(0)
-    const [reveal, setReveal] = useState(false)
     const [deleteLoadState, setDeleteLoadState] = useState(0)
 
     async function clickRemoveRow(){
@@ -328,15 +336,6 @@ function TableRow({ assetId, item, setItem, i, tableCols, isFirst, isLast, remov
         }
     }
 
-    const websiteData = useMemo(() => {
-        if (item.website_data){
-            return JSON.parse(item.website_data)
-        }
-        return undefined
-    }, [item.website_data])
-
-    const needScrapePreview = !!websiteData?.length
-
     return (
         <div className={`${styles.rowContainer} ${isFirst ? styles.rowContainerFirst : ''} ${isLast ? styles.rowContainerLast : ''} ${i % 2 ? styles.rowContainerOdd : ''}`} {...props}>
             <div style={{'display': 'flex', 'gap': TABLE_COL_GAP}}>
@@ -379,7 +378,7 @@ function TableRow({ assetId, item, setItem, i, tableCols, isFirst, isLast, remov
                         if (item['scraped_at']){
                             inner = (
                                 <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '5px'}}>
-                                    <div className={styles.tableButton} onClick={() => slideToRight('scrape', item)}>
+                                    <div className={styles.tableButton} onClick={() => slideToRight('scrape', {'item': item})}>
                                         View
                                     </div>
                                     {scrapeLoading == 1 ? (
@@ -433,113 +432,6 @@ function TableRow({ assetId, item, setItem, i, tableCols, isFirst, isLast, remov
                     )
                 })}
             </div>
-            {needScrapePreview ? (
-                <Modal
-                    title={"Scrape"}
-                    isOpen={reveal}
-                    close={() => setReveal(false)}
-                >
-                    <ScrapePreview item={item} websiteData={websiteData} assetId={assetId} />
-                </Modal>
-            ) : ""}
-        </div>
-    )
-}
-
-function ScrapePreview({ assetId, item, websiteData }){
-    const { getToken } = Auth.useAuth()
-
-    const [screenshotIndex, setScreenshotIndex] = useState(0)
-    const [screenshotImages, setScreenshotImages] = useState([])  // holds the retrieved data
-    const [screenshotsLoading, setScreenshotsLoading] = useState({})
-
-    const mainData = useMemo(() => {
-        return websiteData[0]  // guaranteed to exist
-    }, [websiteData])
-
-    const screenshots = useMemo(() => {
-        return websiteData.slice(1)  // might be length 0
-    }, [websiteData])
-
-    const downloadData = useCallback(async () => {
-        try {
-            const url = process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/files?id=${assetId}&name=${mainData.resource_id}`
-            const response = await fetch(url, {
-                'headers': {
-                    'x-access-token': await getToken(),
-                },
-                'method': 'GET'
-            })
-            await fileResponse(response)
-        }
-        catch(e) {
-            console.log(e)
-        }
-    }, [assetId, mainData])
-
-    const retrieveScreenshot = useCallback(async (screenshotIndex) => {
-        try {
-            setScreenshotsLoading((prev) => {return {...prev, [screenshotIndex]: 1}})
-            const screenshot = screenshots[screenshotIndex]
-            const url = process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/files?id=${assetId}&name=${screenshot.resource_id}`
-            const response = await fetch(url, {
-                'headers': {
-                    'x-access-token': await getToken(),
-                },
-                'method': 'GET'
-            })
-            if (!response.ok){
-                throw Error("Response was not OK")
-            }
-            const blob = await response.blob();
-            const imageUrl = URL.createObjectURL(blob);
-            console.log(imageUrl)
-            setScreenshotImages([...screenshotImages, imageUrl]);
-            setScreenshotsLoading((prev) => {return {...prev, [screenshotIndex]: 2}})
-        }
-        catch(e) {
-            console.log(e)
-            setScreenshotsLoading((prev) => {return {...prev, [screenshotIndex]: 3}})
-        }
-    }, [screenshotImages, assetId, screenshots])
-
-    useEffect(() => {
-        if (screenshots?.length && screenshots?.length > screenshotIndex && screenshotImages?.length <= screenshotIndex){
-            retrieveScreenshot(screenshotIndex)
-        }
-    }, [screenshotIndex, screenshots, downloadData, retrieveScreenshot, screenshotImages])
-
-    const pagesToShow = [...Array(screenshots.length).keys()].map(i => i + 1)
-
-    return (
-        <div>
-            <div className="_clickable" onClick={() => downloadData()}>
-                Download Scraped Data
-            </div>
-            {screenshots.length ? (
-                <div>
-                    <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
-                        {pagesToShow.map((x, i) => {
-                            return (
-                                <div style={{'display': 'flex', 'alignItems': 'center', 'padding': '5px 10px', 'border': '1px solid var(--light-border)', 'backgroundColor': 'var(--dark-primary)', 'color': 'var(--light-text)', 'borderRadius': 'var(--small-border-radius)'}} key={x} onClick={() => setScreenshotIndex(i)}>
-                                    {x}
-                                </div>
-                            )
-                        })}
-                    </div>
-                    <div>
-                        {screenshotsLoading[screenshotIndex] <= 1 ? (
-                            <Loading text="" />
-                        ) : (screenshotsLoading[screenshotIndex] === 3 ? (
-                            "Error"
-                        ) : (
-                            <div className={styles.screenshotContainer}>
-                                <img src={screenshotImages[screenshotIndex]} width={200} alt={"Screenshot"} className={styles.screenshot} />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            ) : ""}
         </div>
     )
 }

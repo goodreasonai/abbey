@@ -40,6 +40,7 @@ def create_and_upload_database(asset_id):
                 scraped_at DATETIME,      
                 title TEXT,
                 author TEXT,
+                desc TEXT,
                 text TEXT,
                 content_type TEXT,
                 url TEXT
@@ -66,6 +67,7 @@ def create_and_upload_database(asset_id):
                 website_id UNINDEXED,
                 title,
                 author,
+                desc,
                 text
             );
         """
@@ -74,7 +76,7 @@ def create_and_upload_database(asset_id):
             CREATE TRIGGER IF NOT EXISTS after_websites_insert
             AFTER INSERT ON websites
             BEGIN
-                INSERT INTO websites_fts5 (website_id, title, author, text) VALUES (NEW.id, NEW.title, NEW.author, NEW.text);
+                INSERT INTO websites_fts5 (website_id, title, author, desc, text) VALUES (NEW.id, NEW.title, NEW.author, NEW.desc, NEW.text);
             END;
         """
         cursor.execute(sql)
@@ -83,7 +85,7 @@ def create_and_upload_database(asset_id):
             AFTER UPDATE ON websites
             BEGIN
                 DELETE FROM websites_fts5 WHERE website_id = OLD.id;
-                INSERT INTO websites_fts5 (website_id, title, author, text) VALUES (NEW.id, NEW.title, NEW.author, NEW.text);
+                INSERT INTO websites_fts5 (website_id, title, author, desc, text) VALUES (NEW.id, NEW.title, NEW.author, NEW.desc, NEW.text);
             END;
         """
         cursor.execute(sql)
@@ -204,6 +206,7 @@ def get_manifest(user: User):
             websites.scraped_at,
             websites.title,
             websites.author,
+            websites.desc,
             websites.content_type,
             websites.url,
             COALESCE(json_group_array(json_object(
@@ -366,12 +369,13 @@ def scrape_one_site(user: User):
                 UPDATE websites
                 SET `title`=?,
                     `author`=?,
+                    `desc`=?,
                     `text`=?,
                     `content_type`=?,
                     `scraped_at`=CURRENT_TIMESTAMP
                 WHERE `id`=?
             """
-            crawler.execute(sql, (meta.title, meta.author, text, content_type, item['id']))
+            crawler.execute(sql, (meta.title, meta.author, meta.desc, text, content_type, item['id']))
 
             # Does old scrape data exist?
             # If so, delete from storage, asset_resources, and from the crawler db

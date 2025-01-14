@@ -40,6 +40,9 @@ export default function LoadingSkeleton({ numResults=10, type='default', classNa
     else if (type == 'video'){
         containerClassName = styles.video
     }
+    else if (type == 'image'){
+        containerClassName = styles.image
+    }
     else if (type == 'blocks'){
         containerClassName = styles.containerBlocks
         itemClassName = styles.loadingBlock

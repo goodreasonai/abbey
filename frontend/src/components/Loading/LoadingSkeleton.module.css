@@ -18,14 +18,6 @@
     gap: 1rem;
 }
 
-.video {
-    width: 100%;
-    height: 450px;
-    background: linear-gradient(90deg, var(--light-highlight), var(--light-primary), var(--light-highlight));
-    background-size: 300px 50%; 
-    animation: shimmer 5s infinite linear;
-}
-
 .loadingRow {
     min-height: 55px;
 
@@ -163,4 +155,32 @@ Chat
     width: 100%;  /* Pretty arbitrary, but recall that these are almost always asset rows, which are long. */
     border-radius: var(--medium-border-radius);
     flex: 1;
+}
+
+/*
+
+Video
+ 
+*/
+
+.video {
+    width: 100%;
+    height: 450px;
+    background: linear-gradient(90deg, var(--light-highlight), var(--light-primary), var(--light-highlight));
+    background-size: 300px 50%; 
+    animation: shimmer 5s infinite linear;
+}
+
+/*
+
+Image
+
+*/
+
+.image {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--light-highlight), var(--light-primary), var(--light-highlight));
+    background-size: 300px 50%; 
+    animation: shimmer 5s infinite linear;
 }

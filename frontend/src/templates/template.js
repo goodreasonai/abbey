@@ -824,7 +824,6 @@ class CrawlerTemplate extends Template {
     static summarizable = false
     static noSignIn = false
     static noMargins = true
-    static fixHeight = true
     static actionPhrase = "Create"
 
     constructor(){

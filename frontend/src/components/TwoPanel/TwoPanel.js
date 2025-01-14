@@ -72,7 +72,7 @@ export default function TwoPanel({ leftPanel, rightPanel, hideLeftPanel=false, h
     return (
         <div className={`${styles.container} ${stackOnMobile ? styles.containerStackOnMobile : ''} ${className}`} {...props} >
             {!hideLeftPanel ? (
-                <div className={`${stickyPanel == 'left' ? styles.stickyPanel : ''} ${styles.panel}`} style={{'width': initialLeftWidth, 'minWidth': '0px', ...leftPanelStyle}} ref={leftPanelRef}> 
+                <div className={`${stickyPanel == 'left' ? styles.stickyPanel : ''} ${styles.panel}`} style={{'height': '100%', 'width': initialLeftWidth, 'minWidth': '0px', ...leftPanelStyle}} ref={leftPanelRef}> 
                     {leftPanel}
                 </div>
             ) : ""}
@@ -82,12 +82,12 @@ export default function TwoPanel({ leftPanel, rightPanel, hideLeftPanel=false, h
                 !hideLeftPanel && !hideRightPanel ? (
                     <>
                         <div ref={overlayRef} style={{ display: 'none', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}></div>
-                        <div ref={resizerRef} className={styles.resizer} style={resizerStyle}></div>
+                        <div ref={resizerRef} className={styles.resizer} style={{'height': '100%', ...resizerStyle}}></div>
                     </>
                 ) : ""
             }
             {!hideRightPanel ? (
-                <div className={`${stickyPanel == 'right' ? styles.stickyPanel : ''} ${styles.panel}`} style={{'width': initialRightWidth, 'minWidth': '0px', ...rightPanelStyle}} ref={rightPanelRef}>
+                <div className={`${stickyPanel == 'right' ? styles.stickyPanel : ''} ${styles.panel}`} style={{'height': '100%', 'width': initialRightWidth, 'minWidth': '0px', ...rightPanelStyle}} ref={rightPanelRef}>
                     {rightPanel}
                 </div>
             ) : ""}

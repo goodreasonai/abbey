@@ -13,7 +13,11 @@
     background-color: var(--light-highlight);
 }
 
-.urlLink:hover {
+.downloadLink {
+    cursor: pointer;
+}
+
+.urlLink:hover, .downloadLink:hover {
     text-decoration: underline;
 }
 
@@ -28,19 +32,15 @@
 .rowContainer {
     font-family: var(--font-body);
     padding: 5px 10px;
-    border: 1px solid var(--light-border);
-    border-bottom-width: 0px;
+    border-bottom: 1px solid var(--light-border);
+    background-color: var(--light-background);
 }
 
 .rowContainerFirst {
-    border-top-left-radius: var(--medium-border-radius);
-    border-top-right-radius: var(--medium-border-radius);
 }
 
 .rowContainerLast {
-    border-bottom-width: 1px;
-    border-bottom-left-radius: var(--medium-border-radius);
-    border-bottom-right-radius: var(--medium-border-radius);
+    border-bottom-width: 0px;
 }
 
 .rowContainerOdd {
@@ -60,13 +60,80 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    position: relative;
+}
+
+.pageButton {
     display: flex;
-    justify-content: center;
     align-items: center;
+    padding: 5px 10px;
+    border: 1px solid var(--light-border);
+    background: var(--dark-primary);
+    color: var(--light-primary);
+    border-radius: var(--small-border-radius);
+    transition: .1s ease-in-out background-color;
+    cursor: pointer;
+}
+
+.pageButton:hover {
+    background-color: var(--dark-highlight);
+}
+
+.pageButtonSelected {
+    background-color: var(--light-primary);
+    color: var(--dark-text);
+}
+
+.pageButtonSelected:hover {
+    background-color: var(--light-highlight);
+    color: var(--dark-text);
 }
 
 .screenshot {
     width: 100%;
     height: 100%;
-    object-fit: contain; /* Options: cover, contain, fill, scale-down, none */
+    object-fit: contain;
+    position: absolute;
+}
+
+.table {
+    display: flex;
+    flex-direction: column;
+}
+
+.tableRow {
+    display: flex;
+    border-bottom: 1px solid var(--light-border);
+    border-left: 1px solid var(--light-border);
+    border-right: 1px solid var(--light-border);
+    overflow: hidden;
+}
+
+.tableRowOdd {
+    background-color: var(--light-primary);
+}
+
+.tableRowFirst {
+    border-top: 1px solid var(--light-border);
+    border-top-left-radius: var(--medium-border-radius);
+    border-top-right-radius: var(--medium-border-radius);
+}
+
+.tableRowLast {
+    border-bottom-left-radius: var(--medium-border-radius);
+    border-bottom-right-radius: var(--medium-border-radius);
+}
+
+.tableLabel {
+    flex: 1;
+    padding: 5px 10px;
+    border-right: 1px solid var(--light-border);
+    color: var(--light-text);
+    background-color: var(--dark-primary);
+}
+
+.tabelInfo {
+    flex: 5;
+    padding: 5px 10px;
+    min-width: 0px;
 }

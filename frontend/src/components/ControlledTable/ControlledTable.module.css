@@ -1,0 +1,35 @@
+
+
+/* Custom scroll bars */
+
+.customScroll {
+    overflow-y: scroll;
+}
+
+.customScroll::-webkit-scrollbar {
+    width: 12px;
+}
+
+/* This is like the background of the scroll bar */
+.customScroll::-webkit-scrollbar-track{
+    background: var(--light-highlight);
+}
+
+.customScroll::-webkit-scrollbar-thumb:vertical {
+    border: 1px solid var(--light-border);
+    cursor: pointer;
+    background-color: var(--dark-primary)
+}
+
+.customTemplatesScroll::-webkit-scrollbar {
+    height: 5px;
+    width: 0px;
+}
+.customTemplatesScroll::-webkit-scrollbar-track{
+    background: var(--light-highlight);
+}
+.customTemplatesScroll::-webkit-scrollbar-thumb:horizontal {
+    border: 1px solid var(--light-border);
+    cursor: pointer;
+    background-color: var(--dark-primary)
+}

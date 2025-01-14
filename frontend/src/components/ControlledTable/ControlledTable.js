@@ -9,7 +9,7 @@ import LoadMore from "../LoadMore/LoadMore"
 import LoadingSkeleton from "../Loading/LoadingSkeleton"
 
 // getUrl is a function taking one arg (page number) and returns url to make GET request to for row items
-export default function ControlledTable({ items, setItems, loadingState, setLoadingState, makeRow, getUrl, searchBarStyle={}, searchBarContainerStyle={}, noResultsContainerStyle={}, paginationContainerStyle={}, loadingSkeleton=undefined, searchable=false, limit=10, resultsKey='results', flexDirection='column', flexWrap='wrap', totalKey='total', gap='20px', paginated=true, doublePaginated=false, loadMore=false, itemsCallback=()=>{}, forceRefresh=undefined, rightOfSearchBar="", tableHeader="", ...props }){
+export default function ControlledTable({ items, setItems, loadingState, setLoadingState, makeRow, getUrl, searchBarStyle={}, searchBarContainerStyle={}, noResultsContainerStyle={}, paginationContainerStyle={}, loadingSkeleton=undefined, searchable=false, limit=10, resultsKey='results', flexDirection='column', flexWrap='wrap', totalKey='total', gap='20px', paginated=true, doublePaginated=false, loadMore=false, itemsCallback=()=>{}, forceRefresh=undefined, rightOfSearchBar="", tableHeader="", scroll=false, customDisplayWrapperStyle={}, customNoResults="", ...props }){
 
     const [currPage, setCurrPage] = useState(1)
     const [numResults, setNumResults] = useState(0);
@@ -131,16 +131,21 @@ export default function ControlledTable({ items, setItems, loadingState, setLoad
             }
         }
         else {
-            display = (
-                <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '1rem', ...noResultsContainerStyle}}>
-                    <div>
-                        No results.
+            if (customNoResults){
+                display = customNoResults
+            }
+            else {
+                display = (
+                    <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '1rem', ...noResultsContainerStyle}}>
+                        <div>
+                            No results.
+                        </div>
+                        <div>
+                            <Button value="Refresh" onClick={() => getItems(1)} />
+                        </div>
                     </div>
-                    <div>
-                        <Button value="Refresh" onClick={() => getItems(1)} />
-                    </div>
-                </div>
-            )
+                )
+            }
         }
     }
     else {
@@ -150,7 +155,7 @@ export default function ControlledTable({ items, setItems, loadingState, setLoad
     }
 
     return (
-        <div style={{'display': 'flex', 'gap': '1rem', 'flexDirection': `column`}} {...props}>
+        <div style={{'display': 'flex', 'gap': '1rem', 'flexDirection': `column`, ...(scroll ? {'height': '100%'} : {})}} {...props}>
             {searchable ? (
                     <div style={searchBarContainerStyle}>
                         <SearchBar
@@ -173,10 +178,12 @@ export default function ControlledTable({ items, setItems, loadingState, setLoad
                     </div>
             ) : ""}
             {paginated && doublePaginated && items && numResults > limit ? <Pagination getPage={getItems} currPage={currPage} numPages={Math.ceil(numResults / limit)} /> : ""}
-            <div>
+            <div style={scroll ? {'flex': '1', 'display': 'flex', 'flexDirection': 'column', 'minHeight': '0px'} : {}}>
                 {showTableHeader ? tableHeader : ""}
-                <div style={{'display': 'flex', 'flexDirection': flexDirection, 'gap': gap, 'flexWrap': flexWrap}}>
-                    {display}
+                <div style={{...(scroll ? {'height': '100%', 'minHeight': '0px'} : {}), ...customDisplayWrapperStyle}}>
+                    <div className={scroll ? styles.customScroll : ''} style={{'display': 'flex', 'flexDirection': flexDirection, 'gap': gap, 'flexWrap': flexWrap, ...(scroll ? {'height': '100%', 'overflowY': 'scroll'} : {})}}>
+                        {display}
+                    </div>
                 </div>
             </div>
             <div style={paginationContainerStyle}>
