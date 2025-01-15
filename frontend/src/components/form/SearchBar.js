@@ -7,7 +7,7 @@ import { useState, useEffect, useRef } from 'react'
 import styles from './Form.module.css'
 
 
-export default function SearchBar({ value, setValue, getSearchResults, handleSearch, placeholder="Search...", textFieldStyle={}, searchOnErase=true, textFieldStretch=false, autoFocus=false, textInputStyle={}, size="large", containerStretch=true, ...props }) {
+export default function SearchBar({ value, setValue, getSearchResults, handleSearch, placeholder="Search...", textFieldStyle={}, searchOnErase=true, textFieldStretch=false, autoFocus=false, textInputStyle={}, size="large", containerStretch=true, autoComplete=true, ...props }) {
 
     const [autoFillOptions, setAutoFillOptions] = useState([]);
     const searchDropdownRef = useRef(null);
@@ -30,7 +30,7 @@ export default function SearchBar({ value, setValue, getSearchResults, handleSea
             }
         }
 
-        if (showDropdown && getSearchResults){
+        if (showDropdown && getSearchResults && autoComplete){
             makeAutoFill()
         } else {
             setShowDropdown(true)

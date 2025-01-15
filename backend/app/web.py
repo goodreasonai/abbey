@@ -268,7 +268,8 @@ def scrape_with_service(url):
 def get_web_chunks(user: User, search_query, available_context, max_n=5):
     se_code = get_user_search_engine_code(user)
     se: SearchEngine = SEARCH_PROVIDERS[se_code]
-    results: list[SearchResult] = se.search(search_query)
+    results: list[SearchResult]
+    results, _ = se.search(search_query)
     
     # Scrape each site in parallel
     scrape_responses = []

@@ -16,13 +16,15 @@ from ..utils import ext_from_mimetype, get_extension_from_path, mimetype_from_ex
 from ..db import with_lock, get_db
 from ..integrations.file_loaders import get_loader, TextSplitter, RawChunk
 from ..exceptions import ScraperUnavailable
+from ..user import get_user_search_engine_code
+from ..integrations.web import SearchEngine, SEARCH_PROVIDERS, SearchResult
 import sys
 import os
 
 
 bp = Blueprint('crawler', __name__, url_prefix="/crawler")
 
-DB_VERSION: int = 1  # increment this in order to redo the schema on older DBs.
+DB_VERSION: int = 2  # increment this in order to redo the schema on older DBs.
 
 
 def create_database(path):
@@ -46,6 +48,10 @@ def create_database(path):
             )
         """
         cursor.execute(sql)
+        sql = """
+            CREATE INDEX url_index ON websites(url COLLATE NOCASE);
+        """
+        cursor.execute(sql)  # Additionally makes any query on URL case insensitive
         sql = """
             CREATE TABLE website_data (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -359,6 +365,7 @@ def remove_website(user: User):
 
     return MyResponse(True).to_json()
 
+
 @bp.route('/add', methods=('POST',))
 @cross_origin()
 @token_optional
@@ -518,6 +525,33 @@ def scrape_one_site(user: User):
         new_row = add_to_db()
 
     return MyResponse(True, {'result': new_row}).to_json()
+
+
+@bp.route('/web', methods=('GET',))
+@cross_origin()
+@token_optional
+def search_web(user: User):
+    asset_id = request.args.get('id')
+    asset_row = get_asset(user, asset_id)
+    if not asset_row:
+        return MyResponse(False, reason="No asset found", status=404).to_json()
+
+    query = request.args.get('query')
+    if not query:
+        return MyResponse(True, {'results': []}).to_json()
+    
+    limit = request.args.get('limit', 10, int)
+    offset = request.args.get('offset', 0, int)
+
+    # Use search engine
+    # Find which websites have already been added and return that with the results
+
+    se_code = get_user_search_engine_code(user)
+    se: SearchEngine = SEARCH_PROVIDERS[se_code]
+    results: list[SearchResult]
+    results, total = se.search(query, max_n=limit, offset=offset)
+
+    return MyResponse(True, {'results': [x.to_json() for x in results], 'total': total}).to_json()
 
 
 class Crawler(Template):

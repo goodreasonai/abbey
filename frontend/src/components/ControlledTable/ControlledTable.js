@@ -9,7 +9,7 @@ import LoadMore from "../LoadMore/LoadMore"
 import LoadingSkeleton from "../Loading/LoadingSkeleton"
 
 // getUrl is a function taking one arg (page number) and returns url to make GET request to for row items
-export default function ControlledTable({ items, setItems, loadingState, setLoadingState, makeRow, getUrl, searchBarStyle={}, searchBarContainerStyle={}, noResultsContainerStyle={}, paginationContainerStyle={}, loadingSkeleton=undefined, searchable=false, limit=10, resultsKey='results', flexDirection='column', flexWrap='wrap', totalKey='total', gap='20px', paginated=true, doublePaginated=false, loadMore=false, itemsCallback=()=>{}, forceRefresh=undefined, rightOfSearchBar="", tableHeader="", scroll=false, customDisplayWrapperStyle={}, customNoResults="", leftOfSearchBar="", ...props }){
+export default function ControlledTable({ items, setItems, loadingState, setLoadingState, makeRow, getUrl, searchBarStyle={}, searchBarContainerStyle={}, noResultsContainerStyle={}, paginationContainerStyle={}, loadingSkeleton=undefined, searchable=false, limit=10, resultsKey='results', flexDirection='column', flexWrap='wrap', totalKey='total', gap='20px', paginated=true, doublePaginated=false, loadMore=false, itemsCallback=()=>{}, forceRefresh=undefined, rightOfSearchBar="", tableHeader="", scroll=false, customDisplayWrapperStyle={}, customNoResults="", leftOfSearchBar="", searchAutoComplete=true, ...props }){
 
     const [currPage, setCurrPage] = useState(1)
     const [numResults, setNumResults] = useState(0);
@@ -174,6 +174,7 @@ export default function ControlledTable({ items, setItems, loadingState, setLoad
                                 setLoadingState(2)
                             }}
                             containerStretch={false}
+                            autoComplete={searchAutoComplete}
                         />
                         {rightOfSearchBar}
                     </div>

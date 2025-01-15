@@ -163,60 +163,21 @@ export default function Crawler({ manifestRow, canEdit }) {
 
     useKeyboardShortcut([['ArrowRight']], ()=>{rightViewCode && slideToRight(rightViewCode, rightViewData)}, false)
 
-    const tableCols = useMemo(() => {
-        return [
-            {'title': 'Added', 'key': 'created_at', 'flex': 2},
-            {'title': 'URL', 'key': 'url', 'flex': 6},
-            {'title': 'Title', 'key': 'title', 'flex': 6},
-            {'title': 'Content', 'key': 'content_type', 'flex': 2},
-            {'title': 'Scrape', 'key': '_scrape', 'flex': 6},
-            {'title': 'Visited', 'key': 'scraped_at', 'flex': 2},
-            {'title': '', 'key': 'delete', 'flex': 1},
-        ]
-    }, [])
-
-    async function removeRow(item){
-        try {
-            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/crawler/remove'
-            const data = {
-                'id': manifestRow?.id,
-                'row_id': item.id
-            }
-            const response = await fetch(url, {
-                'headers': {
-                    'x-access-token': await getToken(),
-                    'Content-Type': 'application/json'
-                },
-                'method': 'POST',
-                'body': JSON.stringify(data)
-            })
-            if (!response.ok){
-                throw Error("Response was not OK")
-            }
-            setWebsites((prev) => prev.filter((x) => x.id != item.id))  // prev and filter used to prevent issues when two are called at the same time
-            return true
-        }
-        catch(e) {
-            console.log(e)
-        }
-        return false  // means an error occurred, so the website won't be deleted
-    }
-
     // The way this works is:
     // if we want to show a React component in the right,
     // you set the rightVieWCode to correspond with the correct hook
     // and that hook will take the rightViewData as a prop.
-    function slideToRight(rightViewCode, rightViewData){
+    const slideToRight = useCallback((rightViewCode, rightViewData) => {
         setRightViewCode(rightViewCode)
         setRightViewData(rightViewData)
         setShowRight(true)
-    }
+    }, [])
 
-    function slideToLeft(){
+    const slideToLeft = useCallback(() => {
         // Notably, leave data and code as is so that during the transition, it's fully displayed
         // Also allows memoizing the data for back and forth moves
         setShowRight(false)
-    }
+    }, [])
 
     let rightElement = ""
     if (rightViewCode == 'scrape'){
@@ -231,8 +192,189 @@ export default function Crawler({ manifestRow, canEdit }) {
     }
 
     function makeRow(item, i) {
-        return <TableRow key={i} slideToRight={slideToRight} assetId={manifestRow?.id} setItem={(x) => setWebsites((prev) => prev.map((old) => old.id == x.id ? x : old))} item={item} i={i} isFirst={ i == 0} isLast={i == websites?.length - 1} tableCols={tableCols} removeRow={() => removeRow(item)} />
+        return <TableRow key={i} slideToRight={slideToRight} setItem={(x) => setWebsites((prev) => prev.map((old) => old.id == x.id ? x : old))} item={item} i={i} isFirst={ i == 0} isLast={i == websites?.length - 1} tableCols={tableCols} />
     }
+
+    const tableCols = useMemo(() => {
+        return [
+            {'title': 'Added', 'key': 'created_at', 'flex': 2, 'hook': ({ item }) => {
+                return formatTimestampSmall(item['created_at'])
+            }},
+            {'title': 'URL', 'key': 'url', 'flex': 6, 'hook': ({ item }) => {
+                const shortenedUrl = extractSiteWithPath(item['url'])
+                return (
+                    <a className={styles.urlLink} target="_blank" href={item['url']}>{shortenedUrl}</a>
+                )
+            }},
+            {'title': 'Title', 'key': 'title', 'flex': 6, 'hook': ({ item }) => {
+                return (
+                    <span title={item['title']}>{item['title']}</span>
+                )
+            }},
+            {'title': 'Content', 'key': 'content_type', 'flex': 2, 'hook': ({ item }) => {
+                const { getToken } = Auth.useAuth()
+
+                const [downloadLoadState, setDownloadLoadState] = useState(0)
+
+                async function downloadData(resourceId){
+                    try {
+                        setDownloadLoadState(1)
+                        const url = process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/files?id=${manifestRow?.id}&name=${resourceId}`
+                        const response = await fetch(url, {
+                            'headers': {
+                                'x-access-token': await getToken(),
+                            },
+                            'method': 'GET'
+                        })
+                        await fileResponse(response)
+                        setDownloadLoadState(2)
+                    }
+                    catch(e) {
+                        setDownloadLoadState(3)
+                        console.log(e)
+                    }
+                }
+                
+                let inner = ""
+                if (item.website_data){
+                    const websiteData = JSON.parse(item.website_data)
+                    const mainData = websiteData.filter((x) => x.data_type == 'data')
+                    if (mainData.length){
+                        const ext = getExtFromMimetype(item['content_type'])
+                        inner = downloadLoadState == 1 ? (
+                            <Loading size={15} text="" />
+                        ) : (
+                            <div style={{'display': 'flex'}}>
+                                <div className={styles.downloadLink} onClick={() => downloadData(mainData[0].resource_id)}>
+                                    {ext}
+                                </div>
+                            </div>
+                        )
+                    }
+                }
+                else {
+                    inner = ""
+                }
+                return inner
+            }},
+            {'title': 'Scrape', 'key': '_scrape', 'flex': 6, 'hook': ({ item, setItem }) => {
+                const { getToken } = Auth.useAuth()
+                const [scrapeLoading, setScrapeLoading] = useState(0)
+                
+                async function scrapeSite() {
+                    try {
+                        setScrapeLoading(1)
+                        const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/crawler/scrape'
+                        const data = {
+                            'id': manifestRow?.id,
+                            'item': item
+                        }
+                        const response = await fetch(url, {
+                            'headers': {
+                                'x-access-token': await getToken(),
+                                'Content-Type': 'application/json'
+                            },
+                            'method': "POST",
+                            'body': JSON.stringify(data)
+                        })
+                        if (response.ok){
+                            const myJson = await response.json()
+                            setItem(myJson['result'])
+                        }
+                        else {
+                            throw Error("Response was not OK")
+                        }
+                        setScrapeLoading(2)
+                    }
+                    catch(e) {
+                        setScrapeLoading(3)
+                        console.log(e)
+                    }
+                }
+                
+                let inner = ""
+                if (item['scraped_at']){
+                    inner = (
+                        <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '5px'}}>
+                            <div className={styles.tableButton} onClick={() => slideToRight('scrape', {'item': item})}>
+                                View
+                            </div>
+                            {scrapeLoading == 1 ? (
+                                <Loading text="" />
+                            ) : (
+                                <Tooltip content={"Redo Scrape"}>
+                                    <MyImage className={"_touchableOpacity"} src={RestartIcon} width={15} height={15} alt={"Restart"} onClick={() => scrapeSite()} />
+                                </Tooltip>
+                            )}
+                        </div>
+                    )
+                }
+                else if (scrapeLoading == 1){
+                    inner = (
+                        <Loading text="" />
+                    )
+                }
+                else {
+                    inner = (
+                        <div style={{'display': 'flex', 'alignItems': 'center'}}>
+                            <div className={styles.tableButton} onClick={() => scrapeSite()}>
+                                Scrape
+                            </div>
+                        </div>
+                    )
+                }
+                return inner
+            }},
+            {'title': 'Visited', 'key': 'scraped_at', 'flex': 2, 'hook': ({ item }) => {
+                return item.scraped_at ? (
+                    <div>
+                        {formatTimestampSmall(item['scraped_at'])}
+                    </div>
+                ) : ""
+            }},
+            {'title': '', 'key': 'delete', 'flex': 1, 'hook': ({ item }) => {
+                const [deleteLoadState, setDeleteLoadState] = useState(0)
+                const { getToken } = Auth.useAuth()
+
+                async function removeRow(){
+                    try {
+                        setDeleteLoadState(1)
+                        const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/crawler/remove'
+                        const data = {
+                            'id': manifestRow?.id,
+                            'row_id': item.id
+                        }
+                        const response = await fetch(url, {
+                            'headers': {
+                                'x-access-token': await getToken(),
+                                'Content-Type': 'application/json'
+                            },
+                            'method': 'POST',
+                            'body': JSON.stringify(data)
+                        })
+                        if (!response.ok){
+                            throw Error("Response was not OK")
+                        }
+                        setWebsites((prev) => prev.filter((x) => x.id != item.id))  // prev and filter used to prevent issues when two are called at the same time
+                        setDeleteLoadState(2)
+                    }
+                    catch(e) {
+                        console.log(e)
+                        setDeleteLoadState(3)
+                    }
+                }
+                return (
+                    <div style={{'display': 'flex', 'justifyContent': 'flex-end', 'alignItems': 'center'}}>
+                        {deleteLoadState == 1 ? (
+                            <Loading text="" />
+                        ) : (
+                            <MyImage className={"_clickable"} src={DeleteIcon} width={20} height={20} onClick={() => removeRow()} alt={"Delete"} />
+                        )}
+                    </div>
+                )
+            }},
+        ]
+    }, [slideToRight, setWebsites, manifestRow])
 
     return (
         <SmartHeightWrapper>
@@ -277,7 +419,11 @@ export function TableHeader({ cols }) {
         <div className={styles.tableHeader}>
             <div style={{'display': 'flex', 'gap': TABLE_COL_GAP}}>
                 {cols.map((item) => {
-                    return (
+                    return item.headerHook ? (
+                        <div style={{'flex': item.flex}} key={item.key}>
+                            <item.headerHook />
+                        </div>
+                    ) : (
                         <div style={{'flex': item.flex}} key={item.key}>
                             {item.title}
                         </div>
@@ -288,164 +434,18 @@ export function TableHeader({ cols }) {
     )
 }
 
-export function TableRow({ assetId, item, setItem, i, tableCols, isFirst, isLast, removeRow, slideToRight, ...props }) {
-
-    const { getToken } = Auth.useAuth()
-    const [scrapeLoading, setScrapeLoading] = useState(0)
-    const [downloadLoadState, setDownloadLoadState] = useState(0)
-    const [deleteLoadState, setDeleteLoadState] = useState(0)
-
-    async function clickRemoveRow(){
-        setDeleteLoadState(1)
-        const removed = await removeRow()
-        if (removed){
-            setDeleteLoadState(2)
-        }
-        else {
-            // set up a message in the future maybe
-            setDeleteLoadState(3)
-        }
-    }
-
-    async function scrapeSite(item) {
-        try {
-            setScrapeLoading(1)
-            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/crawler/scrape'
-            const data = {
-                'id': assetId,
-                'item': item
-            }
-            const response = await fetch(url, {
-                'headers': {
-                    'x-access-token': await getToken(),
-                    'Content-Type': 'application/json'
-                },
-                'method': "POST",
-                'body': JSON.stringify(data)
-            })
-            if (response.ok){
-                const myJson = await response.json()
-                setItem(myJson['result'])
-            }
-            else {
-                throw Error("Response was not OK")
-            }
-            setScrapeLoading(2)
-        }
-        catch(e) {
-            setScrapeLoading(3)
-            console.log(e)
-        }
-    }
-
-    async function downloadData(resourceId){
-        try {
-            setDownloadLoadState(1)
-            const url = process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/files?id=${assetId}&name=${resourceId}`
-            const response = await fetch(url, {
-                'headers': {
-                    'x-access-token': await getToken(),
-                },
-                'method': 'GET'
-            })
-            await fileResponse(response)
-            setDownloadLoadState(2)
-        }
-        catch(e) {
-            setDownloadLoadState(3)
-            console.log(e)
-        }
-    }
-
+export function TableRow({ item, setItem, i, tableCols, isFirst, isLast, slideToRight, ...props }) {
+    
     return (
         <div className={`${styles.rowContainer} ${isFirst ? styles.rowContainerFirst : ''} ${isLast ? styles.rowContainerLast : ''} ${i % 2 ? styles.rowContainerOdd : ''}`} {...props}>
             <div style={{'display': 'flex', 'gap': TABLE_COL_GAP}}>
                 {tableCols.map((x) => {
                     let inner = item[x.key]
-                    if (x.key == 'url'){
-                        const shortenedUrl = extractSiteWithPath(item[x.key])
-                        inner = (<a className={styles.urlLink} target="_blank" href={item[x.key]}>{shortenedUrl}</a>)
-                    }
-                    else if (x.key == 'title'){
+                    if (x.hook){
                         inner = (
-                            <span title={item[x.key]}>{item[x.key]}</span>
+                            <x.hook item={item} setItem={setItem} />
                         )
                     }
-                    else if (x.key == 'created_at'){
-                        inner = formatTimestampSmall(item[x.key])
-                    }
-                    else if (x.key == 'content_type'){
-                        if (item.website_data){
-                            const websiteData = JSON.parse(item.website_data)
-                            const mainData = websiteData.filter((x) => x.data_type == 'data')
-                            if (mainData.length){
-                                const ext = getExtFromMimetype(item[x.key])
-                                inner = downloadLoadState == 1 ? (
-                                    <Loading size={15} text="" />
-                                ) : (
-                                    <div style={{'display': 'flex'}}>
-                                        <div className={styles.downloadLink} onClick={() => downloadData(mainData[0].resource_id)}>
-                                            {ext}
-                                        </div>
-                                    </div>
-                                )
-                            }
-                        }
-                        else {
-                            inner = ""
-                        }
-                    }
-                    else if (x.key == '_scrape'){
-                        if (item['scraped_at']){
-                            inner = (
-                                <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '5px'}}>
-                                    <div className={styles.tableButton} onClick={() => slideToRight('scrape', {'item': item})}>
-                                        View
-                                    </div>
-                                    {scrapeLoading == 1 ? (
-                                        <Loading text="" />
-                                    ) : (
-                                        <Tooltip content={"Redo Scrape"}>
-                                            <MyImage className={"_touchableOpacity"} src={RestartIcon} width={15} height={15} alt={"Restart"} onClick={() => scrapeSite(item)} />
-                                        </Tooltip>
-                                    )}
-                                </div>
-                            )
-                        }
-                        else if (scrapeLoading == 1){
-                            inner = (
-                                <Loading text="" />
-                            )
-                        }
-                        else {
-                            inner = (
-                                <div style={{'display': 'flex', 'alignItems': 'center'}}>
-                                    <div className={styles.tableButton} onClick={() => scrapeSite(item)}>
-                                        Scrape
-                                    </div>
-                                </div>
-                            )
-                        }
-                    }
-                    else if (x.key == 'scraped_at'){
-                        inner = item['scraped_at'] ? (
-                            <div>
-                                {formatTimestampSmall(item['scraped_at'])}
-                            </div>
-                        ) : ""
-                    }
-                    else if (x.key == 'delete'){
-                        inner =  (
-                            <div style={{'display': 'flex', 'justifyContent': 'flex-end', 'alignItems': 'center'}}>
-                                {deleteLoadState == 1 ? (
-                                    <Loading text="" />
-                                ) : (
-                                    <MyImage className={"_clickable"} src={DeleteIcon} width={20} height={20} onClick={() => clickRemoveRow()} alt={"Delete"} />
-                                )}
-                            </div>
-                        )
-                    }
-
                     return (
                         <div style={{'flex': x.flex}} className="_clamped1" key={x.key}>
                             {inner}

@@ -15,11 +15,20 @@ The main functions return SearchResult or ImageSearchResult objects.
 class SearchResult():
     name: str
     url: str
-    def __init__(self, name, url) -> None:
+    language: str  # A code, like en
+    snippet: str
+    def __init__(self, name, url, language="", snippet="") -> None:
         self.name = name
         self.url = url
+        self.language = language
+        self.snippet = snippet
     def to_json(self):
-        return {'name': self.name, 'url': self.url}
+        return {
+            'name': self.name,
+            'url': self.url,
+            'language': self.language,
+            'snippet': self.snippet
+        }
 
 
 class SearchEngine():
@@ -32,7 +41,8 @@ class SearchEngine():
         self.use_pdf = use_pdf
         self.market = market
 
-    def search(self, query, max_n=10):
+    # Returns (list[SearchResult], total)
+    def search(self, query, max_n=10, offset=0):
         raise Exception(f"Search not implemented for search engine with code '{self.code}'")
     
     def to_json_obj(self):
@@ -48,28 +58,29 @@ class SearchEngine():
 
 class Bing(SearchEngine):
     
-    def search(self, query, max_n=10):
+    def search(self, query, max_n=10, offset=0):
         endpoint = "https://api.bing.microsoft.com/v7.0/search"
         # Refer here for bing market codes:  https://learn.microsoft.com/en-us/bing/search-apis/bing-web-search/reference/market-codes
         mkt = 'en-US' if not self.market else self.market
-        params = { 'q': query, 'mkt': mkt }
+        params = { 'q': query, 'mkt': mkt, 'count': max_n, 'offset': offset }  # count defaults to 10, can be up to 50
         headers = { 'Ocp-Apim-Subscription-Key': BING_API_KEY }
         response = requests.get(endpoint, headers=headers, params=params)
         response.raise_for_status()  # will throw an error if the request isn't good
         my_json = response.json()
         try:
+            total = my_json['webPages']['totalEstimatedMatches']
             raw_results = my_json['webPages']['value']
         except:
             print(f"Could not get web pages from search engine. Here was the repsonse: {my_json}", file=sys.stderr)
             return []
         
-        results = [SearchResult(x['name'], x['url']) for i, x in enumerate(raw_results) if i < max_n]
-        return results
+        results = [SearchResult(x['name'], x['url'], language=x['language'], snippet=x['snippet']) for i, x in enumerate(raw_results) if i < max_n]
+        return results, total
 
 
 class SearXNG(SearchEngine):
 
-    def search(self, query, max_n=10):
+    def search(self, query, max_n=10, offset=0):
         # TODO: add support for different market/language etc codes
         
         params = {'q': query, 'format': 'json'}
@@ -94,7 +105,7 @@ class SearXNG(SearchEngine):
                     result_objs.append(SearchResult(res['title'], res['url']))
             else:
                 result_objs.append(SearchResult(res['title'], res['url']))
-        return result_objs
+        return result_objs, None
 
 
 PROVIDER_TO_WEB = {
