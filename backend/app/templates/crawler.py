@@ -22,14 +22,13 @@ import os
 
 bp = Blueprint('crawler', __name__, url_prefix="/crawler")
 
+DB_VERSION: int = 1  # increment this in order to redo the schema on older DBs.
 
-# TODO move this into the CrawlerDB class
-def create_and_upload_database(asset_id):
-    temp_file = tempfile.NamedTemporaryFile(mode='w+', delete=False)
-    db_path = temp_file.name
+
+def create_database(path):
+    # Connect to the SQLite database
     try:
-        # Connect to the SQLite database
-        conn = sqlite3.connect(db_path)
+        conn = sqlite3.connect(path)
         cursor = conn.cursor()
 
         # You should modify /manifest and add appropriate columns if you modify this
@@ -98,16 +97,25 @@ def create_and_upload_database(asset_id):
         """
         cursor.execute(sql)
 
-        # Commit the changes
+        sql = f"""
+            PRAGMA user_version = {DB_VERSION}
+        """
+        cursor.execute(sql)
+
         conn.commit()
-
-        path, from_key = upload_asset_file(asset_id, temp_file.name, 'sqlite')
-        add_asset_resource(asset_id, MAIN_FILE, from_key, path, "Database")
-
     finally:
-        # Close the connection
         conn.close()
 
+
+# TODO move this into the CrawlerDB class
+def create_and_upload_database(asset_id):
+    temp_file = tempfile.NamedTemporaryFile(mode='w+', delete=False)
+    db_path = temp_file.name
+    try:
+        create_database(db_path)
+        path, from_key = upload_asset_file(asset_id, temp_file.name, 'sqlite')
+        add_asset_resource(asset_id, MAIN_FILE, from_key, path, "Database")
+    finally:
         # Delete the temporary database file
         if os.path.exists(db_path):
             os.remove(db_path)
@@ -151,6 +159,74 @@ class CrawlerDB():
         conn.row_factory = dict_factory
         self.conn = conn
         self.asset_id = asset_id
+
+        self._check_version_and_update()
+
+    def _check_version_and_update(self):
+        sql = "PRAGMA user_version"
+        res = self.execute(sql)
+        version = res.fetchone()['user_version']
+        if version < DB_VERSION:
+            # Create new database
+            temp_file = tempfile.NamedTemporaryFile(mode='w+', delete=False)
+            db_path = temp_file.name
+
+            create_database(db_path)
+            new_conn = sqlite3.connect(db_path)
+            new_conn.row_factory = dict_factory
+
+            new_cursor = new_conn.cursor()
+            old_cursor = self.conn.cursor()
+
+            # Should be updated as new tables are added (OK if don't exist in previous database)
+            tables_to_reconstruct = ['websites', 'website_data']
+
+            for table in tables_to_reconstruct:
+                # Get common columns first
+                new_cursor.execute(f"PRAGMA table_info({table});")
+                new_columns = {col["name"] for col in new_cursor.fetchall()}
+
+                old_cursor.execute(f"PRAGMA table_info({table});")
+                old_columns = {col["name"] for col in old_cursor.fetchall()}
+
+                common_columns = new_columns.intersection(old_columns)
+                if not common_columns:
+                    continue
+
+                columns_list = ", ".join(common_columns)
+
+                # 1. Read rows from old DB in one go (or chunked if data is huge).
+                select_sql = f"SELECT {columns_list} FROM {table}"
+                old_cursor.execute(select_sql)
+                rows = old_cursor.fetchall()
+
+                # 2. Insert them into new DB efficiently:
+                placeholders = ", ".join(["?"] * len(common_columns))
+                insert_sql = f"INSERT INTO {table} ({columns_list}) VALUES ({placeholders})"
+
+                # Wrap in a transaction for fewer commits
+                new_conn.execute("BEGIN TRANSACTION;")
+                # executemany can take an iterable of tuples
+                new_cursor.executemany(
+                    insert_sql,
+                    (
+                        tuple(row_dict[col] for col in common_columns)
+                        for row_dict in rows
+                    ),
+                )
+                new_conn.execute("COMMIT;")
+
+            new_conn.commit()
+            
+            new_cursor.close()
+            old_cursor.close()
+
+            # Remove the old database and attach new one
+            os.remove(self.path)
+            self.path = db_path
+            self.conn = new_conn
+
+            # Notably, will NOT reupload the DB unless the user commits.
 
     def execute(self, *args, **kwargs):
         res = self.conn.execute(*args, **kwargs)
