@@ -16,6 +16,8 @@ import { extractSiteWithPath } from "@/utils/text"
 import SlidingPage from "../SlidingPage/SlidingPage"
 import ScrapePreview from "./ScrapePreview"
 import SmartHeightWrapper from "../SmartHeightWrapper/SmartHeightWrapper"
+import SearchEngine from "./SearchEngine"
+import useKeyboardShortcut from "@/utils/keyboard"
 
 const TABLE_COL_GAP='10px'
 
@@ -95,7 +97,7 @@ export default function Crawler({ manifestRow, canEdit }) {
     }
 
     const rightOfSearchBar = (
-        <div style={{'display': 'flex', 'alignItems': 'stretch'}}>
+        <div style={{'display': 'flex', 'alignItems': 'stretch', 'flex': '1', 'gap': '10px'}}>
             <SyntheticButton
                 value={(
                     <div style={{'display': 'flex', 'alignItems': 'center'}}>
@@ -105,6 +107,18 @@ export default function Crawler({ manifestRow, canEdit }) {
                 style={{'display': 'flex'}}
                 onClick={() => setAddWebsiteModalOpen(true)}
             />
+            <SyntheticButton
+                value={(
+                    <div style={{'display': 'flex', 'alignItems': 'center'}}>
+                        Search
+                    </div>
+                )}
+                style={{'display': 'flex'}}
+                onClick={() => slideToRight('search')}
+            />
+            <div style={{'fontSize': '1.25rem', 'display': 'flex', 'flex': '1', 'justifyContent': 'right', 'alignItems': 'center', 'color': 'var(--passive-text)'}}>
+                Website Collection
+            </div>
             <Modal
                 title={"Add URL"}
                 isOpen={addWebsiteModalOpen}
@@ -146,6 +160,8 @@ export default function Crawler({ manifestRow, canEdit }) {
             'gap': '10px',
         }
     }, [])
+
+    useKeyboardShortcut([['ArrowRight']], ()=>{rightViewCode && slideToRight(rightViewCode, rightViewData)}, false)
 
     const tableCols = useMemo(() => {
         return [
@@ -208,6 +224,11 @@ export default function Crawler({ manifestRow, canEdit }) {
             <ScrapePreview assetId={manifestRow?.id} item={rightViewData?.item} slideToLeft={slideToLeft} />
         )
     }
+    else if (rightViewCode == 'search'){
+        rightElement = (
+            <SearchEngine assetId={manifestRow?.id} slideToLeft={slideToLeft} />
+        )
+    }
 
     function makeRow(item, i) {
         return <TableRow key={i} slideToRight={slideToRight} assetId={manifestRow?.id} setItem={(x) => setWebsites((prev) => prev.map((old) => old.id == x.id ? x : old))} item={item} i={i} isFirst={ i == 0} isLast={i == websites?.length - 1} tableCols={tableCols} removeRow={() => removeRow(item)} />
@@ -251,7 +272,7 @@ export default function Crawler({ manifestRow, canEdit }) {
     )
 }
 
-function TableHeader({ cols }) {
+export function TableHeader({ cols }) {
     return (
         <div className={styles.tableHeader}>
             <div style={{'display': 'flex', 'gap': TABLE_COL_GAP}}>
@@ -267,7 +288,7 @@ function TableHeader({ cols }) {
     )
 }
 
-function TableRow({ assetId, item, setItem, i, tableCols, isFirst, isLast, removeRow, slideToRight, ...props }) {
+export function TableRow({ assetId, item, setItem, i, tableCols, isFirst, isLast, removeRow, slideToRight, ...props }) {
 
     const { getToken } = Auth.useAuth()
     const [scrapeLoading, setScrapeLoading] = useState(0)

@@ -10,6 +10,7 @@ import TwoPanel from "../TwoPanel/TwoPanel"
 import { extractSiteWithPath } from "@/utils/text"
 import { formatTimestampSmall } from "@/utils/time"
 import LoadingSkeleton from "../Loading/LoadingSkeleton"
+import BackToCollection from "./BackToCollection"
 
 
 export default function ScrapePreview({ assetId, item, slideToLeft }){
@@ -89,11 +90,8 @@ export default function ScrapePreview({ assetId, item, slideToLeft }){
     return (
         <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '1rem', 'height': '100%'}}>
             <div style={{'display': 'flex', 'fontSize': '1rem'}}>
-                <div onClick={() => slideToLeft()} className="_touchableOpacity" style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center', 'flex': '1'}}>
-                    <MyImage src={BackIcon} width={20} height={20} />
-                    <div>
-                        Back to Collection
-                    </div>
+                <div style={{'flex': '1', 'display': 'flex'}}>
+                    <BackToCollection slideToLeft={slideToLeft} />
                 </div>
                 <div style={{'flex': '5', 'display': 'flex', 'justifyContent': 'center'}}>
                     <div style={{'backgroundColor': 'var(--light-primary)', 'border': '1px solid var(--light-border)', 'padding': '5px 10px', 'borderRadius': 'var(--medium-border-radius)'}}>
