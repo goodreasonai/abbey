@@ -186,8 +186,11 @@ export default function Crawler({ manifestRow, canEdit }) {
         )
     }
     else if (rightViewCode == 'search'){
+        function addCallback(results) {
+            setWebsites([...results, ...websites])
+        }
         rightElement = (
-            <SearchEngine assetId={manifestRow?.id} slideToLeft={slideToLeft} />
+            <SearchEngine assetId={manifestRow?.id} slideToLeft={slideToLeft} addCallback={addCallback} />
         )
     }
 
@@ -407,6 +410,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                             customDisplayWrapperStyle={{'borderRadius': 'var(--medium-border-radius)', 'overflow': 'hidden', 'border': '1px solid var(--light-border)', 'backgroundColor': 'var(--light-primary)'}}
                         />
                     )}
+                    keepRightRendered={rightViewCode == 'search'}
                     right={rightElement}
                 />
             </div>

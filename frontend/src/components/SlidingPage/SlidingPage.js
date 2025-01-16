@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-export default function SlidingPage({ main, right, showRight, style, ...props }) {
+export default function SlidingPage({ main, right, showRight, style, keepRightRendered, ...props }) {
     
     const [rightInView, setRightInView] = useState(true)
     const rightRef = useRef()
@@ -79,7 +79,7 @@ export default function SlidingPage({ main, right, showRight, style, ...props })
                     pointerEvents: showRight ? '' : 'none'
                 }}
             >
-                {rightInView ? right : ""} 
+                {rightInView || keepRightRendered ? right : ""} 
             </div>
         </div>
     );

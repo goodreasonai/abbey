@@ -1,5 +1,5 @@
 from .template import Template
-from ..db import needs_db
+from ..db import needs_db, db_polling_lock, db_release_lock
 from ..auth import User
 import sqlite3
 import tempfile
@@ -150,14 +150,14 @@ def dict_factory(cursor, row):
     return d
 
 class CrawlerDB():
-    def __init__(self, asset_id):
+    def __init__(self, asset_id, read_only=False, db=None):  # Note that db is an argument, but the class doesn't use needs_db
         # Somewhat inefficient in that there's no caching
         # And requires downloading the entire DB
-        res = get_asset_resource(asset_id, MAIN_FILE)
+        res = get_asset_resource(asset_id, MAIN_FILE, db=db)
         if res is None:
             raise Exception(f"Couldn't find any existing crawler database for asset id {asset_id}")
         self.asset_resource = res
-
+        self.db = db
         tmp = tempfile.NamedTemporaryFile(delete=False)
         download_file(tmp.name, res)
         self.path = tmp.name
@@ -165,6 +165,7 @@ class CrawlerDB():
         conn.row_factory = dict_factory
         self.conn = conn
         self.asset_id = asset_id
+        self.read_only = read_only
 
         self._check_version_and_update()
 
@@ -248,6 +249,23 @@ class CrawlerDB():
     def close(self, *args, **kwargs):
         self.conn.close(*args, **kwargs)
         os.remove(self.path)
+
+    def __enter__(self):
+        # Returning the CrawlerDB object like "with CrawlerDB(...) as db:"
+        # Acquire the lock
+        if not self.read_only:
+            has_lock = db_polling_lock(get_crawler_lock_name(self.asset_id), db=self.db)
+            if not has_lock:
+                raise Exception(f"Couldn't acquire the lock for CrawlerDB on asset with id {self.asset_id}")
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Remove the temporary file when done
+        try:
+            self.close()
+        finally:
+            if not self.read_only:
+                db_release_lock(get_crawler_lock_name(self.asset_id), db=self.db)
 
 
 @bp.route('/manifest', methods=('GET',))
@@ -544,14 +562,59 @@ def search_web(user: User):
     offset = request.args.get('offset', 0, int)
 
     # Use search engine
-    # Find which websites have already been added and return that with the results
-
     se_code = get_user_search_engine_code(user)
     se: SearchEngine = SEARCH_PROVIDERS[se_code]
     results: list[SearchResult]
     results, total = se.search(query, max_n=limit, offset=offset)
 
-    return MyResponse(True, {'results': [x.to_json() for x in results], 'total': total}).to_json()
+    results_json = [x.to_json() for x in results]
+    # Find which websites have already been added and return that with the results
+    with CrawlerDB(asset_id, read_only=True) as crawler:
+        quoted_urls = [f"'{x['url']}'" for x in results_json]
+        sql = f"""
+            SELECT * FROM websites
+            WHERE `url` IN ({','.join(quoted_urls)})
+        """
+        res = crawler.execute(sql)
+        duplicates = res.fetchall()
+
+        # n^2 gang
+        for item in duplicates:
+            for i in range(len(results_json)):
+                if results_json[i]['url'] == item['url']:
+                    results_json[i]['added'] = True
+
+    return MyResponse(True, {'results': results_json, 'total': total}).to_json()
+
+
+@bp.route('/add-bulk', methods=('POST',))
+@cross_origin()
+@token_optional
+def add_bulk(user: User):
+    asset_id = request.json.get('id')
+    asset_row = get_asset(user, asset_id)
+    if not asset_row:
+        return MyResponse(False, reason="Couldn't find asset", status=404).to_json()
+    
+    items = request.json.get('items')
+    added = []
+    with CrawlerDB(asset_id) as crawler:
+        sql = """
+            INSERT INTO websites (`url`, `title`)
+            VALUES (?, ?)
+        """
+        for item in items:
+            crawler.execute(sql, (item['url'], item['name']))
+            get_id_sql = """
+                SELECT * FROM websites
+                WHERE rowid = last_insert_rowid();
+            """
+            res = crawler.execute(get_id_sql)
+            last = res.fetchone()
+            added.append(last)
+        crawler.commit()
+    
+    return MyResponse(True, {'results': added}).to_json()
 
 
 class Crawler(Template):

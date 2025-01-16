@@ -221,7 +221,7 @@ def needs_special_db(new_conn=False, exclusive_conn=False, consistent_conn=False
 # A polling lock so that we don't cause delays with the db pool
 # TO USER OF THE FUNCTION, APPEARS AS THOUGH IT'S BLOCKING - perhaps poorly named...
 @needs_db
-def _db_polling_lock(name, db: ProxyDB = None):
+def db_polling_lock(name, db: ProxyDB = None):
 
     # Two phases for performance
     # We use IS_FREE_LOCK as a pure polling solution
@@ -255,7 +255,7 @@ def _db_polling_lock(name, db: ProxyDB = None):
 
 
 @needs_db
-def _db_release_lock(name, db: ProxyDB = None):
+def db_release_lock(name, db: ProxyDB = None):
     curr = db.cursor()
     sql = f"SELECT RELEASE_LOCK('{name}');"
     curr.execute(sql)
@@ -265,7 +265,7 @@ def with_lock(lock_name, db):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            has_lock = _db_polling_lock(lock_name, db=db)
+            has_lock = db_polling_lock(lock_name, db=db)
             
             if not has_lock:
                 return None
@@ -273,7 +273,7 @@ def with_lock(lock_name, db):
             try:
                 result = func(*args, **kwargs)
             finally:
-                _db_release_lock(lock_name, db=db)
+                db_release_lock(lock_name, db=db)
             
             return result
         return wrapper
