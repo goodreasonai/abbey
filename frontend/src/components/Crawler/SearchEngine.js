@@ -8,6 +8,7 @@ import FakeCheckbox from "../form/FakeCheckbox";
 import SyntheticButton from "../form/SyntheticButton";
 import { Auth } from "@/auth/auth";
 import Loading from "../Loading/Loading";
+import Dropdown from "../Dropdown/Dropdown";
 
 
 export default function SearchEngine({ assetId, slideToLeft, addCallback }) {
@@ -120,22 +121,20 @@ export default function SearchEngine({ assetId, slideToLeft, addCallback }) {
         return <TableRow key={i} setItem={() => {}} item={item} i={i} isFirst={ i == 0} isLast={i == websites?.length - 1} tableCols={tableCols} />
     }
 
-    const rightOfSearchBar = useMemo(() => {
+    const bulkAddButton = useMemo(() => {
         if (nSelected == 0 && bulkAddedNumber){
             return (
-                <div style={{'display': 'flex', 'alignItems': 'stretch', 'flex': '1', 'gap': '10px'}}>
-                    <SyntheticButton
-                        value={(
-                            <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
-                                <div>
-                                    {`Added ${bulkAddedNumber}`}
-                                </div>
+                <SyntheticButton
+                    value={(
+                        <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
+                            <div>
+                                {`Added ${bulkAddedNumber}`}
                             </div>
-                        )}
-                        noHighlight={true}
-                        style={{'display': 'flex'}}
-                    />
-                </div>
+                        </div>
+                    )}
+                    noHighlight={true}
+                    style={{'display': 'flex'}}
+                />
             )
         }
         else if (!nSelected){
@@ -143,34 +142,39 @@ export default function SearchEngine({ assetId, slideToLeft, addCallback }) {
         }
 
         return addBulkLoading == 1 ? (
-            <div style={{'display': 'flex', 'alignItems': 'stretch', 'flex': '1', 'gap': '10px'}}>
-                <SyntheticButton
-                    value={(
-                        <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
-                            <div>
-                                Add to Collection
-                            </div>
-                            <Loading text="" color={"var(--light-text)"} />
+            <SyntheticButton
+                value={(
+                    <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
+                        <div>
+                            Add to Collection
                         </div>
-                    )}
-                    noHighlight={true}
-                    style={{'display': 'flex'}}
-                />
-            </div>
+                        <Loading text="" color={"var(--light-text)"} />
+                    </div>
+                )}
+                noHighlight={true}
+                style={{'display': 'flex'}}
+            />
         ) : (
+            <SyntheticButton
+                value={(
+                    <div style={{'display': 'flex', 'alignItems': 'center'}}>
+                        Add to Collection ({`${nSelected}`})
+                    </div>
+                )}
+                style={{'display': 'flex'}}
+                onClick={() => addBulk()}
+            />
+        )
+    }, [selected, addBulkLoading, nSelected, bulkAddedNumber, assetId])
+
+    const rightOfSearchBar = useMemo(() => {
+        return (
             <div style={{'display': 'flex', 'alignItems': 'stretch', 'flex': '1', 'gap': '10px'}}>
-                <SyntheticButton
-                    value={(
-                        <div style={{'display': 'flex', 'alignItems': 'center'}}>
-                            Add to Collection ({`${nSelected}`})
-                        </div>
-                    )}
-                    style={{'display': 'flex'}}
-                    onClick={() => addBulk()}
-                />
+                <SelectEngine />
+                {bulkAddButton}
             </div>
         )
-    }, [selected, addBulkLoading, nSelected, bulkAddedNumber])
+    }, [bulkAddButton])
 
     return (
         <div style={{'display': 'flex', 'flexDirection': 'column', 'height': '100%', 'gap': '1rem'}}>
@@ -208,3 +212,110 @@ export default function SearchEngine({ assetId, slideToLeft, addCallback }) {
         </div>
     )
 }
+
+
+function SelectEngine({ }) {
+
+    const { getToken } = Auth.useAuth()
+
+    const [selectedSearchEngine, setSelectedSearchEngine] = useState({})  // obj of information - does it accept images? etc.
+    const [userSearchEngineOptions, setUserSearchEngineOptions] = useState([])
+    const [userSearchEngineLoadingState, setUserSearchEngineLoadingState] = useState(0)
+
+    async function setUserSearchEngine(model){
+        try {
+            setUserSearchEngineLoadingState(1)
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/user/select-search-engine'
+            const data = {
+                'model': model.code
+            }
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                    'Content-Type': 'application/json'
+                },
+                'method': 'POST',
+                'body': JSON.stringify(data)
+            })
+            const myJson = await response.json()
+            if (myJson['response'] != 'success'){
+                console.log(myJson)
+                throw Error("Response was not success")
+            }
+            setSelectedSearchEngine(myJson['model'])
+            setUserSearchEngineLoadingState(2)
+        }
+        catch (e) {
+            console.log(e)
+            setUserSearchEngineLoadingState(2)  // on fail, user will notice.
+        }
+    }
+
+    async function getUserSearchEngine(){
+        try {
+            setUserSearchEngineLoadingState(1)
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/user/search-engine'
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                },
+                'method': 'GET'
+            })
+
+            let myJson = await response.json()
+            let model = myJson['model']
+            setSelectedSearchEngine(model)
+            setUserSearchEngineLoadingState(2)
+        }
+        catch(e) {
+            console.log(e)
+            setUserSearchEngineLoadingState(3)
+        }
+    }
+
+    async function getUserSearchEngineOptions(){
+        try {
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/user/search-engines'
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                    'Content-Type': 'application/json'
+                },
+                'method': 'GET'
+            })
+            const myJson = await response.json()
+            if (myJson['response'] != 'success'){
+                console.log(myJson)
+                throw Error("Response was not success")
+            }
+            const available = myJson['available'].map((item) => {return {...item, 'available': true}})
+            const unavailable = myJson['unavailable'].map((item) => {return {...item, 'available': false}})
+            setUserSearchEngineOptions([...available, ...unavailable])
+        }
+        catch (e) {
+            console.log(e)
+        }
+    }
+
+    useEffect(() => {
+        getUserSearchEngine()
+        getUserSearchEngineOptions()
+    }, [])
+
+    return (
+        <Dropdown
+            rightAlign={true}
+            style={{'display': 'flex'}}
+            value={userSearchEngineLoadingState < 2 ? (
+                <Loading text="" color="var(--light-text)" />
+            ) : selectedSearchEngine.name}
+            options={userSearchEngineOptions.map((item) => {
+                return {
+                    'value': item.name,
+                    'onClick': () => setUserSearchEngine(item)
+                }
+            })}
+        />
+    )
+}
+

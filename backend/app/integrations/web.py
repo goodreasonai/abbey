@@ -83,7 +83,9 @@ class SearXNG(SearchEngine):
     def search(self, query, max_n=10, offset=0):
         # TODO: add support for different market/language etc codes
         
-        params = {'q': query, 'format': 'json'}
+        # Since there's no offset or limit in the SearXNG API, we have to convert to pages
+        page = 1 + (offset // max_n)
+        params = {'q': query, 'format': 'json', 'pageno': page}
         url = SETTINGS['searxng']['url']
         if self.engine:
             params['engines'] = self.engine
@@ -100,11 +102,11 @@ class SearXNG(SearchEngine):
             # Using the PDF url instead of the regularly URL can be useful for scholarly works
             if self.use_pdf:
                 if 'pdf_url' in res and res['pdf_url']:
-                    result_objs.append(SearchResult(res['title'], res['pdf_url']))
+                    result_objs.append(SearchResult(res['title'], res['pdf_url'], snippet=res['content']))
                 else:
-                    result_objs.append(SearchResult(res['title'], res['url']))
+                    result_objs.append(SearchResult(res['title'], res['url'], snippet=res['content']))
             else:
-                result_objs.append(SearchResult(res['title'], res['url']))
+                result_objs.append(SearchResult(res['title'], res['url'], snippet=res['content']))
         return result_objs, None
 
 

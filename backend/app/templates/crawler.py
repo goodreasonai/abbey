@@ -556,7 +556,7 @@ def search_web(user: User):
 
     query = request.args.get('query')
     if not query:
-        return MyResponse(True, {'results': []}).to_json()
+        return MyResponse(True, {'results': [], 'total': 0}).to_json()
     
     limit = request.args.get('limit', 10, int)
     offset = request.args.get('offset', 0, int)

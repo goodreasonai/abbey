@@ -324,6 +324,9 @@ You can make sure your SearXNG instance is working correctly when the following 
 curl -kLX GET --data-urlencode q='abbey ai' -d format=json http://localhost:8080
 ```
 
+Other note: the SearXNG documentation says to put its docker repo in /usr/local, but on some systems this may prevent it from accessing your custom settings. Try cloning it to your Desktop instead if things aren't working.
+
+
 ### Optical Character Recognition (OCR)
 
 Optical Character Recognition APIs are configured under `ocr` in `settings.yml`. By default, no OCR is used. Optionally configuring OCR allows Abbey to read scanned PDFs. Abbey automatically determines whether OCR appears needed.

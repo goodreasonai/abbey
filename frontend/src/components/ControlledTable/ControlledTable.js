@@ -9,7 +9,7 @@ import LoadMore from "../LoadMore/LoadMore"
 import LoadingSkeleton from "../Loading/LoadingSkeleton"
 
 // getUrl is a function taking one arg (page number) and returns url to make GET request to for row items
-export default function ControlledTable({ items, setItems, loadingState, setLoadingState, makeRow, getUrl, searchBarStyle={}, searchBarContainerStyle={}, noResultsContainerStyle={}, paginationContainerStyle={}, loadingSkeleton=undefined, searchable=false, limit=10, resultsKey='results', flexDirection='column', flexWrap='wrap', totalKey='total', gap='20px', paginated=true, doublePaginated=false, loadMore=false, itemsCallback=()=>{}, forceRefresh=undefined, rightOfSearchBar="", tableHeader="", scroll=false, customDisplayWrapperStyle={}, customNoResults="", leftOfSearchBar="", searchAutoComplete=true, autoFocus=false, ...props }){
+export default function ControlledTable({ items, setItems, loadingState, setLoadingState, makeRow, getUrl, searchBarStyle={}, searchBarContainerStyle={}, noResultsContainerStyle={}, paginationContainerStyle={}, loadingSkeleton=undefined, searchable=false, limit=10, resultsKey='results', flexDirection='column', flexWrap='wrap', totalKey='total', gap='20px', paginated=true, doublePaginated=false, loadMore=false, itemsCallback=()=>{}, forceRefresh=undefined, rightOfSearchBar="", tableHeader="", scroll=false, customDisplayWrapperStyle={}, customNoResults="", leftOfSearchBar="", searchAutoComplete=true, autoFocus=false, defaultTotal=1000, ...props }){
 
     const [currPage, setCurrPage] = useState(1)
     const [numResults, setNumResults] = useState(0);
@@ -52,7 +52,12 @@ export default function ControlledTable({ items, setItems, loadingState, setLoad
             let myJson = await makeRequest(page)
             setItems(myJson[resultsKey])
             if (totalKey){
-                setNumResults(myJson[totalKey])
+                if (myJson[totalKey] === null){
+                    setNumResults(defaultTotal)  // if there's no total, set it to a high number
+                }
+                else {
+                    setNumResults(myJson[totalKey])
+                }
             }
             setLoadingState(2)
         }
@@ -167,7 +172,10 @@ export default function ControlledTable({ items, setItems, loadingState, setLoad
                             handleSearch={async (x) => {
                                 setLoadingState(1)
                                 let [items, total] = await getSearchResults(x);
-                                if (total){
+                                if (total === null){
+                                    setNumResults(defaultTotal)
+                                }
+                                else {
                                     setNumResults(total)
                                 }
                                 setItems(items)

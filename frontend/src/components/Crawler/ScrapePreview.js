@@ -189,7 +189,7 @@ function InfoTable({ assetId, item, mainData }) {
             <div className={styles.table}>
                 {rows.map((row, i) => {
                     return (
-                        <div className={`${styles.tableRow} ${i == 0 ? styles.tableRowFirst : ''} ${i == rows.length - 1 ? styles.tableRowLast : ''} ${i % 2 ? styles.tableRowOdd : ''}`}>
+                        <div key={i} className={`${styles.tableRow} ${i == 0 ? styles.tableRowFirst : ''} ${i == rows.length - 1 ? styles.tableRowLast : ''} ${i % 2 ? styles.tableRowOdd : ''}`}>
                             <div className={styles.tableLabel}>
                                 {row.title}
                             </div>
