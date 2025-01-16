@@ -178,6 +178,7 @@ export default function ControlledTable({ items, setItems, loadingState, setLoad
                                 else {
                                     setNumResults(total)
                                 }
+                                setCurrPage(1)
                                 setItems(items)
                                 setLoadingState(2)
                             }}
