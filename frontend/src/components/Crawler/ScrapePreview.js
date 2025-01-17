@@ -14,7 +14,7 @@ import BackToCollection from "./BackToCollection"
 
 
 export default function ScrapePreview({ assetId, item, slideToLeft }){
-    const { getToken } = Auth.useAuth()
+    const { getToken, isSignedIn } = Auth.useAuth()
 
     const [screenshotIndex, setScreenshotIndex] = useState(0)
     const [screenshotImages, setScreenshotImages] = useState([])  // holds the retrieved data
@@ -78,10 +78,10 @@ export default function ScrapePreview({ assetId, item, slideToLeft }){
     }, [screenshotImages, assetId, screenshots])
 
     useEffect(() => {
-        if (screenshots?.length && screenshots?.length > screenshotIndex && screenshotImages?.length <= screenshotIndex){
+        if (isSignedIn !== undefined && screenshots?.length && screenshots?.length > screenshotIndex && screenshotImages?.length <= screenshotIndex){
             retrieveScreenshot(screenshotIndex)
         }
-    }, [screenshotIndex, screenshots, downloadData, retrieveScreenshot, screenshotImages])
+    }, [screenshotIndex, screenshots, downloadData, retrieveScreenshot, screenshotImages, isSignedIn])
 
     useKeyboardShortcut([['ArrowLeft']], slideToLeft, false)
 

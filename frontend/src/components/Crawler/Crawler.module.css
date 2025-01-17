@@ -1,5 +1,5 @@
 
-.tableButton {
+.tableButton, .tableButtonView {
     background-color: var(--light-primary);
     padding: 2px 10px;
     border-radius: var(--small-border-radius);
@@ -11,6 +11,15 @@
 
 .tableButton:hover {
     background-color: var(--light-highlight);
+}
+
+.tableButtonView {
+    background-color: var(--dark-primary);
+    color: var(--light-text);
+}
+
+.tableButtonView:hover {
+    background-color: var(--dark-highlight);
 }
 
 .downloadLink {
@@ -130,6 +139,7 @@
     border-right: 1px solid var(--light-border);
     color: var(--light-text);
     background-color: var(--dark-primary);
+    min-width: 120px;
 }
 
 .tabelInfo {

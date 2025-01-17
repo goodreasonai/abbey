@@ -216,7 +216,7 @@ export default function SearchEngine({ assetId, slideToLeft, addCallback }) {
 
 function SelectEngine({ }) {
 
-    const { getToken } = Auth.useAuth()
+    const { getToken, isSignedIn } = Auth.useAuth()
 
     const [selectedSearchEngine, setSelectedSearchEngine] = useState({})  // obj of information - does it accept images? etc.
     const [userSearchEngineOptions, setUserSearchEngineOptions] = useState([])
@@ -298,9 +298,11 @@ function SelectEngine({ }) {
     }
 
     useEffect(() => {
-        getUserSearchEngine()
-        getUserSearchEngineOptions()
-    }, [])
+        if (isSignedIn !== undefined){
+            getUserSearchEngine()
+            getUserSearchEngineOptions()
+        }
+    }, [isSignedIn])
 
     return (
         <Dropdown

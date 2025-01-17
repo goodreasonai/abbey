@@ -18,12 +18,13 @@ import ScrapePreview from "./ScrapePreview"
 import SmartHeightWrapper from "../SmartHeightWrapper/SmartHeightWrapper"
 import SearchEngine from "./SearchEngine"
 import useKeyboardShortcut from "@/utils/keyboard"
+import Queue from "./Queue"
 
 const TABLE_COL_GAP='10px'
 
 export default function Crawler({ manifestRow, canEdit }) {
     
-    const { getToken } = Auth.useAuth()
+    const { getToken, isSignedIn } = Auth.useAuth()
     
     const [websites, setWebsites] = useState([])
     const [websitesLoadState, setWebsitesLoadState] = useState(0)
@@ -116,6 +117,15 @@ export default function Crawler({ manifestRow, canEdit }) {
                 style={{'display': 'flex'}}
                 onClick={() => slideToRight('search')}
             />
+            <SyntheticButton
+                value={(
+                    <div style={{'display': 'flex', 'alignItems': 'center'}}>
+                        Queue
+                    </div>
+                )}
+                style={{'display': 'flex'}}
+                onClick={() => slideToRight('queue')}
+            />
             <div style={{'fontSize': '1.25rem', 'display': 'flex', 'flex': '1', 'justifyContent': 'right', 'alignItems': 'center', 'color': 'var(--passive-text)'}}>
                 Website Collection
             </div>
@@ -191,6 +201,11 @@ export default function Crawler({ manifestRow, canEdit }) {
         }
         rightElement = (
             <SearchEngine assetId={manifestRow?.id} slideToLeft={slideToLeft} addCallback={addCallback} />
+        )
+    }
+    else if (rightViewCode == 'queue'){
+        rightElement = (
+            <Queue slideToLeft={slideToLeft} />
         )
     }
 
@@ -299,16 +314,9 @@ export default function Crawler({ manifestRow, canEdit }) {
                 if (item['scraped_at']){
                     inner = (
                         <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '5px'}}>
-                            <div className={styles.tableButton} onClick={() => slideToRight('scrape', {'item': item})}>
+                            <div className={styles.tableButtonView} onClick={() => slideToRight('scrape', {'item': item})}>
                                 View
                             </div>
-                            {scrapeLoading == 1 ? (
-                                <Loading text="" />
-                            ) : (
-                                <Tooltip content={"Redo Scrape"}>
-                                    <MyImage className={"_touchableOpacity"} src={RestartIcon} width={15} height={15} alt={"Restart"} onClick={() => scrapeSite()} />
-                                </Tooltip>
-                            )}
                         </div>
                     )
                 }
