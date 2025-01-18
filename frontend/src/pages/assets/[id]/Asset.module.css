@@ -63,6 +63,29 @@
     background-color: var(--light-background-highlight);
 }
 
+.editRow {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.editLabel {
+    flex: 1;
+    background-color: var(--dark-primary);
+    border-radius: var(--medium-border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 5px;
+    color: var(--light-text);
+    min-width: 105px;
+    font-size: .9rem;
+}
+
+.editInputContainer {
+    flex: 5;
+}
+
 @media (max-width: 900px) { /* Apply styles when the screen width is 800px or smaller */
     .seeDescription {
         margin-left: 0px;

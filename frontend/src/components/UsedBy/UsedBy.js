@@ -40,7 +40,7 @@ export default function UsedBy({ assetId, label="", ...props }) {
     }, [assetId, setSourceOf, isSignedIn])
 
     if (!sourceOf.length){
-        return <div></div>
+        return ''
     }
 
     let options = sourceOf.map((source, i) => {
@@ -54,14 +54,16 @@ export default function UsedBy({ assetId, label="", ...props }) {
     })
 
     return (
-        <Dropdown 
-            value={label}
-            options={options}
-            initialButtonStyle={{'fontSize': '.8rem', 'paddingTop': '3px', 'paddingBottom': '3px'}}
-            optionsStyle={{'minWidth': '200px'}}
-            rightAlign={true}
-            {...props}
-        />
+        <div style={{'minWidth': '85px'}}>
+            <Dropdown 
+                value={label}
+                options={options}
+                initialButtonStyle={{'fontSize': '.8rem', 'paddingTop': '3px', 'paddingBottom': '3px'}}
+                optionsStyle={{'minWidth': '200px'}}
+                rightAlign={true}
+                {...props}
+            />
+        </div>
     )
 
 }

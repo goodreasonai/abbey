@@ -1,6 +1,6 @@
 import '@/styles/globals.css'
 import Head from 'next/head'
-import { FAVICON_16x16, FAVICON_32x32, COMPANY, SITE_TITLE, NAV_BAR, DESCRIPTION, PREVIEW_IMAGE_URL } from '../config/config'
+import { FAVICON_16x16, FAVICON_32x32, COMPANY, SITE_TITLE, DESCRIPTION, PREVIEW_IMAGE_URL } from '../config/config'
 import { Inter } from 'next/font/google'
 import localFont from 'next/font/local'
 import { ThemeProvider } from 'next-themes'
@@ -8,6 +8,7 @@ import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import Loading from '@/components/Loading/Loading'
 import { Auth } from '@/auth/auth'
+import NavBar, { NavBarProvider } from '@/components/NavBar'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -73,18 +74,20 @@ export default function App({ Component, pageProps }) {
             </style>
             <Auth.Provider pageProps={pageProps}>
                 <ThemeProvider>
-                    <Head>
-                        <title>{SITE_TITLE}</title>
-                        <meta name="description" content={DESCRIPTION} />
-                        <meta name="viewport" content="width=device-width, initial-scale=1" />
-                        <meta name="author" content={COMPANY} />
-                        <link rel="icon" type="image/png" sizes="32x32" href={FAVICON_32x32.src} />
-                        <link rel="icon" type="image/png" sizes="16x16" href={FAVICON_16x16.src} />
-                        <meta property="og:image" content={PREVIEW_IMAGE_URL} />
-                    </Head>
-                    { pageLoading ? <PageLoading /> : "" }
-                    { NAV_BAR }
-                    <Component {...pageProps} />
+                    <NavBarProvider>
+                        <Head>
+                            <title>{SITE_TITLE}</title>
+                            <meta name="description" content={DESCRIPTION} />
+                            <meta name="viewport" content="width=device-width, initial-scale=1" />
+                            <meta name="author" content={COMPANY} />
+                            <link rel="icon" type="image/png" sizes="32x32" href={FAVICON_32x32.src} />
+                            <link rel="icon" type="image/png" sizes="16x16" href={FAVICON_16x16.src} />
+                            <meta property="og:image" content={PREVIEW_IMAGE_URL} />
+                        </Head>
+                        { pageLoading ? <PageLoading /> : "" }
+                        <NavBar />
+                        <Component {...pageProps} />
+                    </NavBarProvider>
                 </ThemeProvider>
             </Auth.Provider>
         </>

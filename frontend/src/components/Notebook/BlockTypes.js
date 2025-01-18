@@ -251,7 +251,7 @@ export class AssetBlock extends BlockType {
         let tmp = getTemplateByCode(item.data.assetRow['template'])
         let typeSpecific = (
             <div>
-                <Link href={`/assets/${item.data.assetRow.id}`} target="_blank" className={styles.assetBlockContainer}>
+                <Link href={`/assets/${item.data.assetRow.id}`}  className={styles.assetBlockContainer}>
                     <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
                         <MyImage src={tmp.constructor.icon} width={20} height={20} alt={tmp.constructor.readableName} />
                         <div style={{'fontSize': '1.2rem'}}>

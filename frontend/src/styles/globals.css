@@ -87,6 +87,8 @@
     --std-margin-top: 1rem;
 
     --nav-bar-height: 35px;  /* Not the greatest - AND SHOULD VERY RARELY BE USED... */
+    --asset-bar-height: 35px;  /* Not the greatest - AND SHOULD VERY RARELY BE USED... */
+    --nav-bar-transition: .5s;
 
     /* Radii */
     

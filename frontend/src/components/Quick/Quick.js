@@ -17,9 +17,9 @@ import Modal from '../Modal/Modal'
 import { getDefaultDescription } from '../Upload/Upload'
 import { getUserName } from '@/utils/user'
 import { Auth } from '@/auth/auth'
+import { useNavBar } from '../NavBar'
 
 
-// Intended to fix some problems with <Quick />
 export default function Quick({ ...props }) {
     
     const router = useRouter()
@@ -33,6 +33,7 @@ export default function Quick({ ...props }) {
     const [uploadProgress, setUploadProgress] = useState(0)
     const [isLoading, setIsLoading] = useState(false)    
     const { user } = Auth.useUser();
+    const { setQuickWantsNavBar } = useNavBar()
 
     const [selectedItem, setSelectedItem] = useState(undefined)
 
@@ -316,6 +317,8 @@ export default function Quick({ ...props }) {
                                 </div>
                             </div>
                         )}
+                        openCallback={() => setQuickWantsNavBar(true)}
+                        closeCallback={() => setQuickWantsNavBar(false)}
                         options={quickOptions}
                         closeOnSelect={true}
                         optionsStyle={{'minWidth': '150px', 'fontSize': '.9rem'}}

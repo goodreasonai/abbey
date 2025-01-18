@@ -78,8 +78,6 @@ Least Important Config Variables
 export const SignedInHomePage = ({}) => {return (<FaceliftHomePage />)}  // The component for the home page, when a user is signed in
 export const LandingPage = ({}) => {return (<SignedOutHomePage />)}  // the component for the home page, when a user is signed out
 
-export const NAV_BAR = (<NavBar />)  // The component for the NavBar
-
 // Should match backend
 export const ILLEGAL_SHARE_DOMAINS = [
     'gmail.com',

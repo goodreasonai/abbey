@@ -11,7 +11,7 @@ import Loading from '../Loading/Loading';
 import { Auth } from '@/auth/auth';
 
 
-export default function MoveToFolder({ topText="", assetId, resultLimit=5, flexDirection='column', closeCallback=undefined, outsideClickCallback=()=>{} }) {
+export default function MoveToFolder({ topText="", assetId, resultLimit=5, flexDirection='column', outsideClickCallback=()=>{} }) {
 
     const myInputRef = useRef();
     const [flashingMessages, setFlashingMessages] = useState({})
@@ -136,9 +136,6 @@ export default function MoveToFolder({ topText="", assetId, resultLimit=5, flexD
 
     return (
         <div className={styles.container} ref={myInputRef}>
-            <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
-                <MyImage src={MinimizeIcon} width={20} height={20} alt={"Close"} onClick={closeCallback ? closeCallback : outsideClickCallback} className={"_clickable"} />
-            </div>
             <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '1rem'}}>
                 {topText}
                 <Table

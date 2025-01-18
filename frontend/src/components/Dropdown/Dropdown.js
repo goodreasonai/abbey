@@ -4,7 +4,7 @@ import ReactDOM from "react-dom";
 
 
 // options = of the form [{'value': (...), 'onClick': (...)}, ...]
-export default function Dropdown({className, options, value, optionsStyle={}, rightAlign=false, initialButtonStyle={}, openCallback=() => {}, closeCallback=() => {}, closeOnSelect=true, direction="down", forceClose, setForceClose, stayOpen, noShadow=false, ...props}) {
+export default function Dropdown({className, options, value, optionsStyle={}, rightAlign=false, initialButtonStyle={}, openCallback=() => {}, closeCallback=() => {}, closeOnSelect=true, direction="down", forceClose, setForceClose, stayOpen, noShadow=false, initialButtonClass="", ...props}) {
     const [selected, setSelected] = useState(false);
     const dropdownRef = useRef(null); // Added this line to create a reference to the dropdown
     const dropdownOptionsContainerRef = useRef(null)
@@ -133,7 +133,7 @@ export default function Dropdown({className, options, value, optionsStyle={}, ri
 
     return (
         <div ref={dropdownRef} className={realClassName} {...props}>
-            <div ref={initialButtonRef} onClick={onClickDropdown} className={`${styles.initialButton} ${!noShadow ? styles.hasShadow : ''}`} style={{'cursor': 'pointer', ...initialButtonStyle}}>
+            <div ref={initialButtonRef} onClick={onClickDropdown} className={`${styles.initialButton} ${!noShadow ? styles.hasShadow : ''} ${initialButtonClass}`} style={{'cursor': 'pointer', ...initialButtonStyle}}>
                 {value}
             </div>
             {

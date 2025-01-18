@@ -75,7 +75,7 @@ export default function Modal({ isOpen, close, title, minWidth="500px", minHeigh
         return () => {
             try {
                 window.removeEventListener('scroll', handleScroll, { passive: true });
-                window.removeEventListener('click', handleClickOutside, { capture: true });
+                window.removeEventListener('mousedown', handleClickOutside, { capture: true });
             } catch(e){}
             handleResetScroll();
         };

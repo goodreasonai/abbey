@@ -13,9 +13,6 @@ import { useEffect } from "react"
 import { getUserName } from "@/utils/user"
 
 
-// Intended to fix some problems with the OLD <Quick />
-// The NEW quick has most of its code borrowed from here, so make sure to update it as you find bugs!
-// Attempts to refactor <Quick /> to use CreateWrapper have failed.
 export default function CreateWrapper({ templateCode, children, loadCallback=()=>{}, callback=()=>{}, noRedirect=false, className, style, noShow=false, newTab=false, data={}, noStretch=false, ...props }) {
     
     const router = useRouter()

@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import DefaultPage from '@/components/DefaultPage';
 import { ADD_TO_WORKSPACE_TEMPLATES, DATA_TEMPLATES, getTemplateByCode } from '@/templates/template';
 import Loading from '@/components/Loading/Loading';
@@ -15,7 +15,6 @@ import PermissionsEntry from '@/components/form/PermissionsEntry';
 import MyImage from '@/components/MyImage/MyImage';
 import { deleteAsset } from '@/utils/requests';
 import UsedBy from '@/components/UsedBy/UsedBy';
-import CollapsibleMenu from '@/components/CollapsibleMenu/CollapsibleMenu';
 import MoveIcon from '../../../../public/icons/MoveIcon.png'
 import MoveToFolder from '@/components/assets-table/MoveToFolder';
 import styles from './Asset.module.css'
@@ -24,13 +23,14 @@ import shortenText from '@/utils/text';
 import FadeOnLoad from '@/components/visuals/FadeOnLoad';
 import Modal from '@/components/Modal/Modal';
 import { Auth } from '@/auth/auth';
+import { useNavBar } from '@/components/NavBar';
+import { useIsMobile } from '@/utils/mobile';
 
 export default function Asset({ assetManifestRow, assetManifestRowLoadState }){
 
     const router = useRouter()
     const { id } = router.query
     const { getToken, isSignedIn } = Auth.useAuth()
-    const { user } = Auth.useUser()
 
     const [isEditing, setIsEditing] = useState(false)
     const [editedTitle, setEditedTitle] = useState(assetManifestRow?.title)
@@ -43,36 +43,62 @@ export default function Asset({ assetManifestRow, assetManifestRowLoadState }){
     const [userIdsToEmails, setUserIdsToEmails] = useState({})
     const [changePermissionsLoadState, setChangePermissionsLoadState] = useState(0)
 
-    const [needNotHidden, setNeedNotHidden] = useState(false)
-    
     const [clickedDelete, setClickedDelete] = useState(false)
     const [deleteLoadingState, setDeleteLoadingState] = useState(0)
 
     const [showMove, setShowMove] = useState(false)
-    const [showDescription, setShowDescription] = useState(false)
 
     const [collabSocket, setCollabSocket] = useState(undefined)
     const [collabUsers, setCollabUsers] = useState([])
     const [collabErrorState, setCollabErrorState] = useState(false)
 
+    const headerRef = useRef()
+    const { isShrunk, expandNavBar, navBarHeight, setWantNavBar } = useNavBar()
+    const { isMobile } = useIsMobile()
+
     const [alertData, setAlertData] = useState()
 
     const canEdit = assetManifestRow?.can_edit && assetManifestRowLoadState == 2
 
-    const handleTitleClick = async () => {
-        if (assetManifestRow['template']==='detached_chat'){
-            setEditedTitle(document.getElementById("titleFromIndex").innerHTML)
-            assetManifestRow['title'] = document.getElementById("titleFromIndex").innerHTML
-        }
-        if (canEdit) setIsEditing(true);
-    }
-
     useEffect(() => {
         setIsEditingPermissions(false)
         setClickedDelete(false)
-        setShowDescription(false)
         setDeleteLoadingState(0)
     }, [id])
+
+    useEffect(() => {
+
+        if (!assetManifestRow?.id){
+            return
+        }
+
+        const assetTemplate = getTemplateByCode(assetManifestRow['template'])
+
+        function handleMouseEnter(){
+            setWantNavBar(true)
+        }
+
+        function handleMouseLeave() {
+            setWantNavBar(false)
+        }
+
+        if (assetTemplate.constructor.prefersShrunk && headerRef?.current && !isMobile){
+            setWantNavBar(false)
+            headerRef.current.addEventListener('mouseenter', handleMouseEnter);
+            headerRef.current.addEventListener('mouseleave', handleMouseLeave);
+        }
+        else {
+            expandNavBar()
+        }
+
+        return () => {
+            if (headerRef?.current){
+                headerRef.current.removeEventListener('mouseenter', handleMouseEnter);
+                headerRef.current.removeEventListener('mouseleave', handleMouseLeave);
+            }
+            setWantNavBar(true)
+        }
+    }, [assetManifestRow, headerRef?.current, isMobile])
 
     const handleInlineEdit = async () => {
         const token = await getToken()
@@ -462,7 +488,7 @@ export default function Asset({ assetManifestRow, assetManifestRowLoadState }){
         dpProps['backgroundColor'] = assetTemplate.constructor.altBackgroundColor
     }
     if (assetTemplate.constructor.fixHeight){
-        dpProps['mainDivStyle'] = {'height': 'calc(100vh - var(--nav-bar-height))'}
+        dpProps['mainDivStyle'] = {'height': `calc(100vh - ${navBarHeight}px)`}
         dpProps['noFooter'] = true
     }
     if (assetTemplate.constructor.footerStyle){
@@ -484,113 +510,96 @@ export default function Asset({ assetManifestRow, assetManifestRowLoadState }){
                 <meta name="description" content={assetManifestRow['preview_desc']} />
             </Head>
             <div style={{'height': '100%', 'display': 'flex', 'flexDirection': 'column', ...(assetTemplate.constructor.noMargins ? {} : {'gap': 'var(--std-margin-top'})}}>
-                <div style={{'backgroundColor': 'var(--light-primary)', 'borderBottom': '1px solid var(--light-border)', 'padding': '10px', 'paddingLeft': 'var(--std-margin)', 'paddingRight': 'var(--std-margin)', 'fontSize': '.9rem'}}>
-                    <CollapsibleMenu openByDefault={true} noHeader={true} bodyContainerStyle={needNotHidden ? {'overflow': 'visible'} : {}}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', 'marginBottom': '10px', 'flexWrap': 'wrap'}}>
-                            <div style={{ fontSize: '1rem', 'display': 'flex'}}>
-                                {isEditing ? (
-                                    <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
-                                        <ControlledInputText 
-                                            placeholder={assetManifestRow['title']}
-                                            value={editedTitle}
-                                            onKeyPress={handleKeyPress}
-                                            setValue={(x) => setEditedTitle(x)} 
-                                            inputStyle={{
-                                                border: 'none',
-                                                borderBottom: '1px solid gray',
-                                                padding: '0',
-                                                background: 'none',
-                                                outline: 'none',
-                                                minWidth: '20vw',
-                                                borderRadius: '0px'
-                                            }}
-                                            size={'15'}
-                                        />
-                                        <span style={{ color: 'var(--passive-text)' }}>by</span>
-                                        <ControlledInputText 
-                                            placeholder={assetManifestRow['author']}
-                                            value={editedAuthor} 
-                                            setValue={setEditedAuthor}
-                                            onKeyPress={handleKeyPress}
-                                            inputStyle={{
-                                                border: 'none',
-                                                borderBottom: '1px solid gray',
-                                                padding: '0',
-                                                background: 'none',
-                                                outline: 'none',
-                                                borderRadius: '0px'
-                                            }}
-                                            size={'10'}
-                                        />
-                                        <MyImage onClick={handleInlineEdit} src={CircleCheckIcon} height={20} width={20} alt={'Submit'} style={{'cursor': 'pointer'}} />
-                                        <MyImage onClick={() => setIsEditing(false)} src={RemoveIcon} height={20} width={20} alt={'Cancel'} style={{'cursor': 'pointer'}} />
-                                    </div>
-                                ) : (
-                                    <span onClick={handleTitleClick} style={canEdit ? {'cursor': 'pointer'} : {}}>
-                                        {/* Not good practice here with the id, but simplifies drastically */}
-                                        <span id="titleFromIndex">
-                                            {assetManifestRow['title']}
-                                        </span>
-                                        {
-                                            assetManifestRow['author'] ? (
-                                                <span style={{ color: 'var(--passive-text)' }}>
-                                                    {` by ${assetManifestRow['author']}`}
-                                                </span>
-                                            ) : ""
-                                        }
-                                    </span>
-                                )}
-                            </div>
-                            <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
-                                {canEdit && !isEditing ? (
-                                    <MyImage title="Edit" className={"_clickable"} src={EditIcon} width={20} height={20} alt='Edit' onClick={() => setIsEditing(true)} />
-                                ) : ""}
-                                {deleteArea}
-                                {isSignedIn ? <MyImage title="Put into folder" className={"_clickable"} src={MoveIcon} width={20} height={20} alt="Add to a Folder" onClick={() => setShowMove(!showMove)} /> : "" }
-                            </div>
-                            <div style={{'flex': '1', 'display': 'flex'}}>
-                                <div title={assetManifestRow['preview_desc']} className={styles.seeDescription} onClick={() => {setShowDescription(!showDescription)}}>
-                                    {showDescription ? `Hide Description` : `See Description`}
-                                </div>
-                            </div>
-                            {assetTemplate.constructor.collab ? (<Collab collabUsers={collabUsers} />) : ""}
+                {/* HEADER PORTION START */}
+                <div ref={headerRef} style={{'height': isShrunk ? '0px' : 'var(--asset-bar-height)', 'transition': 'all var(--nav-bar-transition) ease-in-out', 'overflow': 'hidden', 'backgroundColor': 'var(--light-primary)', 'borderBottom': '1px solid var(--light-border)', 'fontSize': '.9rem'}}>
+                    <div style={{'padding': '0px var(--std-margin)', 'display': 'flex', 'alignItems': 'center', 'width': '100%', 'height': '100%', 'gap': '10px'}}>
+                        <span className='_clamped1' id="titleFromIndex" style={{'cursor': 'default'}}>
+                            {assetManifestRow['title']}
+                        </span>
+                        {
+                            assetManifestRow['author'] ? (
+                                <span className='_clamped1' style={{'color': 'var(--passive-text)', 'cursor': 'default'}}>
+                                    {` by ${assetManifestRow['author']}`}
+                                </span>
+                            ) : ""
+                        }
+                        <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
                             {canEdit ? (
-                                <div className={`${styles.shareButton} _clickable`} id={"EditAssetPermissions"} onClick={() => setIsEditingPermissions(!isEditingPermissions)}>
-                                    <MyImage title="Share" src={ShareIcon} height={15} width={15} alt={"Share"}/>
-                                    Share
+                                <MyImage title="Edit" className={"_clickable"} src={EditIcon} width={20} height={20} alt='Edit' onClick={() => setIsEditing(true)} />
+                            ) : ""}
+                            {deleteArea}
+                            {isSignedIn ? <MyImage title="Put into folder" className={"_clickable"} src={MoveIcon} width={20} height={20} alt="Add to a Folder" onClick={() => setShowMove(!showMove)} /> : "" }
+                        </div>
+                        <div className='_clamped1' style={{'flex': '1', 'color': 'var(--passive-text)', 'cursor': 'default'}}>
+                            {assetManifestRow['preview_desc']}
+                        </div>
+                        {assetTemplate.constructor.collab ? (<Collab collabUsers={collabUsers} />) : ""}
+                        {canEdit ? (
+                            <div className={`${styles.shareButton} _clickable`} id={"EditAssetPermissions"} onClick={() => setIsEditingPermissions(!isEditingPermissions)}>
+                                <MyImage title="Share" src={ShareIcon} height={15} width={15} alt={"Share"}/>
+                                Share
+                            </div>
+                        ) : ("")}
+                        {/* Hate using the exact width for UsedBy but hard to imagine another way to keep it from spilling (clamped is hard here) */}
+                        <UsedBy assetId={assetManifestRow['id']} label='Used By...' />
+                    </div>
+                    <Modal
+                        isOpen={showMove}
+                        close={() => setShowMove(false)}
+                        title={"Move to Folder"}
+                    >
+                        <MoveToFolder flexDirection='row' topText={`Put "${assetManifestRow['title']}" in a folder.`} resultLimit={15} assetId={assetManifestRow.id} closeCallback={() => {setShowMove(false)}} outsideClickCallback={() => {}} />
+                    </Modal>
+                    <Modal
+                        isOpen={isEditing}
+                        close={() => {handleInlineEdit()}}
+                        title={"Edit"}
+                    >
+                        <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center', 'flexDirection': 'column', 'width': '100%', 'height': '100%'}}>
+                            <div className={styles.editRow}>
+                                <div className={styles.editLabel}>
+                                    Title
                                 </div>
-                            ) : ("")}
-                            <div>
-                                <UsedBy assetId={assetManifestRow['id']} label='Used By...' openCallback={() => {setNeedNotHidden(true)}} closeCallback={() => {setNeedNotHidden(false)}} />
+                                <div className={styles.editInputContainer}>
+                                    <ControlledInputText 
+                                        placeholder={assetManifestRow['title']}
+                                        value={editedTitle}
+                                        onKeyPress={handleKeyPress}
+                                        setValue={(x) => setEditedTitle(x)} 
+                                        size={'15'}
+                                    />
+                                </div>
+                            </div>
+                            <div className={styles.editRow}>
+                                <div className={styles.editLabel}>
+                                    Author
+                                </div>
+                                <div className={styles.editInputContainer}>
+                                    <ControlledInputText 
+                                        placeholder={assetManifestRow['author']}
+                                        value={editedAuthor} 
+                                        setValue={setEditedAuthor}
+                                        onKeyPress={handleKeyPress}
+                                    />
+                                </div>
+                            </div>
+                            <div className={styles.editRow}>
+                                <div className={styles.editLabel}>
+                                    Description
+                                </div>
+                                <div className={styles.editInputContainer}>
+                                    <ControlledInputText 
+                                        placeholder={assetManifestRow['preview_desc']}
+                                        value={editedDesc} 
+                                        setValue={setEditedDesc}
+                                        onKeyPress={handleKeyPress}
+                                    />
+                                </div>
                             </div>
                         </div>
-                        {showMove || showDescription || (canEdit && isEditing) ? (
-                            <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '1rem'}}>
-                                {canEdit && isEditing ? (
-                                    <ControlledInputText
-                                        value={editedDesc}
-                                        onKeyPress={handleKeyPress}
-                                        setValue={(x) => setEditedDesc(x)}
-                                        inputStyle={{'backgroundColor': 'var(--light-background)'}} />
-                                ) : (showDescription ? (
-                                    <div
-                                        title={assetManifestRow['preview_desc']}
-                                        className={`${styles.desc}`}
-                                        >
-                                        {assetManifestRow['preview_desc']}
-                                    </div>
-                                ) : "")}
-                                {   /* Also title needs to be true in the case where the user can't view the asset. */
-                                    showMove && assetManifestRow['title'] ? (
-                                        <div>
-                                            <MoveToFolder flexDirection='row' topText={`Put "${assetManifestRow['title']}" in a folder.`} resultLimit={15} assetId={assetManifestRow.id} closeCallback={() => {setShowMove(false)}} outsideClickCallback={() => {}} />
-                                        </div>
-                                    ) : ""
-                                }
-                            </div>
-                        ) : ""}
-                    </CollapsibleMenu>
+                    </Modal>
                 </div>
+                {/* END OF HEADER PORTION */}
                 <div style={parentStyle}>
                     {deleteLoadingState != 2 ? (
                         <assetTemplate.Element assetManifestRow={assetManifestRow} canEdit={canEdit} {...(collabSocket ? {'collabSocket': collabSocket} : {})} />
