@@ -45,9 +45,6 @@
     background-color: var(--light-background);
 }
 
-.rowContainerFirst {
-}
-
 .rowContainerLast {
     border-bottom-width: 0px;
 }

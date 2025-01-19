@@ -224,7 +224,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                     <a className={styles.urlLink} target="_blank" href={item['url']}>{shortenedUrl}</a>
                 )
             }},
-            {'title': 'Title', 'key': 'title', 'flex': 6, 'hook': ({ item }) => {
+            {'title': 'Title', 'key': 'title', 'flex': 7, 'hook': ({ item }) => {
                 return (
                     <span title={item['title']}>{item['title']}</span>
                 )
@@ -275,7 +275,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                 }
                 return inner
             }},
-            {'title': 'Scrape', 'key': '_scrape', 'flex': 6, 'hook': ({ item, setItem }) => {
+            {'title': 'Scrape', 'key': '_scrape', 'flex': 2, 'hook': ({ item, setItem }) => {
                 const { getToken } = Auth.useAuth()
                 const [scrapeLoading, setScrapeLoading] = useState(0)
                 

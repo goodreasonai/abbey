@@ -9,6 +9,7 @@ import SyntheticButton from "../form/SyntheticButton";
 import { Auth } from "@/auth/auth";
 import Loading from "../Loading/Loading";
 import Dropdown from "../Dropdown/Dropdown";
+import { extractSiteName, extractSiteWithPath } from "@/utils/text";
 
 
 export default function SearchEngine({ assetId, slideToLeft, addCallback }) {
@@ -105,12 +106,12 @@ export default function SearchEngine({ assetId, slideToLeft, addCallback }) {
                     }} />
                 )
             }},
-            {'title': 'Name', 'key': 'name', 'flex': 10},
-            {'title': 'URL', 'key': 'url', 'flex': 10, 'hook': ({ item }) => {
+            {'title': 'URL', 'key': 'url', 'flex': 6, 'hook': ({ item }) => {
                 return (
-                    <a href={item['url']} target="_blank" className={styles.urlLink}>{item['url']}</a>
+                    <a href={item['url']} target="_blank" className={styles.urlLink}>{extractSiteWithPath(item['url'])}</a>
                 )
             }},
+            {'title': 'Name', 'key': 'name', 'flex': 10},
             {'title': 'Snippet', 'key': 'snippet', 'flex': 10}
         ]
     }, [selected, websites])
