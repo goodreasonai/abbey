@@ -204,7 +204,7 @@ export default function Chat({id,
             'user_time': userTime,
             'batched': false,
             'streaming': true,
-            'temperature': roundStates[qIndex].temperature === undefined ? .5 : roundStates[qIndex].temperature,  // no way currently to set temperature with the removal of randomness slider
+            // 'temperature': roundStates[qIndex].temperature === undefined ? .5 : roundStates[qIndex].temperature,  // no way currently to set temperature with the removal of randomness slider
             'detached': (roundStates[qIndex].detached || detached) ? true : false,
             'use_web': roundStates[qIndex].useWeb ? true : false,
             'exclude': exclude,
