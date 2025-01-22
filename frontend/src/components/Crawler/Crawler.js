@@ -393,30 +393,8 @@ export default function Crawler({ manifestRow, canEdit }) {
                 <SlidingPage 
                     showRight={showRight}
                     main={(
-                        <ControlledTable
-                            items={websites}
-                            setItems={setWebsites}
-                            loadingState={websitesLoadState}
-                            setLoadingState={setWebsitesLoadState}
-                            makeRow={makeRow}
-                            limit={resultLimit}
-                            getUrl={getUrl}
-                            loadingSkeleton={'default-small'}
-                            searchable={true}
-                            tableHeader={(<TableHeader cols={tableCols} />)}
-                            gap={'0px'}
-                            searchBarContainerStyle={searchBarContainerStyle}
-                            searchBarStyle={{'width': '300px'}}
-                            rightOfSearchBar={rightOfSearchBar}
-                            flexWrap="noWrap"
-                            scroll={true}
-                            customNoResults={(
-                                <div style={{'height': '100%', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center', 'fontSize': '1.15rem'}}>
-                                    Nothing yet.
-                                </div>
-                            )}
-                            customDisplayWrapperStyle={{'borderRadius': 'var(--medium-border-radius)', 'overflow': 'hidden', 'border': '1px solid var(--light-border)', 'backgroundColor': 'var(--light-primary)'}}
-                        />
+                        <div>
+                        </div>
                     )}
                     keepRightRendered={rightViewCode == 'search'}
                     right={rightElement}
@@ -426,45 +404,3 @@ export default function Crawler({ manifestRow, canEdit }) {
     )
 }
 
-export function TableHeader({ cols }) {
-    return (
-        <div className={styles.tableHeader}>
-            <div style={{'display': 'flex', 'gap': TABLE_COL_GAP}}>
-                {cols.map((item) => {
-                    return item.headerHook ? (
-                        <div style={{'flex': item.flex}} key={item.key}>
-                            <item.headerHook />
-                        </div>
-                    ) : (
-                        <div style={{'flex': item.flex}} key={item.key}>
-                            {item.title}
-                        </div>
-                    )
-                })}
-            </div>
-        </div>
-    )
-}
-
-export function TableRow({ item, setItem, i, tableCols, isFirst, isLast, slideToRight, ...props }) {
-    
-    return (
-        <div className={`${styles.rowContainer} ${isFirst ? styles.rowContainerFirst : ''} ${isLast ? styles.rowContainerLast : ''} ${i % 2 ? styles.rowContainerOdd : ''}`} {...props}>
-            <div style={{'display': 'flex', 'gap': TABLE_COL_GAP}}>
-                {tableCols.map((x) => {
-                    let inner = item[x.key]
-                    if (x.hook){
-                        inner = (
-                            <x.hook item={item} setItem={setItem} />
-                        )
-                    }
-                    return (
-                        <div style={{'flex': x.flex}} className="_clamped1" key={x.key}>
-                            {inner}
-                        </div>
-                    )
-                })}
-            </div>
-        </div>
-    )
-}
