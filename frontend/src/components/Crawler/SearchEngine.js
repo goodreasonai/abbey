@@ -21,7 +21,10 @@ export default function SearchEngine({ assetId, slideToLeft, addCallback }) {
     const [addBulkLoading, setAddBulkLoading] = useState(0)
     const [bulkAddedNumber, setBulkAddedNumber] = useState(0)
     const [selected, setSelected] = useState({})  // URL -> item or undefined
-
+    const [currPage, setCurrPage] = useState(1)
+    const [numResults, setNumResults] = useState(0);
+    const [searchText, setSearchText] = useState("")
+    
     function getUrl(page, text){
         if (!text){
             text = ""
@@ -186,6 +189,12 @@ export default function SearchEngine({ assetId, slideToLeft, addCallback }) {
                 <ControlledTable
                     items={websites}
                     setItems={setWebsites}
+                    setCurrPage={setCurrPage}
+                    currPage={currPage}
+                    numResults={numResults}
+                    setNumResults={setNumResults}
+                    searchText={searchText}
+                    setSearchText={setSearchText}
                     loadingState={websitesLoadState}
                     setLoadingState={setWebsitesLoadState}
                     makeRow={makeRow}

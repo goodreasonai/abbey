@@ -28,6 +28,9 @@ export default function Crawler({ manifestRow, canEdit }) {
     
     const [websites, setWebsites] = useState([])
     const [websitesLoadState, setWebsitesLoadState] = useState(0)
+    const [currPage, setCurrPage] = useState(1)
+    const [numResults, setNumResults] = useState(0);
+    const [searchText, setSearchText] = useState("")
 
     const [addWebsiteModalOpen, setAddWebsiteModalOpen] = useState(false)
     const [addWebsiteLoadingState, setAddWebsiteLoadingState] = useState(0)
@@ -325,6 +328,9 @@ export default function Crawler({ manifestRow, canEdit }) {
                 else if (queueLoading == 3){
                     inner = "Error"
                 }
+                else if (item['queued'] || queueLoading == 2){
+                    inner = "Queued"
+                }
                 else {
                     inner = (
                         <div style={{'display': 'flex', 'alignItems': 'center'}}>
@@ -398,12 +404,23 @@ export default function Crawler({ manifestRow, canEdit }) {
                             setItems={setWebsites}
                             loadingState={websitesLoadState}
                             setLoadingState={setWebsitesLoadState}
+                            searchText={searchText}
+                            setSearchText={setSearchText}
+                            currPage={currPage}
+                            setCurrPage={setCurrPage}
+                            numResults={numResults}
+                            setNumResults={setNumResults}
                             makeRow={makeRow}
                             limit={resultLimit}
                             getUrl={getUrl}
                             loadingSkeleton={'default-small'}
                             searchable={true}
-                            tableHeader={(<TableHeader cols={tableCols} />)}
+                            tableHeader={(
+                                <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '10px'}}>
+                                    <TableControls getUrl={getUrl} searchText={searchText} setSearchText={setSearchText} websites={websites} setWebsites={setWebsites} currPage={currPage} setCurrPage={setCurrPage} numResults={numResults} setNumResults={setNumResults} />
+                                    <TableHeader cols={tableCols} />
+                                </div>
+                            )}
                             gap={'0px'}
                             searchBarContainerStyle={searchBarContainerStyle}
                             searchBarStyle={{'width': '300px'}}
@@ -418,7 +435,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                             customDisplayWrapperStyle={{'borderRadius': 'var(--medium-border-radius)', 'overflow': 'hidden', 'border': '1px solid var(--light-border)', 'backgroundColor': 'var(--light-primary)'}}
                         />
                     )}
-                    keepRightRendered={rightViewCode == 'search'}
+                    keepRightRendered={rightViewCode == 'search' || rightViewCode == 'queue'}
                     right={rightElement}
                 />
             </div>
@@ -465,6 +482,55 @@ export function TableRow({ item, setItem, i, tableCols, isFirst, isLast, slideTo
                     )
                 })}
             </div>
+        </div>
+    )
+}
+
+function TableControls({ getUrl, searchText, setSearchText, websites, setWebsites, currPage, setCurrPage, numResults, setNumResults }) {
+    return (<RefreshButton getUrl={getUrl} setSearchText={setSearchText} setWebsites={setWebsites} setCurrPage={setCurrPage} setNumResults={setNumResults} />)
+}
+
+export function RefreshButton({ getUrl, setSearchText, setWebsites, setNumResults, setCurrPage}) {
+    const { getToken } = Auth.useAuth()
+    const [refreshLoadState, setRefreshLoadState] = useState(0)
+
+    async function refresh(){
+        try {
+            setRefreshLoadState(1)
+            const url = getUrl(1)
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                },
+                'method': 'GET'
+            })
+            if (!response.ok){
+                throw Error("Response was not OK")
+            }
+            const myJson = await response.json()
+            const websites = myJson['results']
+            const total = myJson['total']
+            setSearchText("")
+            setRefreshLoadState(2)
+            setWebsites(websites)
+            setNumResults(total)
+            setCurrPage(1)
+        }
+        catch(e) {
+            setRefreshLoadState(3)
+            console.log("Error refreshing")
+        }
+    }
+    
+    return (
+        <div style={{'display': 'flex'}}>
+            {refreshLoadState == 1 ? (
+                <Loading text={"Refreshing"} />
+            ) : (
+                <div className="_touchableOpacity" onClick={() => {refresh()}}>
+                    Refresh
+                </div>
+            )}
         </div>
     )
 }

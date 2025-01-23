@@ -388,7 +388,7 @@ def scrape_from_queue_job(user_obj, job_id, asset_id, db=None):
         # Save into crawler DB
         # Remove from the queue
         # repeat until queue empty
-        queue, _ = get_asset_metadata(user, asset_id, keys=[SCRAPE_QUEUE], limit=100, get_total=False, db=db)
+        queue, _ = get_asset_metadata(user, asset_id, keys=[SCRAPE_QUEUE], limit=100, get_total=False, for_all_users=True, db=db)
         while len(queue):
             to_scrape = queue[0]
             to_scrape_obj = json.loads(to_scrape['value'])
@@ -404,7 +404,7 @@ def scrape_from_queue_job(user_obj, job_id, asset_id, db=None):
             if not scrape:
                 # Maybe deal with scrape error here?
                 pass
-            queue, _ = get_asset_metadata(user, asset_id, keys=[SCRAPE_QUEUE], limit=100, get_total=False, db=db)
+            queue, _ = get_asset_metadata(user, asset_id, keys=[SCRAPE_QUEUE], limit=100, get_total=False, for_all_users=True, db=db)
             # Use the filter in case the change doesn't commit fast enough
             queue = [x for x in filter(lambda x: x['id'] != to_scrape['id'], queue)]
 
@@ -418,10 +418,11 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_t
     # Note that quotes are doubled up
     escaped_query = query.replace('"', '""')
     quoted_query = f'"{escaped_query}"'
+    results = []
+    total = None
     with CrawlerDB(asset_id, read_only=True, db=db) as conn:
 
         # Query to get the total number of results
-        total = None
         if get_total:
             # Annoyingly run the query twice to get a "total"
             # TODO make it work with website_ids
@@ -463,7 +464,7 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_t
         res = conn.execute(sql, (query, limit, offset)) if query else conn.execute(sql, (limit, offset))
         results = res.fetchall()
 
-        return results, total
+    return results, total
 
 
 @bp.route('/queue-manifest', methods=('GET',))
@@ -478,7 +479,7 @@ def queue_manifest(user: User):
     limit = request.args.get('limit', 20)
     offset = request.args.get('offset', 0)
     
-    metadata, total = get_asset_metadata(user, asset_id, keys=[SCRAPE_QUEUE], limit=limit, offset=offset)
+    metadata, total = get_asset_metadata(user, asset_id, keys=[SCRAPE_QUEUE], limit=limit, offset=offset, for_all_users=True)
     website_ids = [ScrapeQueueItem(**json.loads(x['value'])).website_id for x in metadata]
     sites, _ = search_sites(asset_id, website_ids=website_ids)
 
@@ -502,6 +503,25 @@ def get_manifest(user: User):
     raw_query = request.args.get('query', "")
 
     results, total = search_sites(asset_id, raw_query, limit=limit, offset=offset)
+
+    # Add info on which are queued
+    if len(results):
+        website_ids = [str(x['id']) for x in results]
+        website_ids_str = ",".join(website_ids)
+        sql = f"""
+            SELECT * FROM asset_metadata
+            WHERE `asset_id`=%s AND `key`=%s AND JSON_EXTRACT(`value`, '$.website_id') IN ({website_ids_str});
+        """
+        db = get_db()
+        curr = db.cursor()
+        curr.execute(sql, (asset_id, SCRAPE_QUEUE))
+        queued = curr.fetchall()
+        all_queued_ids = [ScrapeQueueItem(**json.loads(x['value'])).website_id for x in queued]
+        all_queued_ids = [str(x) for x in all_queued_ids]
+        # We love n^2 algorithms don't we folks?
+        for res in results:
+            if str(res['id']) in all_queued_ids:
+                res['queued'] = True
 
     return MyResponse(True, {'results': results, 'total': total}).to_json()
 

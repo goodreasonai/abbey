@@ -9,13 +9,9 @@ import LoadMore from "../LoadMore/LoadMore"
 import LoadingSkeleton from "../Loading/LoadingSkeleton"
 
 // getUrl is a function taking one arg (page number) and returns url to make GET request to for row items
-export default function ControlledTable({ items, setItems, loadingState, setLoadingState, makeRow, getUrl, searchBarStyle={}, searchBarContainerStyle={}, noResultsContainerStyle={}, paginationContainerStyle={}, loadingSkeleton=undefined, searchable=false, limit=10, resultsKey='results', flexDirection='column', flexWrap='wrap', totalKey='total', gap='20px', paginated=true, doublePaginated=false, loadMore=false, itemsCallback=()=>{}, forceRefresh=undefined, rightOfSearchBar="", tableHeader="", scroll=false, customDisplayWrapperStyle={}, customNoResults="", leftOfSearchBar="", searchAutoComplete=true, autoFocus=false, defaultTotal=1000, ...props }){
+export default function ControlledTable({ items, setItems, searchText, setSearchText, loadingState, setLoadingState, currPage, setCurrPage, numResults, setNumResults, makeRow, getUrl, searchBarStyle={}, searchBarContainerStyle={}, noResultsContainerStyle={}, paginationContainerStyle={}, loadingSkeleton=undefined, searchable=false, limit=10, resultsKey='results', flexDirection='column', flexWrap='wrap', totalKey='total', gap='20px', paginated=true, doublePaginated=false, loadMore=false, itemsCallback=()=>{}, forceRefresh=undefined, rightOfSearchBar="", tableHeader="", scroll=false, customDisplayWrapperStyle={}, customNoResults="", leftOfSearchBar="", searchAutoComplete=true, autoFocus=false, defaultTotal=1000, ...props }){
 
-    const [currPage, setCurrPage] = useState(1)
-    const [numResults, setNumResults] = useState(0);
     const [loadMoreLoadState, setLoadMoreLoadState] = useState(0)
-
-    const [searchText, setSearchText] = useState("")
 
     const { getToken, isSignedIn } = Auth.useAuth()
 
@@ -119,10 +115,8 @@ export default function ControlledTable({ items, setItems, loadingState, setLoad
         return [[], 0]
     }
 
-    let showTableHeader = true
     let display = ""
     if (!items || items.length == 0 || loadingState < 2){
-        showTableHeader = false
         if (loadingState == 1 || loadingState == 0){
             if (loadingSkeleton){
                 display = (
@@ -160,7 +154,7 @@ export default function ControlledTable({ items, setItems, loadingState, setLoad
     }
 
     return (
-        <div style={{'display': 'flex', 'gap': '1rem', 'flexDirection': `column`, ...(scroll ? {'height': '100%'} : {})}} {...props}>
+        <div style={{'display': 'flex', 'gap': '10px', 'flexDirection': `column`, ...(scroll ? {'height': '100%'} : {})}} {...props}>
             {searchable ? (
                     <div style={searchBarContainerStyle}>
                         {leftOfSearchBar}
@@ -191,7 +185,7 @@ export default function ControlledTable({ items, setItems, loadingState, setLoad
             ) : ""}
             {paginated && doublePaginated && items && numResults > limit ? <Pagination getPage={getItems} currPage={currPage} numPages={Math.ceil(numResults / limit)} /> : ""}
             <div style={scroll ? {'flex': '1', 'display': 'flex', 'flexDirection': 'column', 'minHeight': '0px'} : {}}>
-                {showTableHeader ? tableHeader : ""}
+                {tableHeader || ""}
                 <div style={{...(scroll ? {'height': '100%', 'minHeight': '0px'} : {}), ...customDisplayWrapperStyle}}>
                     <div className={scroll ? styles.customScroll : ''} style={{'display': 'flex', 'flexDirection': flexDirection, 'gap': gap, 'flexWrap': flexWrap, ...(scroll ? {'height': '100%', 'overflowY': 'scroll'} : {})}}>
                         {display}

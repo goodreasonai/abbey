@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import ControlledTable from "../ControlledTable/ControlledTable";
 import BackToCollection from "./BackToCollection";
-import { TableHeader, TableRow } from "./Crawler";
+import { RefreshButton, TableHeader, TableRow } from "./Crawler";
 import { formatTimestampSmall } from "@/utils/time";
 import { extractSiteWithPath } from "@/utils/text";
 import styles from './Crawler.module.css'
@@ -11,6 +11,9 @@ export default function Queue({ slideToLeft, manifestRow }) {
 
     const [websitesLoadState, setWebsitesLoadState] = useState(0)
     const [websites, setWebsites] = useState([])
+    const [currPage, setCurrPage] = useState(1)
+    const [numResults, setNumResults] = useState(0);
+    const [searchText, setSearchText] = useState("")
 
     const resultLimit = 20
 
@@ -63,12 +66,23 @@ export default function Queue({ slideToLeft, manifestRow }) {
                     setItems={setWebsites}
                     loadingState={websitesLoadState}
                     setLoadingState={setWebsitesLoadState}
+                    currPage={currPage}
+                    setCurrPage={setCurrPage}
+                    searchText={searchText}
+                    setSearchText={setSearchText}
+                    numResults={numResults}
+                    setNumResults={setNumResults}
                     makeRow={makeRow}
                     limit={resultLimit}
                     getUrl={getUrl}
                     loadingSkeleton={'default-small'}
                     searchable={true}
-                    tableHeader={(<TableHeader cols={tableCols} />)}
+                    tableHeader={(
+                        <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '10px'}}>
+                            <RefreshButton getUrl={getUrl} setWebsites={setWebsites} setCurrPage={setCurrPage} setNumResults={setNumResults} setSearchText={setSearchText} />
+                            <TableHeader cols={tableCols} />
+                        </div>
+                    )}
                     gap={'0px'}
                     searchBarStyle={{'width': '300px'}}
                     flexWrap="noWrap"
