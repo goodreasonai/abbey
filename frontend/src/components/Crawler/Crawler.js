@@ -206,7 +206,7 @@ export default function Crawler({ manifestRow, canEdit }) {
     }
     else if (rightViewCode == 'queue'){
         rightElement = (
-            <Queue slideToLeft={slideToLeft} />
+            <Queue slideToLeft={slideToLeft} manifestRow={manifestRow} />
         )
     }
 

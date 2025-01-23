@@ -393,6 +393,8 @@ def scrape_from_queue_job(user_obj, job_id, asset_id, db=None):
             to_scrape = queue[0]
             to_scrape_obj = json.loads(to_scrape['value'])
             queue_item = ScrapeQueueItem(**to_scrape_obj)
+            # Remove from the queue
+            delete_asset_metadata_by_id(to_scrape['id'], db=db)
             try:
                 # This not only scrapes but also saves the data in the crawler db
                 scrape = scrape_for_crawler(asset_id, queue_item.website_id, db=db)
@@ -402,14 +404,85 @@ def scrape_from_queue_job(user_obj, job_id, asset_id, db=None):
             if not scrape:
                 # Maybe deal with scrape error here?
                 pass
-            # Remove from the queue
-            delete_asset_metadata_by_id(to_scrape['id'], db=db)
             queue, _ = get_asset_metadata(user, asset_id, keys=[SCRAPE_QUEUE], limit=100, get_total=False, db=db)
             # Use the filter in case the change doesn't commit fast enough
             queue = [x for x in filter(lambda x: x['id'] != to_scrape['id'], queue)]
 
     do_job()
     complete_job(job_id)
+
+
+@needs_db
+def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_total=True, db=None):
+    # See specification of an "fts5 string" here: https://www.sqlite.org/fts5.html#full_text_query_syntax
+    # Note that quotes are doubled up
+    escaped_query = query.replace('"', '""')
+    quoted_query = f'"{escaped_query}"'
+    with CrawlerDB(asset_id, read_only=True, db=db) as conn:
+
+        # Query to get the total number of results
+        total = None
+        if get_total:
+            # Annoyingly run the query twice to get a "total"
+            # TODO make it work with website_ids
+            sql = f"""
+                SELECT COUNT(*) as _total FROM websites_fts5 {'WHERE websites_fts5 MATCH ?' if query else ""}
+            """
+            res = conn.execute(sql, (quoted_query,)) if query else conn.execute(sql)
+            total = res.fetchone()['_total']
+        
+        website_ids_clause = ""
+        if website_ids is not None:
+            str_ids = [str(x) for x in website_ids]
+            website_ids_clause = f'AND websites.id IN ({",".join(str_ids)})'
+        
+        # Actual query
+        sql = f"""
+        SELECT 
+                websites.id,
+                websites.created_at,
+                websites.scraped_at,
+                websites.title,
+                websites.author,
+                websites.desc,
+                websites.content_type,
+                websites.url,
+                COALESCE(json_group_array(json_object(
+                    'data_type', website_data.data_type,
+                    'resource_id', website_data.resource_id
+                )), '[]') AS website_data
+            FROM websites_fts5
+            LEFT JOIN websites ON websites.id = websites_fts5.website_id
+            LEFT JOIN website_data ON websites.id = website_data.website_id
+            {'WHERE websites_fts5 MATCH ?' if query else "WHERE 1=1"}
+            {website_ids_clause}
+            GROUP BY websites.id
+            ORDER BY websites.created_at DESC
+            LIMIT ? OFFSET ?
+        """
+        res = conn.execute(sql, (query, limit, offset)) if query else conn.execute(sql, (limit, offset))
+        results = res.fetchall()
+
+        return results, total
+
+
+@bp.route('/queue-manifest', methods=('GET',))
+@cross_origin()
+@token_optional
+def queue_manifest(user: User):
+    asset_id = request.args.get('id')
+    asset_row = get_asset(user, asset_id)
+    if not asset_row:
+        return MyResponse(False, status=404, reason="Asset not found")
+    
+    limit = request.args.get('limit', 20)
+    offset = request.args.get('offset', 0)
+    
+    metadata, total = get_asset_metadata(user, asset_id, keys=[SCRAPE_QUEUE], limit=limit, offset=offset)
+    website_ids = [ScrapeQueueItem(**json.loads(x['value'])).website_id for x in metadata]
+    sites, _ = search_sites(asset_id, website_ids=website_ids)
+
+    return MyResponse(True, {'results': sites, 'total': total}).to_json()
 
 
 @bp.route('/manifest', methods=('GET',))
@@ -426,49 +499,9 @@ def get_manifest(user: User):
         limit = 500
 
     offset = request.args.get('offset', 0)
-
-    # See specification of an "fts5 string" here: https://www.sqlite.org/fts5.html#full_text_query_syntax
-    # Note that quotes are doubled up
     raw_query = request.args.get('query', "")
-    escaped_query = raw_query.replace('"', '""')
-    query = f'"{escaped_query}"'
 
-    conn = CrawlerDB(asset_id)
-
-    # Query to get the total number of results
-    # Annoyingly run the query twice to get a "total"
-    sql = f"""
-        SELECT COUNT(*) as _total FROM websites_fts5 {'WHERE websites_fts5 MATCH ?' if raw_query else ""}
-    """
-    res = conn.execute(sql, (query,)) if raw_query else conn.execute(sql)
-    total = res.fetchone()['_total']
-    # Actual query
-    sql = f"""
-       SELECT 
-            websites.id,
-            websites.created_at,
-            websites.scraped_at,
-            websites.title,
-            websites.author,
-            websites.desc,
-            websites.content_type,
-            websites.url,
-            COALESCE(json_group_array(json_object(
-                'data_type', website_data.data_type,
-                'resource_id', website_data.resource_id
-            )), '[]') AS website_data
-        FROM websites_fts5
-        LEFT JOIN websites ON websites.id = websites_fts5.website_id
-        LEFT JOIN website_data ON websites.id = website_data.website_id
-        {'WHERE websites_fts5 MATCH ?' if raw_query else ""}
-        GROUP BY websites.id
-        ORDER BY websites.created_at DESC
-        LIMIT ? OFFSET ?
-    """
-    res = conn.execute(sql, (query, limit, offset)) if raw_query else conn.execute(sql, (limit, offset))
-    results = res.fetchall()
-
-    conn.close()  # Very important
+    results, total = search_sites(asset_id, raw_query, limit=limit, offset=offset)
 
     return MyResponse(True, {'results': results, 'total': total}).to_json()
 
