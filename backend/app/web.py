@@ -137,7 +137,6 @@ class ScrapeResponse():
             # Resolving the favicon URL against the base URL
             self.metadata.favicon_url = urljoin(self.url, favicon_url)
 
-
     def set_data(self, content):
         try:
             if self.metadata.content_type == 'text/html':
@@ -261,7 +260,6 @@ def scrape_with_service(url):
                 print(f"Error scraping: {message}", file=sys.stderr)
             except:
                 print(e, file=sys.stderr)
-
         return ScrapeResponse(False, status=None, url=url, headers={})
 
 

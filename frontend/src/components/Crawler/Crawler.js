@@ -132,7 +132,8 @@ export default function Crawler({ manifestRow, canEdit }) {
             <Modal
                 title={"Add URL"}
                 isOpen={addWebsiteModalOpen}
-                close={() => clearWebsiteModal()}>
+                close={() => clearWebsiteModal()}
+            >
                 <div>
                     <div style={{'display': 'flex', 'gap': '10px'}}>
                         <div style={{'flex': '1'}}>
@@ -277,12 +278,12 @@ export default function Crawler({ manifestRow, canEdit }) {
             }},
             {'title': 'Scrape', 'key': '_scrape', 'flex': 2, 'hook': ({ item, setItem }) => {
                 const { getToken } = Auth.useAuth()
-                const [scrapeLoading, setScrapeLoading] = useState(0)
+                const [queueLoading, setQueueLoading] = useState(0)
                 
-                async function scrapeSite() {
+                async function queueSite() {
                     try {
-                        setScrapeLoading(1)
-                        const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/crawler/scrape'
+                        setQueueLoading(1)
+                        const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/crawler/queue'
                         const data = {
                             'id': manifestRow?.id,
                             'item': item
@@ -295,17 +296,13 @@ export default function Crawler({ manifestRow, canEdit }) {
                             'method': "POST",
                             'body': JSON.stringify(data)
                         })
-                        if (response.ok){
-                            const myJson = await response.json()
-                            setItem(myJson['result'])
-                        }
-                        else {
+                        if (!response.ok){
                             throw Error("Response was not OK")
                         }
-                        setScrapeLoading(2)
+                        setQueueLoading(2)
                     }
                     catch(e) {
-                        setScrapeLoading(3)
+                        setQueueLoading(3)
                         console.log(e)
                     }
                 }
@@ -320,16 +317,19 @@ export default function Crawler({ manifestRow, canEdit }) {
                         </div>
                     )
                 }
-                else if (scrapeLoading == 1){
+                else if (queueLoading == 1){
                     inner = (
                         <Loading text="" />
                     )
                 }
+                else if (queueLoading == 3){
+                    inner = "Error"
+                }
                 else {
                     inner = (
                         <div style={{'display': 'flex', 'alignItems': 'center'}}>
-                            <div className={styles.tableButton} onClick={() => scrapeSite()}>
-                                Scrape
+                            <div className={styles.tableButton} onClick={() => queueSite()}>
+                                Queue
                             </div>
                         </div>
                     )

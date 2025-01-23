@@ -56,3 +56,10 @@ def task_new_desc(sretriever):
         curr.execute(sql, (new_desc, asset_id))
         mark_asset_desc_as_updated(None, ret.resource_manifest['asset_id'], db=db)
         db.commit()
+
+
+@celery.task
+def task_scrape_from_queue(user, job_id, asset_id):
+    db = get_db(new_connection=True)
+    from .templates.crawler import scrape_from_queue_job
+    scrape_from_queue_job(user, job_id, asset_id, db=db)

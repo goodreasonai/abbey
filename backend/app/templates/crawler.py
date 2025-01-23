@@ -4,11 +4,11 @@ from ..auth import User
 import sqlite3
 import tempfile
 import os
-from ..asset_actions import add_asset_resource, get_asset_resource, get_asset, get_asset_resource_by_id, get_asset_resources_by_id, delete_asset_resources
+from ..asset_actions import add_asset_resource, get_asset_resource, get_asset, get_asset_resource_by_id, get_asset_resources_by_id, delete_asset_resources, get_asset_metadata, save_asset_metadata, delete_asset_metadata_by_id
 from ..storage_interface import download_file, replace_asset_file, upload_asset_file
 from ..configs.str_constants import MAIN_FILE
 from flask_cors import cross_origin
-from ..auth import token_optional
+from ..auth import token_optional, SynthUser
 from flask import Blueprint, request
 from ..template_response import MyResponse, response_from_resource
 from ..web import ScrapeMetadata, ScrapeResponse, scrape_with_requests, scrape_with_service
@@ -20,12 +20,17 @@ from ..user import get_user_search_engine_code
 from ..integrations.web import SearchEngine, SEARCH_PROVIDERS, SearchResult
 import sys
 import os
+import json
+from ..jobs import search_for_jobs, start_job, job_error_wrapper, complete_job
+from ..worker import task_scrape_from_queue
 
 
 bp = Blueprint('crawler', __name__, url_prefix="/crawler")
 
 DB_VERSION: int = 2  # increment this in order to redo the schema on older DBs.
 
+SCRAPE_QUEUE = 'scrape_queue'  # metadata key
+SCRAPE_FROM_QUEUE_JOB = 'scrape_queue'  # job kind
 
 def create_database(path):
     # Connect to the SQLite database
@@ -268,6 +273,145 @@ class CrawlerDB():
                 db_release_lock(get_crawler_lock_name(self.asset_id), db=self.db)
 
 
+class ScrapeQueueItem():
+    website_id: int
+    def __init__(self, website_id=None):
+        self.website_id = website_id
+    
+    def to_json(self):
+        return {
+            'website_id': self.website_id
+        }
+
+
+@needs_db
+def scrape_for_crawler(asset_id, website_id, website_data=None, db=None):    
+    
+    item = website_data
+    if not item:
+        with CrawlerDB(asset_id, read_only=True, db=db) as crawler:
+            sql = "SELECT * FROM websites WHERE `id` = ?"
+            res = crawler.execute(sql, (website_id,))
+            item = res.fetchone()
+
+    # Scrape the site
+    try:
+        scrape: ScrapeResponse = scrape_with_service(item['url'])
+    except ScraperUnavailable:
+        print("Scraper service unavailable; falling back to request scrape.", file=sys.stderr)
+        scrape: ScrapeResponse = scrape_with_requests(item['url'])
+
+    if not scrape.success:
+        # Scrape failed - TODO pass some error information
+        return False
+
+    content_type = get_mimetype_from_headers(scrape.headers)
+    meta: ScrapeMetadata = scrape.metadata
+    ext = ext_from_mimetype(meta.content_type)
+    MAX_TEXT_LENGTH = 100_000  # in characters
+    text = ""
+    db = get_db()
+    with scrape.consume_data() as data_path:
+        loader = get_loader(ext, data_path)
+        splitter = TextSplitter(max_chunk_size=1024)
+        splits = loader.load_and_split(splitter)
+        for x in splits:
+            x: RawChunk
+            if len(text) + len(x.page_content) < MAX_TEXT_LENGTH:
+                text += x.page_content
+        # Lock and add to the database
+        with CrawlerDB(asset_id, db=db) as crawler:
+            sql = """
+                UPDATE websites
+                SET `title`=?,
+                    `author`=?,
+                    `desc`=?,
+                    `text`=?,
+                    `content_type`=?,
+                    `scraped_at`=CURRENT_TIMESTAMP
+                WHERE `id`=?
+            """
+            crawler.execute(sql, (meta.title, meta.author, meta.desc, text, content_type, item['id']))
+
+            # Does old scrape data exist?
+            # If so, delete from storage, asset_resources, and from the crawler db
+            sql = """
+                SELECT * FROM website_data
+                WHERE `website_id`=?
+            """
+            res = crawler.execute(sql, (item['id'],))
+            existing_data = res.fetchall()
+            if len(existing_data):
+                resources = get_asset_resources_by_id(asset_id, [x['resource_id'] for x in existing_data], db=db)
+                delete_asset_resources(resources, db=db)
+                sql = """
+                    DELETE FROM website_data
+                    WHERE `website_id`=?
+                """
+                crawler.execute(sql, (item['id'],))
+
+            # Upload and insert the data
+            path, from_val = upload_asset_file(asset_id, data_path, ext)
+            assoc_file_id = add_asset_resource(asset_id, 'website', from_val, path, None, db=db)
+
+            sql = """
+                INSERT INTO website_data (`website_id`, `data_type`, `resource_id`)
+                VALUES (?, ?, ?)
+            """
+            crawler.execute(sql, (item['id'], 'data', assoc_file_id))
+
+            # Upload any screenshots available
+            while len(scrape.screenshot_paths):
+                with scrape.consume_screenshot() as ss_path:
+                    # Upload and insert the data
+                    path, from_val = upload_asset_file(asset_id, ss_path, 'jpg')
+                    assoc_file_id = add_asset_resource(asset_id, 'website', from_val, path, None, db=db)
+
+                    sql = """
+                        INSERT INTO website_data (`website_id`, `data_type`, `resource_id`)
+                        VALUES (?, ?, ?)
+                    """
+                    crawler.execute(sql, (item['id'], 'screenshot', assoc_file_id))
+
+            crawler.commit()
+
+    return True
+
+
+@needs_db
+def scrape_from_queue_job(user_obj, job_id, asset_id, db=None):
+    user = SynthUser(user_obj)
+    @job_error_wrapper(job_id)
+    def do_job():
+        # Get first job from queue
+        # Scrape the site
+        # Save into crawler DB
+        # Remove from the queue
+        # repeat until queue empty
+        queue, _ = get_asset_metadata(user, asset_id, keys=[SCRAPE_QUEUE], limit=100, get_total=False, db=db)
+        while len(queue):
+            to_scrape = queue[0]
+            to_scrape_obj = json.loads(to_scrape['value'])
+            queue_item = ScrapeQueueItem(**to_scrape_obj)
+            try:
+                # This not only scrapes but also saves the data in the crawler db
+                scrape = scrape_for_crawler(asset_id, queue_item.website_id, db=db)
+            except Exception as e:
+                print(f"Error in scrape for crawler: {e}", file=sys.stderr)
+                scrape = False
+            if not scrape:
+                # Maybe deal with scrape error here?
+                pass
+            # Remove from the queue
+            delete_asset_metadata_by_id(to_scrape['id'], db=db)
+            queue, _ = get_asset_metadata(user, asset_id, keys=[SCRAPE_QUEUE], limit=100, get_total=False, db=db)
+            # Use the filter in case the change doesn't commit fast enough
+            queue = [x for x in filter(lambda x: x['id'] != to_scrape['id'], queue)]
+
+    do_job()
+    complete_job(job_id)
+
+
 @bp.route('/manifest', methods=('GET',))
 @cross_origin()
 @token_optional
@@ -424,125 +568,45 @@ def add_url(user: User):
     return MyResponse(True, {'result': new_row}).to_json()
 
 
-@bp.route('/scrape', methods=('POST',))
+@bp.route('/queue', methods=('POST',))
 @cross_origin()
 @token_optional
-def scrape_one_site(user: User):
+def queue_site(user: User):
     asset_id = request.json.get('id')
     asset_row = get_asset(user, asset_id)
     if not asset_row:
-        return MyResponse(False, status=404, reason="Asset not found").to_json()
-
+        return MyResponse(False, reason="Asset not found", status=404).to_json()
+    
+    MAX_QUEUE = 100
+    queue, _ = get_asset_metadata(user, asset_id, keys=[SCRAPE_QUEUE], limit=MAX_QUEUE, get_total=False)
+    
+    # Is queue full?
+    if len(queue) >= MAX_QUEUE:
+        return MyResponse(False, reason="Queue full", status=429).to_json()  # 429 = "Too many requests"
+    
+    # Does site already exist in queue?
     item = request.json.get('item')
+    for existing in queue:
+        val = json.loads(existing['value'])
+        queued_item = ScrapeQueueItem(**val)
+        if queued_item.website_id == item['id']:
+            return MyResponse(False, reason="Duplicate", status=409).to_json()  # 409 = Conflict
+    
+    # Add to queue
+    new_in_queue = ScrapeQueueItem(website_id=item['id'])
+    save_asset_metadata(user, asset_id, key=SCRAPE_QUEUE, value=json.dumps(new_in_queue.to_json()))
 
-    if 'id' not in item or 'url' not in item:
-        return MyResponse(False, status=400, reason="Item not valid").to_json()
+    # Check for job
+    jobs = search_for_jobs(kind=SCRAPE_FROM_QUEUE_JOB, asset_id=asset_id, is_running=True)
+    if len(jobs):
+        return MyResponse(True, {'job': jobs[0]}).to_json()
 
-    # Scrape the site
-    try:
-        scrape: ScrapeResponse = scrape_with_service(item['url'])
-    except ScraperUnavailable:
-        print("Scraper service unavailable; falling back to request scrape.", file=sys.stderr)
-        scrape: ScrapeResponse = scrape_with_requests(item['url'])
+    # Start new job
+    job_id = start_job('scrape', {}, asset_id, SCRAPE_FROM_QUEUE_JOB, user_id=user.user_id)
 
-    if not scrape.success:
-        return MyResponse(False, {'scrape_status': scrape.status, 'headers': scrape.headers}, status=500, reason=f"Scrape was not success").to_json()
+    task_scrape_from_queue.apply_async(args=[user.to_json(), job_id, asset_id])
 
-    content_type = get_mimetype_from_headers(scrape.headers)
-    meta: ScrapeMetadata = scrape.metadata
-    ext = ext_from_mimetype(meta.content_type)
-    MAX_TEXT_LENGTH = 100_000  # in characters
-    text = ""
-    db = get_db()
-    with scrape.consume_data() as data_path:
-        loader = get_loader(ext, data_path)
-        splitter = TextSplitter(max_chunk_size=1024)
-        splits = loader.load_and_split(splitter)
-        for x in splits:
-            x: RawChunk
-            if len(text) + len(x.page_content) < MAX_TEXT_LENGTH:
-                text += x.page_content
-        # Lock and add to the database
-        @with_lock(get_crawler_lock_name(asset_id), db)
-        def add_to_db():
-            crawler = CrawlerDB(asset_id)
-            sql = """
-                UPDATE websites
-                SET `title`=?,
-                    `author`=?,
-                    `desc`=?,
-                    `text`=?,
-                    `content_type`=?,
-                    `scraped_at`=CURRENT_TIMESTAMP
-                WHERE `id`=?
-            """
-            crawler.execute(sql, (meta.title, meta.author, meta.desc, text, content_type, item['id']))
-
-            # Does old scrape data exist?
-            # If so, delete from storage, asset_resources, and from the crawler db
-            sql = """
-                SELECT * FROM website_data
-                WHERE `website_id`=?
-            """
-            res = crawler.execute(sql, (item['id'],))
-            existing_data = res.fetchall()
-            if len(existing_data):
-                resources = get_asset_resources_by_id(asset_id, [x['resource_id'] for x in existing_data], db=db)
-                delete_asset_resources(resources, db=db)
-                sql = """
-                    DELETE FROM website_data
-                    WHERE `website_id`=?
-                """
-                crawler.execute(sql, (item['id'],))
-
-            # Upload and insert the data
-            path, from_val = upload_asset_file(asset_id, data_path, ext)
-            assoc_file_id = add_asset_resource(asset_id, 'website', from_val, path, None, db=db)
-
-            sql = """
-                INSERT INTO website_data (`website_id`, `data_type`, `resource_id`)
-                VALUES (?, ?, ?)
-            """
-            crawler.execute(sql, (item['id'], 'data', assoc_file_id))
-
-            # Upload any screenshots available
-            while len(scrape.screenshot_paths):
-                with scrape.consume_screenshot() as ss_path:
-                    # Upload and insert the data
-                    path, from_val = upload_asset_file(asset_id, ss_path, 'jpg')
-                    assoc_file_id = add_asset_resource(asset_id, 'website', from_val, path, None, db=db)
-
-                    sql = """
-                        INSERT INTO website_data (`website_id`, `data_type`, `resource_id`)
-                        VALUES (?, ?, ?)
-                    """
-                    crawler.execute(sql, (item['id'], 'screenshot', assoc_file_id))
-
-            # Get currently entry including the resources
-            # Meant to mimic an entry returned in /manifest
-            sql = """
-                SELECT
-                    websites.*,
-                    COALESCE(json_group_array(json_object(
-                        'data_type', website_data.data_type,
-                        'resource_id', website_data.resource_id
-                    )), '[]') AS website_data
-                FROM websites
-                LEFT JOIN website_data ON websites.id = website_data.website_id
-                WHERE websites.id=?
-                GROUP BY websites.id
-            """
-            res = crawler.execute(sql, (item['id'],))
-            updated = res.fetchone()
-            
-            crawler.commit()
-            crawler.close()
-
-            return updated
-        
-        new_row = add_to_db()
-
-    return MyResponse(True, {'result': new_row}).to_json()
+    return MyResponse(True).to_json()
 
 
 @bp.route('/web', methods=('GET',))

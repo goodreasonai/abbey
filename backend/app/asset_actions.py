@@ -160,6 +160,16 @@ def save_asset_metadata(user: User, asset_id, key, value, needs_attention=False,
     return curr.lastrowid
 
 
+# Not permissioned in any way!
+@needs_db
+def delete_asset_metadata_by_id(metadata_id, db: ProxyDB=None):
+    sql = """
+        DELETE FROM asset_metadata WHERE `id`=%s
+    """
+    curr = db.cursor()
+    curr.execute(sql, (metadata_id,))
+
+
 """
 
 It sets gives the permissions using joint_asset_id to its recursive children.

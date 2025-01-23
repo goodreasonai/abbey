@@ -557,6 +557,8 @@ def save_metadata(user: User):
     db = get_db()
     curr = db.cursor()
 
+    # TODO: consider using a function in asset_actions to delete the metadata
+
     if delete:
         if delete_id:
             sql = """
