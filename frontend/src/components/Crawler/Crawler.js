@@ -233,9 +233,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                     <FakeCheckbox value={allSelected} setValue={(x) => {
                         const newSelected = {...selected}
                         for (const site of websites){
-                            if (!site.added){
-                                newSelected[site.url] = x ? site : undefined
-                            }
+                            newSelected[site.url] = x ? site : undefined
                         }
                         setSelected(newSelected)
                     }} />
@@ -324,6 +322,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                         if (!response.ok){
                             throw Error("Response was not OK")
                         }
+                        setItem({...item, 'queued': true})
                         setQueueLoading(2)
                     }
                     catch(e) {
@@ -344,14 +343,18 @@ export default function Crawler({ manifestRow, canEdit }) {
                 }
                 else if (queueLoading == 1){
                     inner = (
-                        <Loading text="" />
+                        <div style={{'display': 'flex', 'alignItems': 'center'}}>
+                            <div className={styles.tableButton} onClick={() => queueSite()}>
+                                <Loading size={15} text="" />
+                            </div>
+                        </div>
                     )
                 }
                 else if (queueLoading == 3){
                     inner = "Error"
                 }
                 else if (item['queued'] || queueLoading == 2){
-                    inner = "Queued"
+                    inner = ""  // Queued
                 }
                 else {
                     inner = (
@@ -413,7 +416,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                 )
             }},
         ]
-    }, [slideToRight, setWebsites, manifestRow, selected])
+    }, [slideToRight, setWebsites, websites, manifestRow, selected])
 
     return (
         <SmartHeightWrapper>
@@ -564,8 +567,10 @@ function TableControls({ manifestRow, getUrl, searchText, setSearchText, website
             <RefreshButton getUrl={getUrl} searchText={searchText} setSearchText={setSearchText} setWebsites={setWebsites} currPage={currPage} setCurrPage={setCurrPage} setNumResults={setNumResults} />
             {needQueue.length ? (
                 <div style={{'display': 'flex'}} onClick={() => bulkQueue()}>
-                    <div className="_touchableOpacity">
-                        {`Queue ${needQueue.length}`}
+                    <div className={styles.tableButton}>
+                        {bulkQueueLoadingState == 1 ? (
+                            <Loading size={15} text="" />
+                        ) : `Queue ${needQueue.length}`}
                     </div>
                 </div>
             ) : ""}
@@ -605,13 +610,11 @@ export function RefreshButton({ getUrl, searchText, setSearchText, setWebsites, 
     
     return (
         <div style={{'display': 'flex'}}>
-            {refreshLoadState == 1 ? (
-                <Loading text={"Refreshing"} />
-            ) : (
-                <div className="_touchableOpacity" onClick={() => {refresh()}}>
-                    Refresh
-                </div>
-            )}
+            <div className={styles.tableButton} onClick={() => {refresh()}}>
+                {refreshLoadState == 1 ? (
+                    <Loading size={15} text={""} />
+                ) : "Refresh"}
+            </div>
         </div>
     )
 }
