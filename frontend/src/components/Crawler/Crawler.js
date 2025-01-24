@@ -20,6 +20,7 @@ import SearchEngine from "./SearchEngine"
 import useKeyboardShortcut from "@/utils/keyboard"
 import Queue from "./Queue"
 import FakeCheckbox from "../form/FakeCheckbox"
+import PassiveTextarea from "../PassiveTextarea/PassiveTextarea"
 
 const TABLE_COL_GAP='10px'
 
@@ -306,6 +307,7 @@ export default function Crawler({ manifestRow, canEdit }) {
             {'title': 'Scrape', 'key': '_scrape', 'flex': 2, 'hook': ({ item, setItem }) => {
                 const { getToken } = Auth.useAuth()
                 const [queueLoading, setQueueLoading] = useState(0)
+                const [showError, setShowError] = useState(false)
                 
                 async function queueSite() {
                     try {
@@ -354,8 +356,32 @@ export default function Crawler({ manifestRow, canEdit }) {
                         </div>
                     )
                 }
-                else if (queueLoading == 3){
-                    inner = "Error"
+                else if (item['errors'] && JSON.parse(item['errors'])?.length){
+                    const errors = JSON.parse(item['errors'])
+                    const recentError = errors[errors.length - 1]
+                    inner = (
+                        <div style={{'display': 'flex', 'alignItems': 'center'}}>
+                            <div className={styles.errorButton} onClick={() => {setShowError(true)}}>
+                                Error
+                            </div>
+                            <Modal
+                                isOpen={showError}
+                                close={() => setShowError(false)}
+                                title={"Error"}
+                                minWidth="600px"
+                            >
+                                <div>
+                                    <InfoTable clamp={false} rows={[
+                                        {'title': 'Stage', 'value': recentError['stage']},
+                                        {'title': 'Status', 'value': recentError['status']},
+                                        {'title': 'Traceback', 'value': (
+                                            <PassiveTextarea style={recentError['traceback'] ? {'minHeight': '10rem', 'fontFamily': 'var(--font-body)'} : {}} value={recentError['traceback']} readOnly={true} /> 
+                                        )},
+                                    ]} />
+                                </div>
+                            </Modal>
+                        </div>
+                    )
                 }
                 else if (item['queued'] || queueLoading == 2){
                     inner = ""  // Queued
@@ -619,6 +645,35 @@ export function RefreshButton({ getUrl, searchText, setSearchText, setWebsites, 
                     <Loading size={15} text={""} />
                 ) : "Refresh"}
             </div>
+        </div>
+    )
+}
+
+
+// rows are [{'title': '', 'value': ()}, ...]
+export function InfoTable({ rows, clamp=true }) {
+    return (
+        <div className={styles.table}>
+            {rows.map((row, i) => {
+                return (
+                    <div key={i} className={`${styles.tableRow} ${i == 0 ? styles.tableRowFirst : ''} ${i == rows.length - 1 ? styles.tableRowLast : ''} ${i % 2 ? styles.tableRowOdd : ''}`}>
+                        <div className={styles.tableLabel}>
+                            {row.title}
+                        </div>
+                        <div className={`${styles.tabelInfo}`}>
+                            <div className={clamp ? "_clamped2" : ""}>
+                                {row.isText ? (
+                                    row.value ? (
+                                        <span title={row.value}>{row.value}</span>
+                                    ) : (
+                                        <span style={{'color': 'var(--passive-text)'}}>None</span>
+                                    )
+                                ) : row.value}
+                            </div>
+                        </div>
+                    </div>
+                )
+            })}
         </div>
     )
 }

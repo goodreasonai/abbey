@@ -23,11 +23,12 @@ import os
 import json
 from ..jobs import search_for_jobs, start_job, job_error_wrapper, complete_job
 from ..worker import task_scrape_from_queue
+import traceback
 
 
 bp = Blueprint('crawler', __name__, url_prefix="/crawler")
 
-DB_VERSION: int = 2  # increment this in order to redo the schema on older DBs.
+DB_VERSION: int = 3  # increment this in order to redo the schema on older DBs.
 
 SCRAPE_QUEUE = 'scrape_queue'  # metadata key
 SCRAPE_FROM_QUEUE_JOB = 'scrape_queue'  # job kind
@@ -55,6 +56,21 @@ def create_database(path):
         cursor.execute(sql)
         sql = """
             CREATE INDEX url_index ON websites(url COLLATE NOCASE);
+        """
+        # You should modify /manifest and add appropriate columns if you modify this
+        sql = """
+            CREATE TABLE errors (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                website_id INTEGER,
+                traceback TEXT,  /* if applicable */
+                stage TEXT,  /* Where was the error caught? */
+                status INTEGER  /* If we have it, what was the scrape response status? */
+            )
+        """
+        cursor.execute(sql)
+        sql = """
+            CREATE INDEX website_id_error_index ON errors(website_id);
         """
         cursor.execute(sql)  # Additionally makes any query on URL case insensitive
         sql = """
@@ -191,7 +207,7 @@ class CrawlerDB():
             old_cursor = self.conn.cursor()
 
             # Should be updated as new tables are added (OK if don't exist in previous database)
-            tables_to_reconstruct = ['websites', 'website_data']
+            tables_to_reconstruct = ['websites', 'website_data', 'errors']
 
             for table in tables_to_reconstruct:
                 # Get common columns first
@@ -284,6 +300,18 @@ class ScrapeQueueItem():
         }
 
 
+# Takes care of opening up the Crawler DB
+@needs_db
+def record_error(asset_id, website_id, traceback="", stage="", status: int=None, db=None):
+    with CrawlerDB(asset_id, db=db) as crawler:
+        sql = """
+            INSERT INTO errors (`website_id`, `traceback`, `stage`, `status`)
+            VALUES (?, ?, ?, ?)
+        """
+        crawler.execute(sql, (website_id, traceback, stage, status))
+        crawler.commit()
+
+
 @needs_db
 def scrape_for_crawler(asset_id, website_id, website_data=None, db=None):    
     
@@ -302,8 +330,7 @@ def scrape_for_crawler(asset_id, website_id, website_data=None, db=None):
         scrape: ScrapeResponse = scrape_with_requests(item['url'])
 
     if not scrape.success:
-        # Scrape failed - TODO pass some error information
-        return False
+        return scrape.success, scrape.status
 
     content_type = get_mimetype_from_headers(scrape.headers)
     meta: ScrapeMetadata = scrape.metadata
@@ -375,7 +402,7 @@ def scrape_for_crawler(asset_id, website_id, website_data=None, db=None):
 
             crawler.commit()
 
-    return True
+    return scrape.success, scrape.status
 
 
 @needs_db
@@ -393,17 +420,20 @@ def scrape_from_queue_job(user_obj, job_id, asset_id, db=None):
             to_scrape = queue[0]
             to_scrape_obj = json.loads(to_scrape['value'])
             queue_item = ScrapeQueueItem(**to_scrape_obj)
-            # Remove from the queue
-            delete_asset_metadata_by_id(to_scrape['id'], db=db)
             try:
                 # This not only scrapes but also saves the data in the crawler db
-                scrape = scrape_for_crawler(asset_id, queue_item.website_id, db=db)
+                success, status = scrape_for_crawler(asset_id, queue_item.website_id, db=db)
             except Exception as e:
                 print(f"Error in scrape for crawler: {e}", file=sys.stderr)
-                scrape = False
-            if not scrape:
-                # Maybe deal with scrape error here?
-                pass
+                record_error(asset_id, queue_item.website_id, stage='call_scrape_for_crawler', traceback=traceback.format_exc(), db=db)
+                success = True
+            if not success:
+                # Means scrape_for_crawler handed error gracefully
+                record_error(asset_id, queue_item.website_id, stage='scrape_for_crawler_returned_not_success', status=status, db=db)
+
+            # Remove from the queue
+            delete_asset_metadata_by_id(to_scrape['id'], db=db)
+
             queue, _ = get_asset_metadata(user, asset_id, keys=[SCRAPE_QUEUE], limit=100, get_total=False, for_all_users=True, db=db)
             # Use the filter in case the change doesn't commit fast enough
             queue = [x for x in filter(lambda x: x['id'] != to_scrape['id'], queue)]
@@ -439,7 +469,7 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_t
         
         # Actual query
         sql = f"""
-        SELECT 
+            SELECT 
                 websites.id,
                 websites.created_at,
                 websites.scraped_at,
@@ -448,13 +478,26 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_t
                 websites.desc,
                 websites.content_type,
                 websites.url,
-                COALESCE(json_group_array(json_object(
-                    'data_type', website_data.data_type,
-                    'resource_id', website_data.resource_id
-                )), '[]') AS website_data
+                COALESCE(NULLIF(json_group_array(CASE 
+                    WHEN website_data.data_type IS NULL THEN NULL 
+                    ELSE json_object(
+                        'data_type', website_data.data_type,
+                        'resource_id', website_data.resource_id
+                    )
+                END), '[null]'), '[]') AS website_data,
+                COALESCE(NULLIF(json_group_array(CASE 
+                    WHEN errors.traceback IS NULL THEN NULL 
+                    ELSE json_object(
+                        'traceback', errors.traceback,
+                        'status', errors.status,
+                        'stage', errors.stage,
+                        'created_at', errors.created_at
+                    )
+                END), '[null]'), '[]') AS errors
             FROM websites_fts5
             LEFT JOIN websites ON websites.id = websites_fts5.website_id
             LEFT JOIN website_data ON websites.id = website_data.website_id
+            LEFT JOIN errors ON websites.id = errors.website_id
             {'WHERE websites_fts5 MATCH ?' if query else "WHERE 1=1"}
             {website_ids_clause}
             GROUP BY websites.id

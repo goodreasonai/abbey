@@ -1,5 +1,5 @@
 
-.tableButton, .tableButtonView {
+.tableButton, .tableButtonView, .errorButton {
     background-color: var(--light-primary);
     padding: 2px 10px;
     border-radius: var(--small-border-radius);
@@ -20,6 +20,15 @@
 
 .tableButtonView:hover {
     background-color: var(--dark-highlight);
+}
+
+.errorButton {
+    background-color: var(--logo-red);
+    color: var(--light-text);
+}
+
+.errorButton:hover {
+    background-color: var(--logo-red);
 }
 
 .downloadLink {

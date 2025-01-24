@@ -11,6 +11,7 @@ import { extractSiteWithPath } from "@/utils/text"
 import { formatTimestampSmall } from "@/utils/time"
 import LoadingSkeleton from "../Loading/LoadingSkeleton"
 import BackToCollection from "./BackToCollection"
+import { InfoTable } from "./Crawler"
 
 
 export default function ScrapePreview({ assetId, item, slideToLeft }){
@@ -106,7 +107,7 @@ export default function ScrapePreview({ assetId, item, slideToLeft }){
                 stickyPanel="left"
                 initialLeftWidth="60%"
                 initialRightWidth="40%"
-                rightPanel={(<InfoTable assetId={assetId} item={item} mainData={mainData} />)}
+                rightPanel={(<ScrapeInfoTable assetId={assetId} item={item} mainData={mainData} />)}
                 leftPanel={(
                     <div style={{'height': '100%'}}>
                         {screenshots.length ? (
@@ -140,7 +141,7 @@ export default function ScrapePreview({ assetId, item, slideToLeft }){
     )
 }
 
-function InfoTable({ assetId, item, mainData }) {
+function ScrapeInfoTable({ assetId, item, mainData }) {
 
     const { getToken } = Auth.useAuth()
     const [downloadLoadState, setDownloadLoadState] = useState(0)
@@ -188,28 +189,7 @@ function InfoTable({ assetId, item, mainData }) {
 
     return (
         <div>
-            <div className={styles.table}>
-                {rows.map((row, i) => {
-                    return (
-                        <div key={i} className={`${styles.tableRow} ${i == 0 ? styles.tableRowFirst : ''} ${i == rows.length - 1 ? styles.tableRowLast : ''} ${i % 2 ? styles.tableRowOdd : ''}`}>
-                            <div className={styles.tableLabel}>
-                                {row.title}
-                            </div>
-                            <div className={`${styles.tabelInfo}`}>
-                                <div className="_clamped2">
-                                    {row.isText ? (
-                                        row.value ? (
-                                            <span title={row.value}>{row.value}</span>
-                                        ) : (
-                                            <span style={{'color': 'var(--passive-text)'}}>None</span>
-                                        )
-                                    ) : row.value}
-                                </div>
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
+            <InfoTable rows={rows} />
         </div>
     )
 }
