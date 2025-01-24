@@ -4,7 +4,7 @@ from ..auth import User
 import sqlite3
 import tempfile
 import os
-from ..asset_actions import add_asset_resource, get_asset_resource, get_asset, get_asset_resource_by_id, get_asset_resources_by_id, delete_asset_resources, get_asset_metadata, save_asset_metadata, delete_asset_metadata_by_id
+from ..asset_actions import add_asset_resource, get_asset_resource, get_asset, get_asset_resource_by_id, get_asset_resources_by_id, delete_asset_resources, get_asset_metadata, save_asset_metadata, add_bulk_asset_metadata, delete_asset_metadata_by_id
 from ..storage_interface import download_file, replace_asset_file, upload_asset_file
 from ..configs.str_constants import MAIN_FILE
 from flask_cors import cross_origin
@@ -15,7 +15,7 @@ from ..web import ScrapeMetadata, ScrapeResponse, scrape_with_requests, scrape_w
 from ..utils import ext_from_mimetype, get_extension_from_path, mimetype_from_ext, get_mimetype_from_headers
 from ..db import with_lock, get_db
 from ..integrations.file_loaders import get_loader, TextSplitter, RawChunk
-from ..exceptions import ScraperUnavailable
+from ..exceptions import ScraperUnavailable, QueueDuplicate, QueueFull
 from ..user import get_user_search_engine_code
 from ..integrations.web import SearchEngine, SEARCH_PROVIDERS, SearchResult
 import sys
@@ -467,6 +467,38 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_t
     return results, total
 
 
+@needs_db
+def start_queue_job_if_none_exists(user: User, asset_id, db=None):
+    # Check for job
+    jobs = search_for_jobs(kind=SCRAPE_FROM_QUEUE_JOB, asset_id=asset_id, is_running=True, db=db)
+    if len(jobs):
+        return jobs[0]
+
+    # Start new job
+    job_id = start_job('scrape', {}, asset_id, SCRAPE_FROM_QUEUE_JOB, user_id=user.user_id, db=db)
+
+    task_scrape_from_queue.apply_async(args=[user.to_json(), job_id, asset_id])
+
+
+@needs_db
+def add_websites_to_queue(user, asset_id, websites, db=None):
+    MAX_QUEUE = 100
+    queue, _ = get_asset_metadata(user, asset_id, keys=[SCRAPE_QUEUE], limit=MAX_QUEUE, get_total=False, db=db)
+    
+    # Is queue full?
+    if len(queue) >= MAX_QUEUE:
+        raise QueueFull()
+    
+    queued_ids = [str(ScrapeQueueItem(**json.loads(x['value'])).website_id) for x in queue]
+    # Does site already exist in queue?
+    for item in websites:
+        if str(item['id']) in queued_ids:
+            raise QueueDuplicate()
+    
+    values = [json.dumps(ScrapeQueueItem(website_id=item['id']).to_json()) for item in websites]
+    add_bulk_asset_metadata(user, asset_id, key=SCRAPE_QUEUE, values=values, db=db)
+
+
 @bp.route('/queue-manifest', methods=('GET',))
 @cross_origin()
 @token_optional
@@ -630,34 +662,37 @@ def queue_site(user: User):
     if not asset_row:
         return MyResponse(False, reason="Asset not found", status=404).to_json()
     
-    MAX_QUEUE = 100
-    queue, _ = get_asset_metadata(user, asset_id, keys=[SCRAPE_QUEUE], limit=MAX_QUEUE, get_total=False)
-    
-    # Is queue full?
-    if len(queue) >= MAX_QUEUE:
-        return MyResponse(False, reason="Queue full", status=429).to_json()  # 429 = "Too many requests"
-    
-    # Does site already exist in queue?
     item = request.json.get('item')
-    for existing in queue:
-        val = json.loads(existing['value'])
-        queued_item = ScrapeQueueItem(**val)
-        if queued_item.website_id == item['id']:
-            return MyResponse(False, reason="Duplicate", status=409).to_json()  # 409 = Conflict
+    try:
+        add_websites_to_queue(user, asset_id, [item])
+    except QueueDuplicate:
+        return MyResponse(False, reason="Duplicate", status=409).to_json()  # 409 = Conflict
+    except QueueFull:
+        return MyResponse(False, reason="Queue full", status=429).to_json()  # 429 = "Too many requests"
+
+    start_queue_job_if_none_exists(user, asset_id)
+
+    return MyResponse(True).to_json()
+
+
+@bp.route('/bulk-queue', methods=('POST',))
+@cross_origin()
+@token_optional
+def bulk_queue_sites(user: User):
+    asset_id = request.json.get('id')
+    asset_row = get_asset(user, asset_id)
+    if not asset_row:
+        return MyResponse(False, reason="Asset not found", status=404).to_json()
     
-    # Add to queue
-    new_in_queue = ScrapeQueueItem(website_id=item['id'])
-    save_asset_metadata(user, asset_id, key=SCRAPE_QUEUE, value=json.dumps(new_in_queue.to_json()))
+    items = request.json.get('items')
+    try:
+        add_websites_to_queue(user, asset_id, items)
+    except QueueDuplicate:
+        return MyResponse(False, reason="Duplicate", status=409).to_json()  # 409 = Conflict
+    except QueueFull:
+        return MyResponse(False, reason="Queue full", status=429).to_json()  # 429 = "Too many requests"
 
-    # Check for job
-    jobs = search_for_jobs(kind=SCRAPE_FROM_QUEUE_JOB, asset_id=asset_id, is_running=True)
-    if len(jobs):
-        return MyResponse(True, {'job': jobs[0]}).to_json()
-
-    # Start new job
-    job_id = start_job('scrape', {}, asset_id, SCRAPE_FROM_QUEUE_JOB, user_id=user.user_id)
-
-    task_scrape_from_queue.apply_async(args=[user.to_json(), job_id, asset_id])
+    start_queue_job_if_none_exists(user, asset_id)
 
     return MyResponse(True).to_json()
 

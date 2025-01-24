@@ -160,6 +160,33 @@ def save_asset_metadata(user: User, asset_id, key, value, needs_attention=False,
     return curr.lastrowid
 
 
+# Add a bunch of asset metadata, all of the same key/asset_id but different values
+@needs_db
+def add_bulk_asset_metadata(user: User, asset_id, key, values, needs_attention=False, replace_all=False, replace_for_user=None, db: ProxyDB=None):
+    curr = db.cursor()
+    if replace_all or replace_for_user:
+        sql = """
+        DELETE FROM asset_metadata
+        WHERE `key`=%s AND `asset_id`=%s
+        """
+        if not replace_all:
+            sql += f" AND `user_id`='{db.escape_string(replace_for_user)}'"
+        curr.execute(sql, (key, asset_id))
+
+    # Prepare bulk insert
+    sql = """
+    INSERT INTO asset_metadata (`user_id`, `asset_id`, `key`, `value`, `needs_attention`)
+    VALUES (%s, %s, %s, %s, %s)
+    """
+    
+    # Create parameter tuples for each value
+    user_id = user.user_id if user else None
+    params = [(user_id, asset_id, key, value, needs_attention) for value in values]
+    
+    # Execute bulk insert
+    curr.executemany(sql, params)
+
+
 # Not permissioned in any way!
 @needs_db
 def delete_asset_metadata_by_id(metadata_id, db: ProxyDB=None):

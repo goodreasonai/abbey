@@ -19,6 +19,7 @@ import SmartHeightWrapper from "../SmartHeightWrapper/SmartHeightWrapper"
 import SearchEngine from "./SearchEngine"
 import useKeyboardShortcut from "@/utils/keyboard"
 import Queue from "./Queue"
+import FakeCheckbox from "../form/FakeCheckbox"
 
 const TABLE_COL_GAP='10px'
 
@@ -39,6 +40,8 @@ export default function Crawler({ manifestRow, canEdit }) {
     const [showRight, setShowRight] = useState(false)
     const [rightViewCode, setRightViewCode] = useState("")
     const [rightViewData, setRightViewData] = useState(undefined)
+    
+    const [selected, setSelected] = useState({})  // URL -> item or undefined
 
     const resultLimit = 20
 
@@ -219,6 +222,25 @@ export default function Crawler({ manifestRow, canEdit }) {
 
     const tableCols = useMemo(() => {
         return [
+            {'title': '', 'key': 'selected', 'flex': 1, 'hook': ({ item }) => {
+                const isSelected = selected[item['url']]
+                return (
+                    <FakeCheckbox value={isSelected} setValue={(x) => {setSelected({...selected, [item['url']]: x ? item : undefined})}} />
+                )
+            }, 'headerHook': ({}) => {
+                const allSelected = websites.filter((x) => selected[x.url]).length == websites.length
+                return (
+                    <FakeCheckbox value={allSelected} setValue={(x) => {
+                        const newSelected = {...selected}
+                        for (const site of websites){
+                            if (!site.added){
+                                newSelected[site.url] = x ? site : undefined
+                            }
+                        }
+                        setSelected(newSelected)
+                    }} />
+                )
+            }},
             {'title': 'Added', 'key': 'created_at', 'flex': 2, 'hook': ({ item }) => {
                 return formatTimestampSmall(item['created_at'])
             }},
@@ -391,7 +413,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                 )
             }},
         ]
-    }, [slideToRight, setWebsites, manifestRow])
+    }, [slideToRight, setWebsites, manifestRow, selected])
 
     return (
         <SmartHeightWrapper>
@@ -417,7 +439,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                             searchable={true}
                             tableHeader={(
                                 <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '10px'}}>
-                                    <TableControls getUrl={getUrl} searchText={searchText} setSearchText={setSearchText} websites={websites} setWebsites={setWebsites} currPage={currPage} setCurrPage={setCurrPage} numResults={numResults} setNumResults={setNumResults} />
+                                    <TableControls manifestRow={manifestRow} selected={selected} setSelected={setSelected} getUrl={getUrl} searchText={searchText} setSearchText={setSearchText} websites={websites} setWebsites={setWebsites} currPage={currPage} setCurrPage={setCurrPage} numResults={numResults} setNumResults={setNumResults} />
                                     <TableHeader cols={tableCols} />
                                 </div>
                             )}
@@ -486,8 +508,69 @@ export function TableRow({ item, setItem, i, tableCols, isFirst, isLast, slideTo
     )
 }
 
-function TableControls({ getUrl, searchText, setSearchText, websites, setWebsites, currPage, setCurrPage, numResults, setNumResults }) {
-    return (<RefreshButton getUrl={getUrl} searchText={searchText} setSearchText={setSearchText} setWebsites={setWebsites} currPage={currPage} setCurrPage={setCurrPage} setNumResults={setNumResults} />)
+function TableControls({ manifestRow, getUrl, searchText, setSearchText, websites, setWebsites, currPage, setCurrPage, numResults, setNumResults, selected, setSelected }) {
+   
+    const { getToken } = Auth.useAuth()
+    const [bulkQueueLoadingState, setBulkQueueLoadingState] = useState(0)
+
+    const needQueue = useMemo(() => {
+        const needed = []
+        for (const item of Object.values(selected)){
+            if (item && !item.queued && !item.scraped_at){
+                needed.push(item)
+            }
+        }
+        return needed
+    }, [selected])
+
+    async function bulkQueue(){
+        try {
+            setBulkQueueLoadingState(1)
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/crawler/bulk-queue'
+            const data = {
+                'id': manifestRow?.id,
+                'items': needQueue
+            }
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                    'Content-Type': 'application/json'
+                },
+                'body': JSON.stringify(data),
+                'method': 'POST'
+            })
+            if (!response.ok){
+                throw Error("Response was not OK")
+            }
+            const neededIds = needQueue.map((x) => x.id)
+            setWebsites((prev) => {return prev.map((item) => neededIds.includes(item.id) ? {...item, 'queued': true} : item)})
+            setSelected((prev) => {
+                const newSelected = {...prev}
+                for (const needed of needQueue){
+                    newSelected[needed.url] = undefined
+                }
+                return newSelected
+            })
+            setBulkQueueLoadingState(2)
+        }
+        catch(e) {
+            setBulkQueueLoadingState(3)
+            console.log(e)
+        }
+    }
+
+    return (
+        <div style={{'display': 'flex', 'gap': '10px'}}>
+            <RefreshButton getUrl={getUrl} searchText={searchText} setSearchText={setSearchText} setWebsites={setWebsites} currPage={currPage} setCurrPage={setCurrPage} setNumResults={setNumResults} />
+            {needQueue.length ? (
+                <div style={{'display': 'flex'}} onClick={() => bulkQueue()}>
+                    <div className="_touchableOpacity">
+                        {`Queue ${needQueue.length}`}
+                    </div>
+                </div>
+            ) : ""}
+        </div>
+    )
 }
 
 export function RefreshButton({ getUrl, searchText, setSearchText, setWebsites, setNumResults, currPage, setCurrPage}) {

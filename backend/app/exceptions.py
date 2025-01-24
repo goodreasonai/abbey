@@ -33,3 +33,17 @@ class ScraperUnavailable(Exception):
         if not true_message:
             true_message = "There is no scraper service configured in settings"
         super().__init__(true_message)
+
+class QueueDuplicate(Exception):
+    def __init__(self, message="") -> None:
+        true_message = str(message)
+        if not true_message:
+            true_message = "The item you are adding to the queue is already in the queue"
+        super().__init__(true_message)
+
+class QueueFull(Exception):
+    def __init__(self, message="") -> None:
+        true_message = str(message)
+        if not true_message:
+            true_message = "The queue is full"
+        super().__init__(true_message)

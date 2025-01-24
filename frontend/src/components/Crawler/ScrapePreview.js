@@ -94,8 +94,10 @@ export default function ScrapePreview({ assetId, item, slideToLeft }){
                     <BackToCollection slideToLeft={slideToLeft} />
                 </div>
                 <div style={{'flex': '5', 'display': 'flex', 'justifyContent': 'center'}}>
-                    <div style={{'backgroundColor': 'var(--light-primary)', 'border': '1px solid var(--light-border)', 'padding': '5px 10px', 'borderRadius': 'var(--medium-border-radius)'}}>
-                        {item.title}
+                    <div style={{'backgroundColor': 'var(--light-primary)', 'border': '1px solid var(--light-border)', 'padding': '5px 10px', 'borderRadius': 'var(--medium-border-radius)', 'display': 'flex', 'margin': '0px 10px'}}>
+                        <div style={{'width': '100%'}} className="_clamped1">
+                            {item.title}
+                        </div>
                     </div>
                 </div>
                 <div style={{'flex': '1'}}></div>
