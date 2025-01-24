@@ -435,7 +435,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                             customDisplayWrapperStyle={{'borderRadius': 'var(--medium-border-radius)', 'overflow': 'hidden', 'border': '1px solid var(--light-border)', 'backgroundColor': 'var(--light-primary)'}}
                         />
                     )}
-                    keepRightRendered={rightViewCode == 'search' || rightViewCode == 'queue'}
+                    keepRightRendered={rightViewCode == 'search'}
                     right={rightElement}
                 />
             </div>
@@ -487,17 +487,17 @@ export function TableRow({ item, setItem, i, tableCols, isFirst, isLast, slideTo
 }
 
 function TableControls({ getUrl, searchText, setSearchText, websites, setWebsites, currPage, setCurrPage, numResults, setNumResults }) {
-    return (<RefreshButton getUrl={getUrl} setSearchText={setSearchText} setWebsites={setWebsites} setCurrPage={setCurrPage} setNumResults={setNumResults} />)
+    return (<RefreshButton getUrl={getUrl} searchText={searchText} setSearchText={setSearchText} setWebsites={setWebsites} currPage={currPage} setCurrPage={setCurrPage} setNumResults={setNumResults} />)
 }
 
-export function RefreshButton({ getUrl, setSearchText, setWebsites, setNumResults, setCurrPage}) {
+export function RefreshButton({ getUrl, searchText, setSearchText, setWebsites, setNumResults, currPage, setCurrPage}) {
     const { getToken } = Auth.useAuth()
     const [refreshLoadState, setRefreshLoadState] = useState(0)
 
     async function refresh(){
         try {
             setRefreshLoadState(1)
-            const url = getUrl(1)
+            const url = getUrl(currPage, searchText)
             const response = await fetch(url, {
                 'headers': {
                     'x-access-token': await getToken(),
@@ -510,11 +510,9 @@ export function RefreshButton({ getUrl, setSearchText, setWebsites, setNumResult
             const myJson = await response.json()
             const websites = myJson['results']
             const total = myJson['total']
-            setSearchText("")
             setRefreshLoadState(2)
             setWebsites(websites)
             setNumResults(total)
-            setCurrPage(1)
         }
         catch(e) {
             setRefreshLoadState(3)

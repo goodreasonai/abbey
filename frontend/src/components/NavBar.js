@@ -81,7 +81,7 @@ export default function NavBar({}){
     }, [setNavBarHeight, navBarRef?.current, wantNavBar]);
 
     return (
-        <div ref={navBarRef} style={{'height': isShrunk ? '10px' : 'var(--nav-bar-height)', 'overflow': 'hidden', 'transition': 'all var(--nav-bar-transition) ease-in-out', 'position': 'relative'}}>
+        <div ref={navBarRef} style={{'height': isShrunk ? '15px' : 'var(--nav-bar-height)', 'overflow': 'hidden', 'transition': 'all var(--nav-bar-transition) ease-in-out', 'position': 'relative'}}>
             <div style={{'position': 'absolute', 'top': '0px', 'left': '0px', 'height': '100%', 'width': '100%', 'backgroundColor': 'var(--light-primary)', 'transition': 'all .5s ease-in-out', 'zIndex': '1', 'opacity': isShrunk ? '1' : '0', 'pointerEvents': !isShrunk ? 'none': 'auto'}}></div>
             <div className={`${styles.navBar}`}>
                 <div className={`${styles.leftText}`}>

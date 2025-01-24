@@ -79,7 +79,7 @@ export default function Queue({ slideToLeft, manifestRow }) {
                     searchable={true}
                     tableHeader={(
                         <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '10px'}}>
-                            <RefreshButton getUrl={getUrl} setWebsites={setWebsites} setCurrPage={setCurrPage} setNumResults={setNumResults} setSearchText={setSearchText} />
+                            <RefreshButton getUrl={getUrl} setWebsites={setWebsites} currPage={currPage} setCurrPage={setCurrPage} setNumResults={setNumResults} searchText={searchText} setSearchText={setSearchText} />
                             <TableHeader cols={tableCols} />
                         </div>
                     )}
