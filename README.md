@@ -14,6 +14,10 @@ If Abbey is not by default configurable to your liking, and you're comfortable w
 
 ## Setup and Install (New)
 
+### Upgrading From Previous Version
+
+If you already have Abbey setup but are `git pull`ing a new version, please refer to the [Upgrading section](#upgrading) below to make sure any configuration changes you made still work.
+
 ### Prerequisites
 
 - **Installs**: You must have Docker and  `docker compose` installed. See details [here](https://docs.docker.com/compose/install/).
@@ -128,13 +132,43 @@ backend:
     # ... some stuff
 ```
 
+### Upgrading
+
+If you're **upgrading Abbey to this version from a previous one**, here are some important notes:
+
+- The `redis`, `celery`, and `db_pooler` services have been subsumed into a single `backend` service. Please update any `docker-compose` files you have to match the updated, current `docker-compose.yml` in this repository. Note that changes to mounted volumes have also been made.
+- An experimental web crawling feature has been added, which uses a web scraping service based on Playwright. To enable it, add these lines to your `settings.yml`:
+
+```
+scraper:
+
+templates:
+  experimental: true
+```
+
+and make sure to run `docker-compose.scraper.yml` in addition to the regular `docker-compose.yml`, like:
+
+```
+docker compose -f docker-compose.yml -f docker-compose.scraper.yml up
+```
+
+In some deployed environments, you may also want to specify an API key for the scraper service; you should create a new `.env` inside the `scraper` folder, which would look like this:
+
+```
+SCRAPER_API_KEY=your-key
+```
+
+and be sure to add the same variable to the root `.env`.
+
+**Because the crawler is an experimental feature, no security guarantees can be made at this time.**
+
 ### Troubleshooting
 
-1. General: make sure that all the docker containers are actually running with `docker ps`. You should see 6: backend, frontend, celery, redis, MySQL, and db_pooler (sorry that there are so many - Abbey can do AI tasks in the background and in multiple threads, which necessitates the pooler, redis, and celery containers). If one isn't running, try restarting it with `docker compose restart backend` (or frontend, or celery, or what have you). If it keeps crashing, there's a good chance you've messed up your `settings.yml` or forgot to put appropriate secrets into `.env`. Otherwise, look at the logs.
+1. General: make sure that all the docker containers are actually running with `docker ps`. You should see 6: backend, frontend, and mysql. If one isn't running, try restarting it with `docker compose restart backend` (or frontend, or mysql, or what have you). If it keeps crashing, there's a good chance you've messed up your `settings.yml` or forgot to put appropriate secrets into `.env`. Otherwise, look at the logs.
 
 2. docker config invalid: If it's telling you your docker compose is invalid, then you probably need to upgrade docker on your machine to something >= version 2. Abbey takes advantage of certain relatively new docker features like defaults for env variables and profiles. It's going to be easier just to upgrade docker in the long run - trust.
 
-3. Things look blank / don't load / requests to the backend don't seem to work quite right. First, navigate to the backend in the browser, like to `http://localhost:5000` or whatever URL you put in originally. It should give you a message like "A British tar is a soaring soul..." If you see that, then the backend is up and running but your backend URL config is wrong or incomplete (were you playing around with it?). If your backend isn't running, check the logs in Docker for more information – please read what they say!
+3. Things look blank / don't load / requests to the backend don't seem to work quite right. First, navigate to the backend in the browser, like to `http://localhost:5000` or whatever URL you put in originally (see the `services` heading in `settings.yml` described above). It should give you a message like "A British tar is a soaring soul..." If you see that, then the backend is up and running but your backend URL config is wrong or incomplete (were you playing around with it?). If your backend isn't running, check the logs in Docker for more information – please read what they say!
 
 4. Docker gets stuck downloading/installing/running an image. There is a possibility that you've run out of space on your machine. First, try running `docker system prune` to clean up any nasty stuff lying around in Docker that you've forgotten about. Then try clearing up space on your computer – perhaps enough for ~10gb on your machine. Then restart Docker and try again. If you still get issues – try uninstalling / reinstalling Docker.
 

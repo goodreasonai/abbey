@@ -245,8 +245,9 @@ def scrape_with_service(url):
                 headers = json_part['headers']
                 resp = ScrapeResponse(False, status, url, headers)
             elif i == 1:  # Next is the actual content of the
-                resp.success = True
-                resp.set_data(part.content)
+                if part.content:
+                    resp.success = True
+                    resp.set_data(part.content)
             else:  # Other parts are screenshots, if they exist
                 resp.add_screenshot(part.content)
         

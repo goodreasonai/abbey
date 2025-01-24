@@ -478,22 +478,23 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_t
                 websites.desc,
                 websites.content_type,
                 websites.url,
-                COALESCE(NULLIF(json_group_array(CASE 
-                    WHEN website_data.data_type IS NULL THEN NULL 
-                    ELSE json_object(
+                CASE 
+                    WHEN website_data.id IS NULL THEN NULL 
+                    ELSE COALESCE(json_group_array(json_object(
                         'data_type', website_data.data_type,
                         'resource_id', website_data.resource_id
-                    )
-                END), '[null]'), '[]') AS website_data,
-                COALESCE(NULLIF(json_group_array(CASE 
-                    WHEN errors.traceback IS NULL THEN NULL 
-                    ELSE json_object(
+                    )), '[]')
+                END AS website_data,
+                CASE 
+                    WHEN errors.id IS NULL THEN NULL 
+                    ELSE COALESCE(json_group_array(json_object(
                         'traceback', errors.traceback,
                         'status', errors.status,
                         'stage', errors.stage,
                         'created_at', errors.created_at
-                    )
-                END), '[null]'), '[]') AS errors
+                    )), '[]')
+                END AS errors
+
             FROM websites_fts5
             LEFT JOIN websites ON websites.id = websites_fts5.website_id
             LEFT JOIN website_data ON websites.id = website_data.website_id

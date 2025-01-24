@@ -1,4 +1,3 @@
-import NavBar from '@/components/NavBar';
 import Favicon16x16 from '../../public/Favicon16x16.png'
 import Favicon32x32 from '../../public/Favicon32x32.png'
 import FaceliftHomePage from '@/components/HomePages/FaceliftHomePage';
@@ -9,7 +8,7 @@ import Babel from '../../public/random/babel.jpg'
 import Library from '../../public/random/Library.png'
 import RhodesExpanded from '../../public/random/RhodesExpanded.webp'
 
-export const FRONTEND_VERSION = '0.12.7'
+export const FRONTEND_VERSION = '0.13.0'
 
 /*
 

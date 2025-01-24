@@ -819,7 +819,7 @@ class CrawlerTemplate extends Template {
     static readableName = "Web Crawler"
     static description = "Scrape websites en masse"
     static icon = CrawlerIcon
-    static uploadable = true
+    static uploadable = process.env.NEXT_PUBLIC_EXPERIMENTAL_TEMPLATES === '1'
     static chattable = false
     static primaryColor = '#61866f'
     static summarizable = false

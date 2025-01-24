@@ -99,11 +99,17 @@ def scrape_task(url, wait):
                                 raise e
                 else:
                     raise e
+            
+            if not response:
+                raise Exception("Response was none") 
 
-            if not response or response.status >= 400:
-                raise Exception(f"Failed to load page: Status {response.status if response else 'unknown'}")
-
-            if not processing_download:
+            status = response.status
+            headers = dict(response.headers) if response else {}
+            content_type = headers.get("content-type", "").lower()
+            
+            if status >= 400:
+                pass
+            elif not processing_download:
                 status = response.status
                 headers = dict(response.headers)
                 content_type = headers.get("content-type", "").lower()
@@ -180,7 +186,5 @@ def scrape_task(url, wait):
             raise e
         finally:
             os.remove(ss)
-
-    print(f"Number of screenshot files: {len(compressed_screenshot_files)}", file=sys.stderr)
 
     return status, headers, content_file, compressed_screenshot_files, metadata

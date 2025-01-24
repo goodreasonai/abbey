@@ -1,0 +1,10 @@
+services:
+  scraper:
+    build:
+      context: .
+      dockerfile: scraper/Dockerfile
+    volumes:
+      - ./scraper:/app
+      - ./scraper/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
+    ports:
+      - 5006:5006

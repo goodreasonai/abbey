@@ -28,16 +28,6 @@ services:
       - ./.env:/etc/abbey/.env:ro
       - /frontend-build/node_modules  # Any modifications to node_modules should be done from inside the container!
 
-  scraper:
-    build:
-      context: .
-      dockerfile: scraper/Dockerfile
-    volumes:
-      - ./scraper:/app
-      - ./scraper/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
-    ports:
-      - 5006:5006
-
   mysql:
     image: mysql:8
     environment:
