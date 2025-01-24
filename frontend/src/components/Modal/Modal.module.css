@@ -39,7 +39,6 @@
 
 .header {
     display: flex;
-    color: var(--passive-text);
     font-size: .9rem;
     align-items: center;
     background-color: var(--light-primary);
@@ -50,6 +49,7 @@
 
 .title {
     flex: 1;
+    color: var(--passive-text);
 }
 
 .body {

@@ -24,7 +24,7 @@ export default function SearchEngine({ assetId, slideToLeft, addCallback }) {
     const [currPage, setCurrPage] = useState(1)
     const [numResults, setNumResults] = useState(0);
     const [searchText, setSearchText] = useState("")
-    
+
     function getUrl(page, text){
         if (!text){
             text = ""
@@ -91,22 +91,26 @@ export default function SearchEngine({ assetId, slideToLeft, addCallback }) {
                 }
                 const isSelected = selected[item['url']]
                 return (
-                    <FakeCheckbox value={isSelected} setValue={(x) => {setBulkAddedNumber(0); setSelected({...selected, [item['url']]: x ? item : undefined})}} />
+                    <div style={{'display': 'flex', 'alignItems': 'center'}}>
+                        <FakeCheckbox value={isSelected} setValue={(x) => {setBulkAddedNumber(0); setSelected({...selected, [item['url']]: x ? item : undefined})}} />
+                    </div>
                 )
             }, 'headerHook': ({}) => {
                 const allAdded = websites.filter((x) => x.added).length == websites.length
                 const allSelected = websites.filter((x) => selected[x.url] || x.added).length == websites.length
                 return (
-                    <FakeCheckbox value={allSelected && !allAdded} setValue={(x) => {
-                        const newSelected = {...selected}
-                        for (const site of websites){
-                            if (!site.added){
-                                newSelected[site.url] = x ? site : undefined
+                    <div style={{'display': 'flex', 'alignItems': 'center'}}>
+                        <FakeCheckbox value={allSelected && !allAdded} setValue={(x) => {
+                            const newSelected = {...selected}
+                            for (const site of websites){
+                                if (!site.added){
+                                    newSelected[site.url] = x ? site : undefined
+                                }
                             }
-                        }
-                        setBulkAddedNumber(0)
-                        setSelected(newSelected)
-                    }} />
+                            setBulkAddedNumber(0)
+                            setSelected(newSelected)
+                        }} />
+                    </div>
                 )
             }},
             {'title': 'URL', 'key': 'url', 'flex': 6, 'hook': ({ item }) => {

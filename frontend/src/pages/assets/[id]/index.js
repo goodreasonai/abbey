@@ -513,12 +513,12 @@ export default function Asset({ assetManifestRow, assetManifestRowLoadState }){
                 {/* HEADER PORTION START */}
                 <div ref={headerRef} style={{'height': isShrunk ? '0px' : 'var(--asset-bar-height)', 'transition': 'all var(--nav-bar-transition) ease-in-out', 'overflow': 'hidden', 'backgroundColor': 'var(--light-primary)', 'borderBottom': '1px solid var(--light-border)', 'fontSize': '.9rem'}}>
                     <div style={{'padding': '0px var(--std-margin)', 'display': 'flex', 'alignItems': 'center', 'width': '100%', 'height': '100%', 'gap': '10px'}}>
-                        <span className='_clamped1' id="titleFromIndex" style={{'cursor': 'default'}}>
+                        <span className='_clamped1' id="titleFromIndex" style={{'cursor': 'pointer'}} onClick={() => setIsEditing(true)}>
                             {assetManifestRow['title']}
                         </span>
                         {
                             assetManifestRow['author'] ? (
-                                <span className='_clamped1' style={{'color': 'var(--passive-text)', 'cursor': 'default'}}>
+                                <span className='_clamped1' style={{'color': 'var(--passive-text)', 'cursor': 'pointer'}} onClick={() => setIsEditing(true)}>
                                     {` by ${assetManifestRow['author']}`}
                                 </span>
                             ) : ""
@@ -530,7 +530,7 @@ export default function Asset({ assetManifestRow, assetManifestRowLoadState }){
                             {deleteArea}
                             {isSignedIn ? <MyImage title="Put into folder" className={"_clickable"} src={MoveIcon} width={20} height={20} alt="Add to a Folder" onClick={() => setShowMove(!showMove)} /> : "" }
                         </div>
-                        <div className='_clamped1' style={{'flex': '1', 'color': 'var(--passive-text)', 'cursor': 'default'}}>
+                        <div className='_clamped1' style={{'flex': '1', 'color': 'var(--passive-text)', 'cursor': 'pointer'}} onClick={() => {setIsEditing(true)}}>
                             {assetManifestRow['preview_desc']}
                         </div>
                         {assetTemplate.constructor.collab ? (<Collab collabUsers={collabUsers} />) : ""}
@@ -554,6 +554,7 @@ export default function Asset({ assetManifestRow, assetManifestRowLoadState }){
                         isOpen={isEditing}
                         close={() => {handleInlineEdit()}}
                         title={"Edit"}
+                        closeButton={(<div className='_touchableOpacity'>{`Save & Close`}</div>)}
                     >
                         <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center', 'flexDirection': 'column', 'width': '100%', 'height': '100%'}}>
                             <div className={styles.editRow}>
@@ -567,6 +568,7 @@ export default function Asset({ assetManifestRow, assetManifestRowLoadState }){
                                         onKeyPress={handleKeyPress}
                                         setValue={(x) => setEditedTitle(x)} 
                                         size={'15'}
+                                        autoFocus={true}
                                     />
                                 </div>
                             </div>

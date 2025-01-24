@@ -670,8 +670,6 @@ def queue_site(user: User):
     except QueueFull:
         return MyResponse(False, reason="Queue full", status=429).to_json()  # 429 = "Too many requests"
 
-    # REMOVE!
-    return MyResponse(True).to_json()
     start_queue_job_if_none_exists(user, asset_id)
 
     return MyResponse(True).to_json()

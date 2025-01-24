@@ -6,7 +6,7 @@ import Loading from '../Loading/Loading';
 import ReactDOM from 'react-dom'
 import useKeyboardShortcut from '@/utils/keyboard';
 
-export default function Modal({ isOpen, close, title, minWidth="500px", minHeight="unset", style, preventCloseLoading, children}) {
+export default function Modal({ isOpen, close, title, minWidth="500px", minHeight="unset", style, preventCloseLoading, closeButton, children}) {
 
     const modalOverlayRef = useRef(null)
     const modalContainerRef = useRef(null)
@@ -99,11 +99,13 @@ export default function Modal({ isOpen, close, title, minWidth="500px", minHeigh
                             <div className={styles.title}>
                                 {title}
                             </div>
-                            {preventCloseLoading || false ? (
-                                <Loading text="" size={17} />
-                            ) : (
-                                <MyImage src={RemoveIcon} className={"_clickable"} onClick={close} alt={"Close"} width={17} height={17} />
-                            )}
+                            <div style={{'display': 'flex', 'alignItems': 'center'}} onClick={() => {preventCloseLoading || close()}}>
+                                {preventCloseLoading ? (
+                                    <Loading text="" size={17} />
+                                ) : (closeButton ? closeButton : (
+                                    <MyImage src={RemoveIcon} className={"_clickable"} onClick={close} alt={"Close"} width={17} height={17} />
+                                ))}
+                            </div>
                         </div>
                         <div className={styles.body}>
                             {children}

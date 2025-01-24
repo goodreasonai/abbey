@@ -225,18 +225,22 @@ export default function Crawler({ manifestRow, canEdit }) {
             {'title': '', 'key': 'selected', 'flex': 1, 'hook': ({ item }) => {
                 const isSelected = selected[item['url']]
                 return (
-                    <FakeCheckbox value={isSelected} setValue={(x) => {setSelected({...selected, [item['url']]: x ? item : undefined})}} />
+                    <div style={{'display': 'flex', 'alignItems': 'center'}}>
+                        <FakeCheckbox value={isSelected} setValue={(x) => {setSelected({...selected, [item['url']]: x ? item : undefined})}} />
+                    </div>
                 )
             }, 'headerHook': ({}) => {
-                const allSelected = websites.filter((x) => selected[x.url]).length == websites.length
+                const allSelected = websites.filter((x) => selected[x.url]).length == websites.length && websites.length
                 return (
-                    <FakeCheckbox value={allSelected} setValue={(x) => {
-                        const newSelected = {...selected}
-                        for (const site of websites){
-                            newSelected[site.url] = x ? site : undefined
-                        }
-                        setSelected(newSelected)
-                    }} />
+                    <div style={{'display': 'flex', 'alignItems': 'center'}}>
+                        <FakeCheckbox value={allSelected} setValue={(x) => {
+                            const newSelected = {...selected}
+                            for (const site of websites){
+                                newSelected[site.url] = x ? site : undefined
+                            }
+                            setSelected(newSelected)
+                        }} />
+                    </div>
                 )
             }},
             {'title': 'Added', 'key': 'created_at', 'flex': 2, 'hook': ({ item }) => {
