@@ -30,12 +30,23 @@ export default function NavBar({}){
     useKeyboardShortcut([['d']], keyboardShortcutCallback, true)
 
     useEffect(() => {
+        let shrinkTimer;
         if (!onNavBar && !wantNavBar && !quickWantsNavBar){
-            shrinkNavBar()
+            shrinkTimer = setTimeout(() => {
+                shrinkNavBar();
+            }, 1000);
         }
         else {
+            if (shrinkTimer) {
+                clearTimeout(shrinkTimer);
+            }
             expandNavBar()
         }
+        return () => {
+            if (shrinkTimer) {
+                clearTimeout(shrinkTimer);
+            }
+        };
     }, [onNavBar, wantNavBar, quickWantsNavBar])
 
     useEffect(() => {
