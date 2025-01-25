@@ -165,7 +165,7 @@ try {
 
     // Experimental templates
     if (settings.templates?.experimental){
-        addEnv('NEXT_PUBLIC_EXPERIMENTAL_TEMPLATES', true)
+        addEnv('NEXT_PUBLIC_EXPERIMENTAL_TEMPLATES', 1)
     }
 
     fs.writeFileSync(path.join(__dirname, '../../.env.local'), envContent);
