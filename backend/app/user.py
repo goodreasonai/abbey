@@ -20,7 +20,7 @@ from .configs.user_config import (
 )
 from .pay import get_user_main_sub_code, Protocol, get_protocol_by_code, get_product, get_products
 import pytz
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import math
 import json
 from .activity import make_log, get_user_activity
@@ -607,10 +607,19 @@ def asset_alert(user: User):
 
     uploads_since_last_notebook = []
     for x in recents:
-        if x['template'] == 'notebook':
+        # If the user is already using a notebook, don't alert
+        if x['template'] == 'notebook' or last_response is None:
             break
-        if (last_response is not None) and (compare_db_times(x['time_uploaded'], last_response['timestamp']) < 0):
+        last_response_datetime = datetime.strptime(last_response['timestamp'], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+        uploaded_datetime = datetime.strptime(x['time_uploaded'], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+        # If the user already responded to one since this asset was creaed, don't alert
+        if uploaded_datetime < last_response_datetime:
             break
+        current_utc = datetime.now(timezone.utc)
+        yesterday = current_utc - timedelta(hours=24)
+        # If the user already responded in the last 24 hours, don't alert
+        if last_response_datetime > yesterday:
+            break       
         uploads_since_last_notebook.append(x)
     
     if len(uploads_since_last_notebook) >= UPLOAD_THRESH:

@@ -10,7 +10,7 @@
     right: 0px;
     bottom: 0px;
     background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
-    z-index: 10002; /* Ensure the modal is on top of everything else */
+    z-index: 1000; /* Ensure the modal is on top of everything else */
     display: flex;
     align-items: center;
     justify-content: center;

@@ -4,11 +4,15 @@ from ..auth import User
 import sqlite3
 import tempfile
 import os
-from ..asset_actions import add_asset_resource, get_asset_resource, get_asset, get_asset_resource_by_id, get_asset_resources_by_id, delete_asset_resources, get_asset_metadata, save_asset_metadata, add_bulk_asset_metadata, delete_asset_metadata_by_id
+from ..asset_actions import (
+    add_asset_resource, upload_asset, get_asset_resource, get_asset, get_asset_resource_by_id,
+    get_asset_resources_by_id, delete_asset_resources, get_asset_metadata, save_asset_metadata,
+    add_bulk_asset_metadata, delete_asset_metadata_by_id, set_sources
+)
 from ..storage_interface import download_file, replace_asset_file, upload_asset_file
 from ..configs.str_constants import MAIN_FILE
 from flask_cors import cross_origin
-from ..auth import token_optional, SynthUser
+from ..auth import token_required, SynthUser, token_optional
 from flask import Blueprint, request
 from ..template_response import MyResponse, response_from_resource
 from ..web import ScrapeMetadata, ScrapeResponse, scrape_with_requests, scrape_with_service
@@ -24,11 +28,12 @@ import json
 from ..jobs import search_for_jobs, start_job, job_error_wrapper, complete_job
 from ..worker import task_scrape_from_queue
 import traceback
+from .website import insert_meta_author, insert_meta_description, insert_meta_url
 
 
 bp = Blueprint('crawler', __name__, url_prefix="/crawler")
 
-DB_VERSION: int = 3  # increment this in order to redo the schema on older DBs.
+DB_VERSION: int = 4  # increment this in order to redo the schema on older DBs.
 
 SCRAPE_QUEUE = 'scrape_queue'  # metadata key
 SCRAPE_FROM_QUEUE_JOB = 'scrape_queue'  # job kind
@@ -50,6 +55,7 @@ def create_database(path):
                 desc TEXT,
                 text TEXT,
                 content_type TEXT,
+                asset_id INTEGER,
                 url TEXT
             )
         """
@@ -477,6 +483,7 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_t
             websites.author,
             websites.desc,
             websites.content_type,
+            websites.asset_id,
             websites.url,
             COALESCE(wd.website_data, '[]') AS website_data,
             COALESCE(e.errors, '[]') AS errors
@@ -808,6 +815,77 @@ def add_bulk(user: User):
         crawler.commit()
     
     return MyResponse(True, {'results': added}).to_json()
+
+
+@bp.route('/create-asset', methods=('POST',))
+@cross_origin()
+@token_required
+def create_asset_from_scrape(user: User):
+    asset_id = request.json.get('id')
+    asset_row = get_asset(user, asset_id)
+    if not asset_row:
+        return MyResponse(False, status=404, reason="Asset not found")
+
+    website_id = request.json.get('website_id')
+    resource_id = None
+    website = None
+    with CrawlerDB(asset_id, read_only=True) as crawler:
+        sql = """
+            SELECT * FROM websites WHERE `id`=?
+        """
+        res = crawler.execute(sql, (website_id,))
+        website = res.fetchone()
+        if not website:
+            return MyResponse(False, reason="Website not found").to_json()
+        sql = """
+            SELECT * FROM website_data WHERE `website_id`=? AND `data_type`=?
+        """
+        res = crawler.execute(sql, (website_id, 'data'))
+        website_data = res.fetchone()
+        if not website_data:
+            return MyResponse(False, reason="Website has no data").to_json()
+        
+        resource_id = website_data['resource_id']
+
+    db = get_db(exclusive_conn=True)
+    desc = "Website from Crawler"
+    new_asset_id = None
+    try:
+        # Might want another function with logic or some other standard / better approach.
+        template = 'website' if website['content_type'] == 'text/html' else 'document'
+        ok, message = upload_asset(user, None, website['title'], desc, desc, template, asset_row['author'], None, db=db, no_commit=True)
+        res = get_asset_resource_by_id(asset_id, resource_id)
+        tmp = tempfile.NamedTemporaryFile(delete=False)
+        if not ok:
+            return MyResponse(False, reason=f"Couldn't create new asset: {message}").to_json()
+        try:
+            download_file(tmp.name, res)
+            path, from_val = upload_asset_file(message, tmp.name, ext=get_extension_from_path(res['from'], res['path']))
+            add_asset_resource(message, MAIN_FILE, from_val, path, website['title'], db=db, no_commit=True)
+        finally:
+            tmp.close()
+            if os.path.exists(tmp.name):
+                os.remove(tmp.name)
+        db.commit()
+        new_asset_id = message
+        if template == 'website':
+            insert_meta_url(new_asset_id, website['url'])
+            insert_meta_author(new_asset_id, website['author'])
+            insert_meta_description(new_asset_id, website['desc'])
+
+        set_sources(user, asset_id, [new_asset_id], additive=True)
+        
+        with CrawlerDB(asset_id) as crawler:
+            sql = """
+                UPDATE websites SET `asset_id`=? WHERE `id`=?
+            """
+            crawler.execute(sql, (new_asset_id, website_id))
+            crawler.commit()
+
+    finally:
+        db.close()
+
+    return MyResponse(True, {'id': new_asset_id}).to_json()
 
 
 class Crawler(Template):

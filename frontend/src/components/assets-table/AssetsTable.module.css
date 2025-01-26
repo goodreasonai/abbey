@@ -269,7 +269,7 @@
     position: absolute;
     top: 0px;
     transform: translateY(0%) translateX(-100%);
-    z-index: 100000;
+    z-index: 1000;
 }
 
 .resultLink {

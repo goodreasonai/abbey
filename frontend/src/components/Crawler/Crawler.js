@@ -200,7 +200,7 @@ export default function Crawler({ manifestRow, canEdit }) {
     let rightElement = ""
     if (rightViewCode == 'scrape'){
         rightElement = (
-            <ScrapePreview assetId={manifestRow?.id} item={rightViewData?.item} slideToLeft={slideToLeft} />
+            <ScrapePreview assetId={manifestRow?.id} item={rightViewData?.item} slideToLeft={slideToLeft} setItem={(x) => setWebsites((prev) => prev.map((old) => old.id == x.id ? x : old))} />
         )
     }
     else if (rightViewCode == 'search'){

@@ -13,14 +13,17 @@ import LoadingSkeleton from "../Loading/LoadingSkeleton"
 import BackToCollection from "./BackToCollection"
 import { InfoTable } from "./Crawler"
 import { MyPdfViewer } from "../Document/Document"
+import SyntheticButton from "../form/SyntheticButton"
+import Link from 'next/link';
 
 
-export default function ScrapePreview({ assetId, item, slideToLeft }){
+export default function ScrapePreview({ assetId, item, slideToLeft, setItem }){
     const { getToken, isSignedIn } = Auth.useAuth()
 
     const [screenshotIndex, setScreenshotIndex] = useState(0)
     const [screenshotImages, setScreenshotImages] = useState([])  // holds the retrieved data
     const [screenshotsLoading, setScreenshotsLoading] = useState({})
+
     const pdfRef = useRef()
 
     const websiteData = useMemo(() => {
@@ -155,7 +158,12 @@ export default function ScrapePreview({ assetId, item, slideToLeft }){
                 initialLeftWidth="60%"
                 initialRightWidth="40%"
                 hideLeftPanel={hideLeftPanel}
-                rightPanel={(<ScrapeInfoTable assetId={assetId} item={item} mainData={mainData} />)}
+                rightPanel={(
+                    <div style={{'display': 'flex', 'flexDirection': "column", 'gap': '1rem'}}>
+                        <ScrapeInfoTable assetId={assetId} item={item} mainData={mainData} />
+                        <CreateAssetButton assetId={assetId} website={item} setWebsite={setItem} />
+                    </div>
+                )}
                 leftPanel={leftPanel}
             />                
         </div>
@@ -211,6 +219,90 @@ function ScrapeInfoTable({ assetId, item, mainData }) {
     return (
         <div>
             <InfoTable rows={rows} />
+        </div>
+    )
+}
+
+function CreateAssetButton({ assetId, website, setWebsite }) {
+
+    const { getToken } = Auth.useAuth()
+
+    const [findAssetLoading, setFindAssetLoading] = useState(0)
+    const [createAssetLoading, setCreateAssetLoading] = useState(0)
+    const [createdId, setCreatedId] = useState(undefined)
+
+    async function createAsset(){
+        try {
+            setCreateAssetLoading(1)
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/crawler/create-asset'
+            const data = {
+                'id': assetId,
+                'website_id': website?.id
+            }
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                    'Content-Type': 'application/json'
+                },
+                'method': 'POST',
+                'body': JSON.stringify(data)
+            })
+            if (!response.ok){
+                throw Error("Response was not ok")
+            }
+            const myJson = await response.json()
+            setCreatedId(myJson['id'])
+            setWebsite({...website, 'asset_id': myJson['id']})
+            setCreateAssetLoading(2)
+        }
+        catch(e) {
+            console.log(e)
+            setCreateAssetLoading(3)
+        }
+    }
+
+    async function findAsset(){
+        try {
+            setFindAssetLoading(1)
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/manifest-row?id=${website?.asset_id}`
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                },
+                'method': 'GET',
+            })
+            if (!response.ok){
+                throw Error("Response was not ok")
+            }
+            const myJson = await response.json()
+            if (myJson.result?.id){
+                setCreatedId(myJson['result']['id'])
+            }
+            setFindAssetLoading(2)
+        }
+        catch(e) {
+            console.log(e)
+            setFindAssetLoading(3)
+        }
+    }
+
+    useEffect(() => {
+        if (website?.asset_id){
+            findAsset()
+        }
+    }, [website])
+
+    return (
+        <div style={{'display': 'flex'}}>
+            {createdId ? (
+                <Link href={`/assets/${createdId}`}>
+                    <SyntheticButton value={"Go to Asset"} onClick={() => {}} />
+                </Link>
+            ) : createAssetLoading == 1 ? (
+                <SyntheticButton value={(<Loading text="Uploading" color={'var(--light-text)'} size={15} />)} onClick={() => {}} />
+            ) : (
+                <SyntheticButton value={"Create Asset"} onClick={() => createAsset()} />
+            )}
         </div>
     )
 }
