@@ -96,7 +96,7 @@ export default function ScrapePreview({ assetId, item, slideToLeft }){
     if (item?.content_type == 'application/pdf') {
         const pdfUrl = process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/files?id=${assetId}&name=${mainData.resource_id}`
         leftPanel = (
-            <div style={{'border': '1px solid var(--light-border)', 'height': '100%', 'width': '100%', 'borderRadius': 'var(--medium-border-radius)', 'overflow': 'hidden'}}>
+            <div style={{'border': '1px solid var(--light-border)', 'height': '100%', 'width': '100%', 'borderRadius': 'var(--medium-border-radius)'}}>
                 <div style={{'height': '100%', 'minHeight': '0px'}}>
                     <MyPdfViewer pdfUrl={pdfUrl} ref={pdfRef} />
                 </div>

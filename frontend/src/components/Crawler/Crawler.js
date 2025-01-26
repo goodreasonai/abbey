@@ -450,7 +450,7 @@ export default function Crawler({ manifestRow, canEdit }) {
 
     return (
         <SmartHeightWrapper>
-            <div style={{'padding': 'var(--std-margin-top) var(--std-margin)', 'height': '100%', 'width': '100%'}}>
+            <div style={{'height': '100%', 'width': '100%'}}>
                 <SlidingPage 
                     showRight={showRight}
                     main={(

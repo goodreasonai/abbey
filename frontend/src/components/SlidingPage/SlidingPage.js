@@ -45,7 +45,6 @@ export default function SlidingPage({ main, right, showRight, style, keepRightRe
         <div
             style={{
                 position: 'relative',
-                overflow: 'hidden',
                 width: '100%',
                 height: '100%',
                 ...style,
@@ -62,6 +61,7 @@ export default function SlidingPage({ main, right, showRight, style, keepRightRe
                     height: '100%',
                     transition: 'transform 0.5s ease',
                     transform: showRight ? 'translateX(-100%)' : 'translateX(0)',
+                    padding: 'var(--std-margin-top) var(--std-margin)'
                 }}
             >
                 {main}
@@ -76,7 +76,8 @@ export default function SlidingPage({ main, right, showRight, style, keepRightRe
                     width: '100%',
                     height: '100%',
                     transition: 'transform 0.5s ease',
-                    pointerEvents: showRight ? '' : 'none'
+                    pointerEvents: showRight ? '' : 'none',
+                    padding: 'var(--std-margin-top) var(--std-margin)'
                 }}
             >
                 {rightInView || keepRightRendered ? right : ""} 
