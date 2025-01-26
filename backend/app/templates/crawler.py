@@ -470,38 +470,35 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_t
         # Actual query
         sql = f"""
             SELECT 
-                websites.id,
-                websites.created_at,
-                websites.scraped_at,
-                websites.title,
-                websites.author,
-                websites.desc,
-                websites.content_type,
-                websites.url,
-                CASE 
-                    WHEN website_data.id IS NULL THEN NULL 
-                    ELSE COALESCE(json_group_array(json_object(
-                        'data_type', website_data.data_type,
-                        'resource_id', website_data.resource_id
-                    )), '[]')
-                END AS website_data,
-                CASE 
-                    WHEN errors.id IS NULL THEN NULL 
-                    ELSE COALESCE(json_group_array(json_object(
-                        'traceback', errors.traceback,
-                        'status', errors.status,
-                        'stage', errors.stage,
-                        'created_at', errors.created_at
-                    )), '[]')
-                END AS errors
-
+            websites.id,
+            websites.created_at,
+            websites.scraped_at,
+            websites.title,
+            websites.author,
+            websites.desc,
+            websites.content_type,
+            websites.url,
+            COALESCE(wd.website_data, '[]') AS website_data,
+            COALESCE(e.errors, '[]') AS errors
             FROM websites_fts5
             LEFT JOIN websites ON websites.id = websites_fts5.website_id
-            LEFT JOIN website_data ON websites.id = website_data.website_id
-            LEFT JOIN errors ON websites.id = errors.website_id
+            LEFT JOIN (
+            SELECT 
+                website_id,
+                json_group_array(json_object('data_type', data_type, 'resource_id', resource_id)) AS website_data
+            FROM website_data
+            GROUP BY website_id
+            ) AS wd ON websites.id = wd.website_id
+            LEFT JOIN (
+            SELECT 
+                website_id,
+                json_group_array(json_object('traceback', traceback, 'status', status, 'stage', stage, 'created_at', created_at)) AS errors
+            FROM errors
+            GROUP BY website_id
+            ) AS e ON websites.id = e.website_id
             {'WHERE websites_fts5 MATCH ?' if query else "WHERE 1=1"}
             {website_ids_clause}
-            GROUP BY websites.id
+            GROUP BY websites.id  -- Ensures one row per website
             ORDER BY websites.created_at DESC
             LIMIT ? OFFSET ?
         """

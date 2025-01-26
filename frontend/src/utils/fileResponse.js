@@ -59,7 +59,8 @@ const EXT_TO_MIMETYPE = {
     'md': 'text/markdown',
     'epub': 'application/epub+zip',
     'html': 'text/html',
-    'ahtml': 'abbey/html'
+    'ahtml': 'abbey/html',
+    'csv': 'text/csv'
 }
 const MIMETYPE_TO_EXT = {}
 // Populate MIMETYPE_TO_EXT by reversing EXT_TO_MIMETYPE

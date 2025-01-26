@@ -1,5 +1,5 @@
 import { Auth } from "@/auth/auth"
-import { useState, useMemo, useCallback, useEffect } from "react"
+import { useState, useMemo, useCallback, useEffect, useRef } from "react"
 import fileResponse, { getExtFromMimetype } from "@/utils/fileResponse"
 import styles from './Crawler.module.css'
 import Loading from "../Loading/Loading"
@@ -12,6 +12,7 @@ import { formatTimestampSmall } from "@/utils/time"
 import LoadingSkeleton from "../Loading/LoadingSkeleton"
 import BackToCollection from "./BackToCollection"
 import { InfoTable } from "./Crawler"
+import { MyPdfViewer } from "../Document/Document"
 
 
 export default function ScrapePreview({ assetId, item, slideToLeft }){
@@ -20,6 +21,7 @@ export default function ScrapePreview({ assetId, item, slideToLeft }){
     const [screenshotIndex, setScreenshotIndex] = useState(0)
     const [screenshotImages, setScreenshotImages] = useState([])  // holds the retrieved data
     const [screenshotsLoading, setScreenshotsLoading] = useState({})
+    const pdfRef = useRef()
 
     const websiteData = useMemo(() => {
         if (item.website_data){
@@ -88,6 +90,51 @@ export default function ScrapePreview({ assetId, item, slideToLeft }){
 
     const pagesToShow = [...Array(screenshots.length).keys()].map(i => i + 1)
 
+    // May want to merge with logic in <Document /> to support more file types.
+    let hideLeftPanel = false
+    let leftPanel = ""
+    if (item?.content_type == 'application/pdf') {
+        const pdfUrl = process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/files?id=${assetId}&name=${mainData.resource_id}`
+        leftPanel = (
+            <div style={{'border': '1px solid var(--light-border)', 'height': '100%', 'width': '100%', 'borderRadius': 'var(--medium-border-radius)', 'overflow': 'hidden'}}>
+                <div style={{'height': '100%', 'minHeight': '0px'}}>
+                    <MyPdfViewer pdfUrl={pdfUrl} ref={pdfRef} />
+                </div>
+            </div>
+        )
+    }
+    else if (screenshots.length)(
+        leftPanel = (
+            <div style={{'height': '100%'}}>
+                <div style={{'display': 'flex', 'flexDirection': 'column', 'height': '100%', 'gap': '.5rem'}}>
+                    <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
+                        {pagesToShow.map((x, i) => {
+                            return (
+                                <div className={`${styles.pageButton} ${i == screenshotIndex ? styles.pageButtonSelected : ""}`} key={x} onClick={() => setScreenshotIndex(i)}>
+                                    {x}
+                                </div>
+                            )
+                        })}
+                    </div>
+                    <div style={{'flex': '1', 'border': '1px solid var(--light-border)', 'borderRadius': 'var(--medium-border-radius)', 'backgroundColor': 'var(--light-primary)', 'overflow': 'hidden'}}>
+                        {screenshotsLoading[screenshotIndex] <= 1 ? (
+                            <LoadingSkeleton type={"image"} />
+                        ) : (screenshotsLoading[screenshotIndex] === 3 ? (
+                            "Error"
+                        ) : (
+                            <div className={styles.screenshotContainer}>
+                                <img src={screenshotImages[screenshotIndex]} width={200} alt={"Screenshot"} className={styles.screenshot} />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        )
+    )
+    else {
+        hideLeftPanel=true
+    }
+
     return (
         <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '1rem', 'height': '100%'}}>
             <div style={{'display': 'flex', 'fontSize': '1rem'}}>
@@ -107,35 +154,9 @@ export default function ScrapePreview({ assetId, item, slideToLeft }){
                 stickyPanel="left"
                 initialLeftWidth="60%"
                 initialRightWidth="40%"
+                hideLeftPanel={hideLeftPanel}
                 rightPanel={(<ScrapeInfoTable assetId={assetId} item={item} mainData={mainData} />)}
-                leftPanel={(
-                    <div style={{'height': '100%'}}>
-                        {screenshots.length ? (
-                            <div style={{'display': 'flex', 'flexDirection': 'column', 'height': '100%', 'gap': '.5rem'}}>
-                                <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
-                                    {pagesToShow.map((x, i) => {
-                                        return (
-                                            <div className={`${styles.pageButton} ${i == screenshotIndex ? styles.pageButtonSelected : ""}`} key={x} onClick={() => setScreenshotIndex(i)}>
-                                                {x}
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                                <div style={{'flex': '1', 'border': '1px solid var(--light-border)', 'borderRadius': 'var(--medium-border-radius)', 'backgroundColor': 'var(--light-primary)', 'overflow': 'hidden'}}>
-                                    {screenshotsLoading[screenshotIndex] <= 1 ? (
-                                        <LoadingSkeleton type={"image"} />
-                                    ) : (screenshotsLoading[screenshotIndex] === 3 ? (
-                                        "Error"
-                                    ) : (
-                                        <div className={styles.screenshotContainer}>
-                                            <img src={screenshotImages[screenshotIndex]} width={200} alt={"Screenshot"} className={styles.screenshot} />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : ""}
-                    </div>
-                )}
+                leftPanel={leftPanel}
             />                
         </div>
     )
@@ -168,7 +189,7 @@ function ScrapeInfoTable({ assetId, item, mainData }) {
     const rows = [
         {'title': 'Title', 'value': item.title, 'isText': true},
         {'title': 'URL', 'value': (
-            <a href={item.url} className={styles.urlLink}>
+            <a href={item.url} className={`${styles.urlLink} _clamped1`}>
                 {item.url}
             </a>
         )},

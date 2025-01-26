@@ -384,7 +384,7 @@ const customToolbar = (Toolbar) => (
     </Toolbar>
 );
 
-const MyPdfViewer = forwardRef(({ pdfUrl }, ref) => {
+export const MyPdfViewer = forwardRef(({ pdfUrl }, ref) => {
     const defaultLayoutPluginInstance = defaultLayoutPlugin({
         'sidebarTabs': ()=>[],
         'renderToolbar': customToolbar,

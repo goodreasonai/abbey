@@ -47,6 +47,7 @@ class TextSplitter():
         DEFAULT_SEPARATORS = [  # the point of the weird character codes is to support multiple languages. Recommended here: https://python.langchain.com/v0.1/docs/modules/data_connection/document_transformers/recursive_text_splitter/
             "\n\n",
             "\n",
+            "\t",
             " ",
             ".",
             ",",
@@ -145,11 +146,6 @@ class EpubLoader(UnstructuredLoader):
         return partition_epub(filename=self.fname)
 
 
-class CsvLoader(UnstructuredLoader):
-    def _get_elements(self):
-        return partition_csv(filename=self.fname)
-
-
 class OdtLoader(UnstructuredLoader):
     def _get_elements(self):
         return partition_odt(filename=self.fname)
@@ -175,9 +171,19 @@ class TsvLoader(UnstructuredLoader):
         return partition_tsv(filename=self.fname)
 
 
+# Not using unstructured for CSV because it has a littany of bugs.
+class CsvLoader(UnstructuredLoader):
+    def load_and_split(self, text_splitter: TextSplitter):
+        with open(self.fname, 'r') as file:
+            original_contents = file.read()
+        splitsville = text_splitter.split_text(original_contents)
+        for split in splitsville:
+            yield RawChunk(split, {})
+
+
 # Divides by page, and then splits within each page.
 class PdfLoader(FileLoader):
-    def load_and_split(self, text_splitter):
+    def load_and_split(self, text_splitter: TextSplitter):
         doc = fitz.open(self.fname)
         for i, page in enumerate(doc): # iterate the document pages
             text = page.get_text()  # In the future, we should get images as well.
@@ -200,11 +206,10 @@ class AbbeyJsonLoader(UnstructuredLoader):
 
 
 class JsonLoader(FileLoader):
-    def load_and_split(self, text_splitter):
+    def load_and_split(self, text_splitter: TextSplitter):
         with open(self.fname, 'r') as file:
             original_contents = file.read()
-        txt = "This is a JSON file:" + '\n' + original_contents
-        splitsville = text_splitter.split_text(txt)
+        splitsville = text_splitter.split_text(original_contents)
         for split in splitsville:
             yield RawChunk(split, {})
 
