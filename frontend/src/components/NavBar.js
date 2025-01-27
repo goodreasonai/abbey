@@ -15,7 +15,7 @@ export default function NavBar({}){
   
     const { theme, setTheme } = useTheme()
     const UserButton = Auth.UserButton
-    const { isShrunk, setNavBarHeight, wantNavBar, shrinkNavBar, expandNavBar, setOnNavBar, onNavBar, quickWantsNavBar, setQuickWantsNavBar } = useNavBar();
+    const { isShrunk, setNavBarHeight, wantNavBar, shrinkNavBar, expandNavBar, setOnNavBar, onNavBar, quickWantsNavBar, setQuickWantsNavBar, forceClose, setForceClose } = useNavBar();
     const navBarRef = useRef(null);
 
     let mobileMenuValue = (
@@ -36,6 +36,9 @@ export default function NavBar({}){
                 shrinkNavBar();
             }, 1000);
         }
+        else if (forceClose){
+            shrinkNavBar()
+        }
         else {
             if (shrinkTimer) {
                 clearTimeout(shrinkTimer);
@@ -47,7 +50,7 @@ export default function NavBar({}){
                 clearTimeout(shrinkTimer);
             }
         };
-    }, [onNavBar, wantNavBar, quickWantsNavBar])
+    }, [onNavBar, wantNavBar, quickWantsNavBar, forceClose])
 
     useEffect(() => {
         const navBar = navBarRef.current;
@@ -79,6 +82,13 @@ export default function NavBar({}){
             resizeObserver.disconnect();
         };
     }, [setNavBarHeight, navBarRef?.current, wantNavBar]);
+
+    const toggleForceClose = useCallback(() => {
+        setForceClose(!forceClose)
+    }, [forceClose])
+
+    useKeyboardShortcut([['k']], toggleForceClose, true)
+    useKeyboardShortcut([['Meta', 'k']], toggleForceClose, false)
 
     return (
         <div ref={navBarRef} style={{'height': isShrunk ? '15px' : 'var(--nav-bar-height)', 'overflow': 'hidden', 'transition': 'all var(--nav-bar-transition) ease-in-out', 'position': 'relative'}}>
@@ -178,6 +188,7 @@ export const NavBarProvider = ({ children }) => {
     const [wantNavBar, setWantNavBar] = useState(true);  // whether an asset wants the nav bar open or closed
     const [quickWantsNavBar, setQuickWantsNavBar] = useState(true);  // whether <Quick /> needs the navbar open or not 
     const [onNavBar, setOnNavBar] = useState(false)
+    const [forceClose, setForceClose] = useState(false)
 
     const shrinkNavBar = () => {
         setIsShrunk(true);
@@ -188,7 +199,7 @@ export const NavBarProvider = ({ children }) => {
     };
 
     return (
-        <NavBarContext.Provider value={{ setOnNavBar, onNavBar, navBarHeight, setNavBarHeight, isShrunk, shrinkNavBar, expandNavBar, wantNavBar, setWantNavBar, quickWantsNavBar, setQuickWantsNavBar }}>
+        <NavBarContext.Provider value={{ setOnNavBar, onNavBar, navBarHeight, setNavBarHeight, isShrunk, shrinkNavBar, expandNavBar, wantNavBar, setWantNavBar, quickWantsNavBar, setQuickWantsNavBar, forceClose, setForceClose }}>
             {children}
         </NavBarContext.Provider>
     );

@@ -664,7 +664,7 @@ class NotebookTemplate extends Template {
     static fixHeight = true
     static noUploadOptions = true
     static collab = true
-    static prefersShrunk = true
+    static prefersShrunk = false
 
     constructor(){
         super()
@@ -826,7 +826,7 @@ class CrawlerTemplate extends Template {
     static noSignIn = false
     static noMargins = true
     static actionPhrase = "Create"
-    static prefersShrunk = true
+    static prefersShrunk = false
 
     constructor(){
         super()
