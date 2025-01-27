@@ -530,8 +530,10 @@ export default function Asset({ assetManifestRow, assetManifestRowLoadState }){
                             {deleteArea}
                             {isSignedIn ? <MyImage title="Put into folder" className={"_clickable"} src={MoveIcon} width={20} height={20} alt="Add to a Folder" onClick={() => setShowMove(!showMove)} /> : "" }
                         </div>
-                        <div className='_clamped1' style={{'flex': '1', 'color': 'var(--passive-text)', 'cursor': 'pointer'}} onClick={() => {setIsEditing(true)}}>
-                            {assetManifestRow['preview_desc']}
+                        <div className='_clamped1' style={{'flex': '1', 'color': 'var(--passive-text)'}}>
+                            <span className='_clickable' onClick={() => {setIsEditing(true)}}>
+                                {assetManifestRow['preview_desc']}
+                            </span>
                         </div>
                         {assetTemplate.constructor.collab ? (<Collab collabUsers={collabUsers} />) : ""}
                         {canEdit ? (
