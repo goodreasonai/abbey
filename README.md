@@ -184,6 +184,7 @@ and be sure to add the same variable to the root `.env`.
 - OpenAI
 - Anthropic
 - Ollama
+- Open Router
 - Other OpenAI Compatible APIs (like LocalAI, LMStudio, etc.)
 
 [Embedding Models (Embeds)](#embeding-models-embeds)
@@ -272,7 +273,9 @@ This table gives the provider code for each provider and the relevant API key na
 | OpenAI     | openai        | OPENAI_API_KEY         | No |
 | Anthropic  | anthropic     | ANTHROPIC_API_KEY      | No |
 | Ollama  | ollama     |       | [Yes](#integration-specific-configuration) |
+| Open Router     | open_router        | OPEN_ROUTER_API_KEY         | No |
 | OpenAI Compatible  | openai_compatible     | OPENAI_COMPATIBLE_KEY      | [Yes](#integration-specific-configuration) |
+
 
 
 ### Text-to-Speech Models (TTS)

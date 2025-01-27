@@ -1,4 +1,4 @@
-from ..configs.secrets import OPENAI_API_KEY, ANTHROPIC_API_KEY, OPENAI_COMPATIBLE_KEY
+from ..configs.secrets import OPENAI_API_KEY, ANTHROPIC_API_KEY, OPENAI_COMPATIBLE_KEY, OPEN_ROUTER_API_KEY
 from ..configs.settings import SETTINGS
 from ..utils import extract_from_base64_url
 from ..utils import fix_openai_compatible_url
@@ -304,6 +304,19 @@ class Ollama(LM):
 
 class OpenAICompatibleLM(LM):
 
+    def __init__(self, *args, url=None, key=None, default_headers={}, extra_params={}, **kwargs):
+        if url:
+            self.url = url
+        else:
+            self.url = fix_openai_compatible_url(SETTINGS['openai_compatible']['url'])
+        if key:
+            self.key = key
+        else:
+            self.key = OPENAI_COMPATIBLE_KEY
+        self.default_headers = default_headers
+        self.extra_params = extra_params
+        super().__init__(*args, **kwargs)
+
     def _make_messages(self, txt, system_prompt=None, context=[], images=[]):
         messages = []
         messages.append({'role': 'system', 'content': system_prompt if system_prompt is not None else ""})
@@ -344,12 +357,12 @@ class OpenAICompatibleLM(LM):
             'model': self.model,
             'messages': messages,
             'temperature': temperature if temperature else .7,
-            'stream': False
+            'stream': False,
+            **self.extra_params
         }
-        oai_compatible_url = SETTINGS['openai_compatible']['url']
-        oai_compatible_url = fix_openai_compatible_url(oai_compatible_url)
+        oai_compatible_url = self.url
         url = f'{oai_compatible_url}/chat/completions'
-        response = requests.post(url, headers={'Authorization': f'Bearer {OPENAI_COMPATIBLE_KEY}'}, json=params, stream=False)
+        response = requests.post(url, headers={'Authorization': f'Bearer {self.key}', **self.default_headers}, json=params, stream=False)
         response.raise_for_status()  # Raise an error for bad responses
         my_json = response.json()
         return my_json['choices'][0]['message']['content']
@@ -372,33 +385,49 @@ class OpenAICompatibleLM(LM):
             'model': self.model,
             'messages': messages,
             'temperature': temperature if temperature else .7,
-            'stream': True
+            'stream': True,
+            **self.extra_params
         }
 
-        oai_compatible_url = SETTINGS['openai_compatible']['url']
-        oai_compatible_url = fix_openai_compatible_url(oai_compatible_url)
+        oai_compatible_url = self.url
         url = f'{oai_compatible_url}/chat/completions'
-        response = requests.post(url, headers={'Authorization': f'Bearer {OPENAI_COMPATIBLE_KEY}'}, json=params, stream=True)
+        response = requests.post(url, headers={'Authorization': f'Bearer {self.key}', **self.default_headers}, json=params, stream=True)
         response.raise_for_status()  # Raise an error for bad responses
-
         # Process the streaming response
         for line in response.iter_lines():
             if line:
                 data = line.decode('utf-8')
+                if data[:len('data: ')] != 'data: ':
+                    continue
                 real_data = data[len('data: '):]
                 if real_data == '[DONE]':
                     break
                 my_json = json.loads(real_data)
                 delta = my_json['choices'][0]['delta']
-                if 'content' in delta:
+                if 'content' in delta and delta['content']:
                     yield delta['content']
+
+
+# In the future, may want to change so that it adds open router specific headers and such
+class OpenRouterLM(OpenAICompatibleLM):
+    def __init__(self, *args_lst, args={}, **kwargs):
+        url = "https://openrouter.ai/api/v1"
+        key = OPEN_ROUTER_API_KEY
+        # Note that we DO NOT use user selected frontend url / title since we want all Abbeys to be aggregated on Open Router
+        default_headers = {'HTTP-Referer': 'https://abbey.us.ai', 'X-Title': 'Abbey'}
+        extra_params = {}
+        if len(args):
+            extra_params = args
+        
+        super().__init__(*args_lst, url=url, key=key, default_headers=default_headers, extra_params=extra_params, **kwargs)
 
 
 PROVIDER_TO_LM = {
     'ollama': Ollama,
     'openai': OpenAILM,
     'anthropic': Anthropic,
-    'openai_compatible': OpenAICompatibleLM
+    'openai_compatible': OpenAICompatibleLM,
+    'open_router': OpenRouterLM
 }
 
 
@@ -451,7 +480,8 @@ def generate_lms():
             traits=traits,
             context_length=context_length,
             supports_json=supports_json,
-            accepts_images=accepts_images
+            accepts_images=accepts_images,
+            **({'args': lm['args']} if 'args' in lm else {})
         )
         to_return[code] = obj
     return to_return
