@@ -932,3 +932,7 @@ class Crawler(Template):
         download_file(temp_file.name, res)
         return temp_file.name
 
+    # We do NOT return the sqlite database
+    def get_asset_resources(self, user, asset_id, exclude=[], db=None):
+        return []
+
