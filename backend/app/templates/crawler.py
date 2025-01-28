@@ -945,6 +945,9 @@ class Crawler(Template):
 
     @needs_db
     def upload(self, user: User, asset_id, asset_title="", using_auto_title=False, using_auto_desc=False, db=None):
+        topic = request.form.get("topic")
+        if topic:
+            save_asset_metadata(user, asset_id, RESEARCH_TOPIC, topic)
         # Create the initial sqlite database file and store it
         create_and_upload_database(asset_id)
         return True, asset_id

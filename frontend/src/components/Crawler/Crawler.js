@@ -811,9 +811,9 @@ function TableControls({ manifestRow, refresh, stats, websites, setWebsites, sel
                     <ControlLabel label={"Errors"} value={stats?.errors} color={"var(--logo-red)"} />
                     <ControlLabel label={"Scraped"} value={stats?.scraped} />
                     <ControlLabel label={"Total"} value={stats?.total} color="var(--light-background)" fontColor={"var(--dark-text)"} />
+                    {divider}
                 </>
             ) : ""}
-            {divider}
             <ControlLabel label={"Selected"} value={nSelected} color="var(--light-background)" fontColor="var(--dark-text)" />
             {needQueue.length ? (
                 <div style={{'display': 'flex'}} onClick={() => bulkQueue()}>

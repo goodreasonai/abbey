@@ -44,6 +44,7 @@ import MarkdownViewer from "@/components/Markdown/MarkdownViewer"
 import Website from "@/components/Website/Website"
 import { getMimetypeFromResponse } from "@/utils/fileResponse"
 import Crawler from "@/components/Crawler/Crawler"
+import Textarea from "@/components/form/Textarea"
 
 
 class Template {
@@ -835,6 +836,28 @@ class CrawlerTemplate extends Template {
     Element({ assetManifestRow, canEdit }) {
         return (
             <Crawler manifestRow={assetManifestRow} canEdit={canEdit} />
+        )
+    }
+
+    getUploadData(document, otherData, editing){
+        return {
+            'topic': {
+                name: "Topic",
+                mandatory: false,
+                value: otherData.topic
+            }
+        }
+    }
+
+    ExtraUploadFields({ otherData, setOtherData }) {
+        return (
+            <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '1rem'}}>
+                <Textarea
+                    placeholder="Research topic and objectives (optional)"
+                    value={otherData.topic}
+                    setValue={(topic) => {setOtherData({'topic': topic})}}
+                />
+            </div>
         )
     }
 }
