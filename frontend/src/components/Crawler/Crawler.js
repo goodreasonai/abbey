@@ -21,8 +21,13 @@ import useKeyboardShortcut from "@/utils/keyboard"
 import Queue from "./Queue"
 import FakeCheckbox from "../form/FakeCheckbox"
 import PassiveTextarea from "../PassiveTextarea/PassiveTextarea"
+import Textarea from "../form/Textarea"
+import Saving from "../Saving/Saving"
+import useSaveDataEffect from "@/utils/useSaveDataEffect"
+import RemoveIcon from '../../../public/icons/RemoveIcon.png'
 
 const TABLE_COL_GAP='10px'
+const RESEARCH_TOPIC='topic'
 
 export default function Crawler({ manifestRow, canEdit }) {
     
@@ -48,6 +53,11 @@ export default function Crawler({ manifestRow, canEdit }) {
 
     const [orderBy, setOrderBy] = useState(undefined)
     const [asc, setAsc] = useState(undefined)
+
+    const [showTopic, setShowTopic] = useState(false)
+    const [topicLoading, setTopicLoading] = useState(0)
+    const [topicSaving, setTopicSaving] = useState(0)
+    const [topic, setTopic] = useState("")
 
     const resultLimit = 20
 
@@ -174,6 +184,15 @@ export default function Crawler({ manifestRow, canEdit }) {
                 style={{'display': 'flex'}}
                 onClick={() => slideToRight('queue')}
             />
+            <SyntheticButton
+                value={(
+                    <div style={{'display': 'flex', 'alignItems': 'center'}}>
+                        Topic
+                    </div>
+                )}
+                style={{'display': 'flex'}}
+                onClick={() => setShowTopic(true)}
+            />
             <div style={{'fontSize': '1.25rem', 'display': 'flex', 'flex': '1', 'justifyContent': 'right', 'alignItems': 'center', 'color': 'var(--passive-text)'}}>
                 Website Collection
             </div>
@@ -210,6 +229,22 @@ export default function Crawler({ manifestRow, canEdit }) {
                     </div>
                 </div>
             </Modal>
+            <Modal
+                isOpen={showTopic}
+                close={() => setShowTopic(false)}
+                title={"Research Topic"}
+                closeButton={(
+                    <div style={{'display': 'flex', 'gap': '5px', 'alignItems': 'center'}}>
+                        <Saving saveValueLoading={topicSaving} />
+                        <MyImage className={"_clickable"} src={RemoveIcon} alt={"Close"} width={15} height={15} onClick={() => setShowTopic(false)} />
+                    </div>
+                )}
+            >
+                <Textarea
+                    value={topic}
+                    setValue={setTopic}
+                />
+            </Modal>
         </div>
     )
 
@@ -221,6 +256,67 @@ export default function Crawler({ manifestRow, canEdit }) {
     }, [])
 
     useKeyboardShortcut([['ArrowRight']], ()=>{rightViewCode && slideToRight(rightViewCode, rightViewData)}, false)
+
+    useEffect(() => {
+        async function getTopic(){
+            try{
+                setTopicLoading(1)
+                const url = process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/metadata?id=${manifestRow.id}&key=${RESEARCH_TOPIC}`
+                const response = await fetch(url, {
+                    'headers': {
+                        'x-access-token': await getToken()
+                    },
+                    'method': 'GET'
+                })
+                const myJson = await response.json()
+                if (myJson['results']?.length){
+                    setTopic(myJson['results'][0].value)
+                    if (myJson['results'].length > 1){
+                        console.log(`Bad: multiple research topics found (${myJson['results'].length})`)
+                    }
+                }
+                setTopicLoading(2)
+            }
+            catch(e) {
+                console.log(e)
+                setTopicLoading(3)
+            }
+        }
+
+        if (isSignedIn !== undefined && manifestRow?.id){
+            getTopic()
+        }
+    }, [manifestRow, isSignedIn])
+
+    const saveTopic = useCallback(async () => {
+        setTopicSaving(1)
+        try {
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/assets/save-metadata'
+            const data = {
+                'id': manifestRow?.id,
+                'additive': false,
+                'key': RESEARCH_TOPIC,
+                'value': topic
+            }
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                    'Content-Type': 'application/json'
+                },
+                'body': JSON.stringify(data),
+                'method': 'POST'
+            })
+            if (!response.ok){
+                throw Error("Response was not Ok")
+            }
+
+            setTopicSaving(2)
+        }
+        catch(e) {
+            setTopicSaving(3)
+        }
+    }, [topic, manifestRow, isSignedIn])
+    useSaveDataEffect(topic, canEdit && topicLoading == 2 && isSignedIn !== undefined, saveTopic, 250, setTopicSaving)
 
     // The way this works is:
     // if we want to show a React component in the right,

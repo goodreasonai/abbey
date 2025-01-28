@@ -37,6 +37,7 @@ DB_VERSION: int = 4  # increment this in order to redo the schema on older DBs.
 
 SCRAPE_QUEUE = 'scrape_queue'  # metadata key
 SCRAPE_FROM_QUEUE_JOB = 'scrape_queue'  # job kind
+RESEARCH_TOPIC = 'topic'  # metadata key (also appears in frontend)
 
 def create_database(path):
     # Connect to the SQLite database
@@ -940,6 +941,7 @@ class Crawler(Template):
         self.chattable = False
         self.summarizable = False
         self.code = "crawler"
+        self.metadata_modify_with_edit_perm = [RESEARCH_TOPIC]
 
     @needs_db
     def upload(self, user: User, asset_id, asset_title="", using_auto_title=False, using_auto_desc=False, db=None):
