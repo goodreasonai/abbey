@@ -449,11 +449,31 @@ def scrape_from_queue_job(user_obj, job_id, asset_id, db=None):
 
 
 @needs_db
-def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_total=True, db=None):
+def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_total=True, order_by=None, asc=False, db=None):
     # See specification of an "fts5 string" here: https://www.sqlite.org/fts5.html#full_text_query_syntax
     # Note that quotes are doubled up
     escaped_query = query.replace('"', '""')
     quoted_query = f'"{escaped_query}"'
+
+    # Need to update if the schema changes
+    website_cols = [
+        'id',
+        'created_at',
+        'scraped_at',
+        'title',
+        'author',
+        'desc',
+        'content_type',
+        'asset_id',
+        'url'
+    ]
+    if order_by is None:
+        order_by = 'created_at'
+    elif order_by in website_cols:
+        pass
+    else:
+        raise Exception(f"Order by '{order_by}' is not an accessible column")    
+
     results = []
     total = None
     with CrawlerDB(asset_id, read_only=True, db=db) as conn:
@@ -473,18 +493,12 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_t
             str_ids = [str(x) for x in website_ids]
             website_ids_clause = f'AND websites.id IN ({",".join(str_ids)})'
         
+        website_cols_clause = ",".join([f"websites.{x}" for x in website_cols])
+
         # Actual query
         sql = f"""
             SELECT 
-            websites.id,
-            websites.created_at,
-            websites.scraped_at,
-            websites.title,
-            websites.author,
-            websites.desc,
-            websites.content_type,
-            websites.asset_id,
-            websites.url,
+            {website_cols_clause},
             COALESCE(wd.website_data, '[]') AS website_data,
             COALESCE(e.errors, '[]') AS errors
             FROM websites_fts5
@@ -506,7 +520,7 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_t
             {'WHERE websites_fts5 MATCH ?' if query else "WHERE 1=1"}
             {website_ids_clause}
             GROUP BY websites.id  -- Ensures one row per website
-            ORDER BY websites.created_at DESC
+            ORDER BY websites.{order_by} {'DESC' if not asc else 'ASC'}
             LIMIT ? OFFSET ?
         """
         res = conn.execute(sql, (query, limit, offset)) if query else conn.execute(sql, (limit, offset))
@@ -581,8 +595,10 @@ def get_manifest(user: User):
 
     offset = request.args.get('offset', 0)
     raw_query = request.args.get('query', "")
+    order_by = request.args.get('order_by', None)
+    asc = request.args.get('asc', '0') == '1'
 
-    results, total = search_sites(asset_id, raw_query, limit=limit, offset=offset)
+    results, total = search_sites(asset_id, raw_query, limit=limit, offset=offset, order_by=order_by, asc=asc)
 
     # Add info on which are queued
     if len(results):
@@ -886,6 +902,36 @@ def create_asset_from_scrape(user: User):
         db.close()
 
     return MyResponse(True, {'id': new_asset_id}).to_json()
+
+
+@bp.route('/stats', methods=('GET',))
+@cross_origin()
+@token_optional
+def stats(user: User):
+    asset_id = request.args.get('id')
+    asset_row = get_asset(user, asset_id)
+    if not asset_row:
+        return MyResponse(False, reason="Couldn't find asset", status=404).to_json()
+    
+    _, nqueued = get_asset_metadata(user, asset_id, keys=[SCRAPE_QUEUE], get_total=True)
+
+    row = None
+    with CrawlerDB(asset_id, read_only=True) as crawler:
+        sql = """
+            SELECT
+            (SELECT COUNT(*) FROM websites WHERE scraped_at IS NOT NULL) AS scraped_count,
+            (SELECT COUNT(*) FROM websites WHERE scraped_at IS NULL AND EXISTS (SELECT 1 FROM errors WHERE website_id = websites.id)) AS error_count,
+            (SELECT COUNT(*) FROM websites) AS total_count;
+        """
+        res = crawler.execute(sql)
+        row = res.fetchone()
+
+    return MyResponse(True, {
+        'queued': nqueued,
+        'total': row['total_count'],
+        'scraped': row['scraped_count'],
+        'errors': row['error_count']
+    }).to_json()
 
 
 class Crawler(Template):

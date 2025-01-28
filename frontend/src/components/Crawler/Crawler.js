@@ -43,10 +43,15 @@ export default function Crawler({ manifestRow, canEdit }) {
     const [rightViewData, setRightViewData] = useState(undefined)
     
     const [selected, setSelected] = useState({})  // URL -> item or undefined
+    const [stats, setStats] = useState({})
+    const [statsLoading, setStatsLoading] = useState(0)
+
+    const [orderBy, setOrderBy] = useState(undefined)
+    const [asc, setAsc] = useState(undefined)
 
     const resultLimit = 20
 
-    function getUrl(page, text){
+    function getUrl(page, text, order_by, local_asc){
         if (!text){
             text = ""
         }
@@ -57,7 +62,11 @@ export default function Crawler({ manifestRow, canEdit }) {
             'query': text,
             'limit': resultLimit,
             'offset': offset,
-            'id': manifestRow?.id
+            'id': manifestRow?.id,
+            'asc': local_asc ? '1' : '0'
+        }
+        if (order_by){
+            paramObj['order_by'] = order_by
         }
         for (let key in paramObj) {
             params.append(key, paramObj[key]);
@@ -103,6 +112,38 @@ export default function Crawler({ manifestRow, canEdit }) {
         setAddWebsiteLoadingState(0)
         setAddWebsiteModalOpen(false)
     }
+
+    useEffect(() => {
+
+        async function getStats(){
+            try{
+                setStatsLoading(1)
+                const url = process.env.NEXT_PUBLIC_BACKEND_URL + `/crawler/stats?id=${manifestRow?.id}`
+                const response = await fetch(url, {
+                    'headers': {
+                        'x-access-token': await getToken(),
+                    },
+                    'method': 'GET'
+                })
+                const myJson = await response.json()
+                setStats({
+                    'queued': myJson['queued'],
+                    'errors': myJson['errors'],
+                    'scraped': myJson['scraped'],
+                    'total': myJson['total']
+                })
+                setStatsLoading(2)
+            }
+            catch(e){
+                console.log(e)
+                setStatsLoading(3)
+            }
+        }
+
+        if (manifestRow?.id && isSignedIn !== undefined){
+            getStats()
+        }
+    }, [manifestRow, isSignedIn, websites])
 
     const rightOfSearchBar = (
         <div style={{'display': 'flex', 'alignItems': 'stretch', 'flex': '1', 'gap': '10px'}}>
@@ -221,6 +262,46 @@ export default function Crawler({ manifestRow, canEdit }) {
         return <TableRow key={i} slideToRight={slideToRight} setItem={(x) => setWebsites((prev) => prev.map((old) => old.id == x.id ? x : old))} item={item} i={i} isFirst={ i == 0} isLast={i == websites?.length - 1} tableCols={tableCols} />
     }
 
+    async function refresh(localOrderBy, localAsc){
+        let realOrderBy = localOrderBy
+        if (!realOrderBy){
+            realOrderBy = orderBy
+        }
+        let realAsc = localAsc
+        if (localAsc === undefined){
+            realAsc = asc
+        }
+        try {
+            setWebsitesLoadState(1)
+            const url = getUrl(currPage, searchText, realOrderBy, realAsc)
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                },
+                'method': 'GET'
+            })
+            if (!response.ok){
+                throw Error("Response was not OK")
+            }
+            const myJson = await response.json()
+            const websites = myJson['results']
+            const total = myJson['total']
+            if (orderBy != realOrderBy){
+                setOrderBy(realOrderBy)
+            }
+            if (asc != realAsc){
+                setAsc(realAsc)
+            }
+            setWebsitesLoadState(2)
+            setWebsites(websites)
+            setNumResults(total)
+        }
+        catch(e) {
+            setWebsitesLoadState(3)
+            console.log("Error refreshing")
+        }
+    }
+
     const tableCols = useMemo(() => {
         return [
             {'title': '', 'key': 'selected', 'flex': 1, 'hook': ({ item }) => {
@@ -246,6 +327,19 @@ export default function Crawler({ manifestRow, canEdit }) {
             }},
             {'title': 'Added', 'key': 'created_at', 'flex': 2, 'hook': ({ item }) => {
                 return formatTimestampSmall(item['created_at'])
+            }, 'headerHook': () => {
+                return (
+                    <div className="_clickable" style={{'display': 'flex', 'gap': '5px'}} onClick={() => refresh('created_at', !asc)}>
+                        <div>
+                            Added
+                        </div>
+                        {orderBy == 'created_at' ? (
+                            asc ? (
+                                "▲"
+                            ) : "▼"
+                        ) : ""}
+                    </div>
+                )
             }},
             {'title': 'URL', 'key': 'url', 'flex': 6, 'hook': ({ item }) => {
                 const shortenedUrl = extractSiteWithPath(item['url'])
@@ -403,6 +497,19 @@ export default function Crawler({ manifestRow, canEdit }) {
                         {formatTimestampSmall(item['scraped_at'])}
                     </div>
                 ) : ""
+            }, 'headerHook': () => {
+                return (
+                    <div className="_clickable" style={{'display': 'flex', 'gap': '5px'}} onClick={() => refresh('scraped_at', !asc)}>
+                        <div>
+                            Visited
+                        </div>
+                        {orderBy == 'scraped_at' ? (
+                            asc ? (
+                                "▲"
+                            ) : "▼"
+                        ) : ""}
+                    </div>
+                )
             }},
             {'title': '', 'key': 'delete', 'flex': 1, 'hook': ({ item }) => {
                 const [deleteLoadState, setDeleteLoadState] = useState(0)
@@ -446,7 +553,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                 )
             }},
         ]
-    }, [slideToRight, setWebsites, websites, manifestRow, selected])
+    }, [slideToRight, setWebsites, websites, manifestRow, selected, orderBy, asc])
 
     return (
         <SmartHeightWrapper>
@@ -472,7 +579,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                             searchable={true}
                             tableHeader={(
                                 <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '10px'}}>
-                                    <TableControls manifestRow={manifestRow} selected={selected} setSelected={setSelected} getUrl={getUrl} searchText={searchText} setSearchText={setSearchText} websites={websites} setWebsites={setWebsites} currPage={currPage} setCurrPage={setCurrPage} numResults={numResults} setNumResults={setNumResults} />
+                                    <TableControls manifestRow={manifestRow} refresh={refresh} stats={stats} selected={selected} setSelected={setSelected} websites={websites} setWebsites={setWebsites} />
                                     <TableHeader cols={tableCols} />
                                 </div>
                             )}
@@ -508,7 +615,7 @@ export function TableHeader({ cols }) {
                             <item.headerHook />
                         </div>
                     ) : (
-                        <div style={{'flex': item.flex}} key={item.key}>
+                        <div style={{'flex': item.flex, 'cursor': 'default'}} key={item.key}>
                             {item.title}
                         </div>
                     )
@@ -541,9 +648,9 @@ export function TableRow({ item, setItem, i, tableCols, isFirst, isLast, slideTo
     )
 }
 
-function TableControls({ manifestRow, getUrl, searchText, setSearchText, websites, setWebsites, currPage, setCurrPage, numResults, setNumResults, selected, setSelected }) {
+function TableControls({ manifestRow, refresh, stats, websites, setWebsites, selected, setSelected }) {
    
-    const { getToken } = Auth.useAuth()
+    const { getToken, isSignedIn } = Auth.useAuth()
     const [bulkQueueLoadingState, setBulkQueueLoadingState] = useState(0)
 
     const needQueue = useMemo(() => {
@@ -554,6 +661,10 @@ function TableControls({ manifestRow, getUrl, searchText, setSearchText, website
             }
         }
         return needed
+    }, [selected])
+
+    const nSelected = useMemo(() => {
+        return Object.values(selected).filter((x) => x).length
     }, [selected])
 
     async function bulkQueue(){
@@ -592,9 +703,22 @@ function TableControls({ manifestRow, getUrl, searchText, setSearchText, website
         }
     }
 
+    const divider = <div style={{'color': 'var(--passive-text)'}}>{`|`}</div>
+
     return (
         <div style={{'display': 'flex', 'gap': '10px'}}>
-            <RefreshButton getUrl={getUrl} searchText={searchText} setSearchText={setSearchText} setWebsites={setWebsites} currPage={currPage} setCurrPage={setCurrPage} setNumResults={setNumResults} />
+            <RefreshButton refresh={refresh} />
+            {divider}
+            {stats?.total ? (
+                <>
+                    <ControlLabel label={"Queued"} value={stats?.queued} />
+                    <ControlLabel label={"Errors"} value={stats?.errors} color={"var(--logo-red)"} />
+                    <ControlLabel label={"Scraped"} value={stats?.scraped} />
+                    <ControlLabel label={"Total"} value={stats?.total} color="var(--light-background)" fontColor={"var(--dark-text)"} />
+                </>
+            ) : ""}
+            {divider}
+            <ControlLabel label={"Selected"} value={nSelected} color="var(--light-background)" fontColor="var(--dark-text)" />
             {needQueue.length ? (
                 <div style={{'display': 'flex'}} onClick={() => bulkQueue()}>
                     <div className={styles.tableButton}>
@@ -608,42 +732,11 @@ function TableControls({ manifestRow, getUrl, searchText, setSearchText, website
     )
 }
 
-export function RefreshButton({ getUrl, searchText, setSearchText, setWebsites, setNumResults, currPage, setCurrPage}) {
-    const { getToken } = Auth.useAuth()
-    const [refreshLoadState, setRefreshLoadState] = useState(0)
-
-    async function refresh(){
-        try {
-            setRefreshLoadState(1)
-            const url = getUrl(currPage, searchText)
-            const response = await fetch(url, {
-                'headers': {
-                    'x-access-token': await getToken(),
-                },
-                'method': 'GET'
-            })
-            if (!response.ok){
-                throw Error("Response was not OK")
-            }
-            const myJson = await response.json()
-            const websites = myJson['results']
-            const total = myJson['total']
-            setRefreshLoadState(2)
-            setWebsites(websites)
-            setNumResults(total)
-        }
-        catch(e) {
-            setRefreshLoadState(3)
-            console.log("Error refreshing")
-        }
-    }
-    
+export function RefreshButton({ refresh }) {    
     return (
         <div style={{'display': 'flex'}}>
             <div className={styles.tableButton} onClick={() => {refresh()}}>
-                {refreshLoadState == 1 ? (
-                    <Loading size={15} text={""} />
-                ) : "Refresh"}
+                Refresh
             </div>
         </div>
     )
@@ -674,6 +767,20 @@ export function InfoTable({ rows, clamp=true }) {
                     </div>
                 )
             })}
+        </div>
+    )
+}
+
+
+export function ControlLabel({ label, value, color="var(--dark-primary)", fontColor="var(--light-text)" }) {
+    return (
+        <div style={{'cursor': 'default', 'display': 'flex', 'alignItems': 'center', 'overflow': 'hidden', 'border': '1px solid var(--light-border)', 'borderRadius': 'var(--small-border-radius)', 'fontSize': '.8rem'}}>
+            <div style={{'height': '100%', 'display': 'flex', 'alignItems': 'center', 'padding': '2px 5px', 'backgroundColor': color, 'color': fontColor}}>
+                {label}
+            </div>
+            <div style={{'height': '100%', 'display': 'flex', 'alignItems': 'center', 'padding': '2px 5px', 'backgroundColor': 'var(--light-primary)'}}>
+                {value}
+            </div>
         </div>
     )
 }
