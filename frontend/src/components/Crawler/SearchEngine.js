@@ -119,11 +119,11 @@ export default function SearchEngine({ assetId, slideToLeft, addCallback, topic 
             }},
             {'title': 'URL', 'key': 'url', 'flex': 6, 'hook': ({ item }) => {
                 return (
-                    <a href={item['url']} target="_blank" className={styles.urlLink}>{extractSiteWithPath(item['url'])}</a>
+                    <a style={item.added ? {'color': "var(--passive-text)"} : {}} href={item['url']} target="_blank" className={styles.urlLink}>{extractSiteWithPath(item['url'])}</a>
                 )
             }},
-            {'title': 'Name', 'key': 'name', 'flex': 10},
-            {'title': 'Snippet', 'key': 'snippet', 'flex': 10}
+            {'title': 'Name', 'key': 'name', 'hook': ({item})=>{return <span style={item.added ? {'color': "var(--passive-text)"} : {}}>{item.name}</span>}, 'flex': 10},
+            {'title': 'Snippet', 'key': 'snippet', 'hook': ({item})=>{return <span style={item.added ? {'color': "var(--passive-text)"} : {}}>{item.snippet}</span>}, 'flex': 10}
         ]
     }, [selected, websites])
 
