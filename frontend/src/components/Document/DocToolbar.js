@@ -14,6 +14,7 @@ import SpeakerIcon from '../../../public/icons/SpeakerIcon.png'
 import AudioControls from '../Audio/AudioControls'
 import { useRef } from 'react'
 import styles from './DocToolbar.module.css'
+import SlidingBar from '../SlidingBar/SlidingBar'
 
 
 const stdIconGap = '10px'
@@ -480,116 +481,15 @@ export default function DocToolbar({manifestRow, buttonOptions=defaultButtonOpti
         return <div className={`${styles[`${item.code}Style`]}`} key={item.code}>{inner}</div>
     }
 
-    function getHiddenButtons() {
-        if (!buttonsRef.current || !buttonsRef.current.length || !containerRef.current) return {'left': [], 'right': []};
-
-        const containerRect = containerRef.current.getBoundingClientRect();
-        const containerWidth = containerRect.width;
-
-        const hiddenLeft = []
-        const hiddenRight = []
-        buttonsRef.current.forEach((button, index) => {
-            const buttonLeft = button.offsetLeft;
-            const buttonRight = buttonLeft + button.offsetWidth;
-            if (buttonLeft < 0) {
-                hiddenLeft.push(button)
-            }
-            else if (buttonRight > containerWidth) {
-                hiddenRight.push(button)
-            }
-        });
-
-        return {'left': hiddenLeft, 'right': hiddenRight}
-    }
-    
-    useEffect(() => {
-        function checkButtons() {
-            const { right } = getHiddenButtons();
-            if (right?.length) {
-                setAmOverflowingRight(true);
-            } else {
-                setAmOverflowingRight(false);
-            }
-        }
-
-        checkButtons();
-
-        window.addEventListener('resize', checkButtons);
-        const resizeObserver = new ResizeObserver(() => {
-            checkButtons();
-        });
-
-        if (containerRef.current) {
-            resizeObserver.observe(containerRef.current);
-        }
-
-        return () => {
-            window.removeEventListener('resize', checkButtons);
-            resizeObserver.disconnect();
-        };
-    }, [scrollPosition]);
-
-
-    function moveBarTo(moveToRight) {
-        if (!containerRef.current) return;
-        const { left, right } = getHiddenButtons()
-        // make the rightmost button fully visible
-        if (moveToRight && right?.length){
-            let minHiddenPos = Infinity
-            for (let button of right){
-                const buttonLeft = button.offsetLeft;
-                minHiddenPos = Math.min(minHiddenPos, buttonLeft)
-            }
-            setScrollPosition(-1 * minHiddenPos)
-        }
-        else {
-            setScrollPosition(0)
-        }
-    }
-
     return (
-        <div style={{'backgroundColor': 'var(--light-primary)', 'padding': '5px 10px', 'width': '100%', 'border': '1px solid var(--light-border)', 'borderTopWidth': '0px', 'borderRadius': 'var(--medium-border-radius)', 'borderTopLeftRadius': '0px', 'borderTopRightRadius': '0px', 'position': 'relative', 'overflow': 'hidden'}}>
-            <div
-                ref={containerRef}
-                style={{
-                    'display': 'flex',
-                    'gap': '10px',
-                    'alignItems': 'center',
-                    'position': 'relative',
-                    'transition': 'left .25s ease-in-out',
-                    'left': `${scrollPosition}px`
-                }}
-            >
-                {shownOptions.map((x, i) => {
-                    // initialize buttons ref if not done already
-                    if (buttonsRef && buttonsRef.current && buttonsRef.current.length < i + 1){
-                        buttonsRef.current.push(undefined)
-                    }
-                    return (
-                        <div key={x.code} ref={(el) => (buttonsRef.current[i] = el)}>
-                            {makeButton(x, i)}
-                        </div>
-                    )
-                })}
-            </div>
-            {scrollPosition < 0 || amOverflowingRight ? (
-                <div style={{'position': 'absolute', 'right': '0px', 'top': '0px', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center', 'height': '100%', 'padding': '3px', 'height': '100%', 'backgroundColor': 'var(--light-primary)', 'borderLeft': '1px solid var(--light-border)', 'gap': '5px', 'fontSize': '.8rem'}}>
-                    {scrollPosition < 0 ? (
-                        <MoveButton dir="right" callback={() => {moveBarTo(false)}} />
-                    ) : ""}
-                    {amOverflowingRight ? (
-                        <MoveButton dir="left" callback={() => {moveBarTo(true)}} />
-                    ) : ""}
-                </div>
-            ) : ""}
+        <div style={{'backgroundColor': 'var(--light-primary)', 'width': '100%', 'border': '1px solid var(--light-border)', 'borderTopWidth': '0px', 'borderRadius': 'var(--medium-border-radius)', 'borderTopLeftRadius': '0px', 'borderTopRightRadius': '0px'}}>
+            <SlidingBar
+                values={shownOptions.map(makeButton)}
+                buttonContainerStyle={{'padding': '5px 0px'}}
+                arrowContainerStyleLeft={{'padding': '5px', 'borderRight': '1px solid var(--light-border)'}}
+                arrowContainerStyleRight={{'padding': '5px', 'borderLeft': '1px solid var(--light-border)'}}
+            />
         </div>
     )
 }
 
-function MoveButton({ callback, dir }) {
-    return (
-        <div onClick={() => callback()} className='_touchableOpacity' style={{'transform': dir == 'left' ? 'rotate(180deg)' : '', 'backgroundColor': 'var(--light-background)', 'padding': '1px 3px', 'borderRadius': 'var(--small-border-radius)', 'border': '1px solid var(--light-border)'}}>
-            {`◀`}
-        </div>
-    )
-}

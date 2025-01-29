@@ -37,6 +37,32 @@ export default function Queue({ slideToLeft, manifestRow }) {
         return url
     }
 
+    async function refresh(){
+        try {
+            setWebsitesLoadState(1)
+            const url = getUrl(currPage, searchText)
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                },
+                'method': 'GET'
+            })
+            if (!response.ok){
+                throw Error("Response was not OK")
+            }
+            const myJson = await response.json()
+            const websites = myJson['results']
+            const total = myJson['total']
+            setWebsitesLoadState(2)
+            setWebsites(websites)
+            setNumResults(total)
+        }
+        catch(e) {
+            setWebsitesLoadState(3)
+            console.log("Error refreshing")
+        }
+    }
+
     const tableCols = useMemo(() => {
         return [
             {'title': 'Added', 'key': 'created_at', 'flex': 2, 'hook': ({ item }) => {
@@ -79,7 +105,7 @@ export default function Queue({ slideToLeft, manifestRow }) {
                     searchable={true}
                     tableHeader={(
                         <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '10px'}}>
-                            <RefreshButton getUrl={getUrl} setWebsites={setWebsites} currPage={currPage} setCurrPage={setCurrPage} setNumResults={setNumResults} searchText={searchText} setSearchText={setSearchText} />
+                            <RefreshButton refresh={refresh} />
                             <TableHeader cols={tableCols} />
                         </div>
                     )}

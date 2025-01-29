@@ -22,6 +22,7 @@ from ..integrations.file_loaders import get_loader, TextSplitter, RawChunk
 from ..exceptions import ScraperUnavailable, QueueDuplicate, QueueFull
 from ..user import get_user_search_engine_code
 from ..integrations.web import SearchEngine, SEARCH_PROVIDERS, SearchResult
+from ..integrations.lm import LM, LM_PROVIDERS, HIGH_PERFORMANCE_CHAT_MODEL
 import sys
 import os
 import json
@@ -29,6 +30,7 @@ from ..jobs import search_for_jobs, start_job, job_error_wrapper, complete_job
 from ..worker import task_scrape_from_queue
 import traceback
 from .website import insert_meta_author, insert_meta_description, insert_meta_url
+from ..prompts.crawler_suggest import get_suggest_from_topic_system
 
 
 bp = Blueprint('crawler', __name__, url_prefix="/crawler")
@@ -933,6 +935,30 @@ def stats(user: User):
         'scraped': row['scraped_count'],
         'errors': row['error_count']
     }).to_json()
+
+
+@bp.route('/suggest', methods=('POST',))
+@cross_origin()
+@token_optional
+def suggest_questions(user: User):
+    asset_id = request.json.get('id')
+    asset_row = get_asset(user, asset_id)
+    if not asset_row:
+        return MyResponse(False, reason="Can't find asset").to_json()
+    
+    topic = request.json.get('topic')
+    lm: LM = LM_PROVIDERS[HIGH_PERFORMANCE_CHAT_MODEL]
+    sys_prompt = get_suggest_from_topic_system(n=10)
+    resp = lm.run(topic, system_prompt=sys_prompt, make_json=True)
+    try:
+        obj = json.loads(resp)
+        queries = obj['queries']
+    except (ValueError, KeyError) as _:
+        print(traceback.format_exc())
+        print(f"LM generated crawler queries could not be parsed: {resp}", file=sys.stderr)
+        return MyResponse(False, reason="LM failed").to_json()
+
+    return MyResponse(True, {'results': queries}).to_json()
 
 
 class Crawler(Template):

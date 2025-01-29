@@ -10,11 +10,12 @@ import { Auth } from "@/auth/auth";
 import Loading from "../Loading/Loading";
 import Dropdown from "../Dropdown/Dropdown";
 import { extractSiteName, extractSiteWithPath } from "@/utils/text";
+import SlidingBar from "../SlidingBar/SlidingBar";
 
 
-export default function SearchEngine({ assetId, slideToLeft, addCallback }) {
+export default function SearchEngine({ assetId, slideToLeft, addCallback, topic }) {
 
-    const { getToken } = Auth.useAuth()
+    const { getToken, isSignedIn } = Auth.useAuth()
     const [websites, setWebsites] = useState([])
     const [websitesLoadState, setWebsitesLoadState] = useState(0)
     const resultLimit = 20
@@ -24,6 +25,9 @@ export default function SearchEngine({ assetId, slideToLeft, addCallback }) {
     const [currPage, setCurrPage] = useState(1)
     const [numResults, setNumResults] = useState(0);
     const [searchText, setSearchText] = useState("")
+
+    const [suggestedQueries, setSuggestedQueries] = useState([])
+    const [suggestedQueriesLoadState, setSuggestedQueriesLoadState] = useState(0)
 
     function getUrl(page, text){
         if (!text){
@@ -175,14 +179,77 @@ export default function SearchEngine({ assetId, slideToLeft, addCallback }) {
         )
     }, [selected, addBulkLoading, nSelected, bulkAddedNumber, assetId])
 
+    async function getSuggestedQueries(){
+        try{
+            setSuggestedQueriesLoadState(1)
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + '/crawler/suggest'
+            const data = {
+                'id': assetId,
+                'topic': topic
+            }
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                    'Content-Type': 'application/json'
+                },
+                'body': JSON.stringify(data),
+                'method': 'POST'
+            })
+            if (!response.ok){
+                throw Error("Response was not OK")
+            }
+            const myJson = await response.json()
+            setSuggestedQueries(myJson['results'])
+            setSuggestedQueriesLoadState(2)
+        }
+        catch(e) {
+            console.log(e)
+            setSuggestedQueriesLoadState(3)
+        }
+
+    }
+
+    const queryButtons = useMemo(() => {
+        return suggestedQueries.map((x, i) => {
+            function onClick(){
+                setSearchText(x)
+            }
+            return (
+                <div onClick={() => onClick()} className="_clickable" style={{'display': 'flex', 'backgroundColor': 'var(--light-background)', 'borderRadius': 'var(--small-border-radius)', 'border': '1px solid var(--light-border)', 'padding': '5px 10px', 'fontSize': '.9rem'}}>
+                    {x}
+                </div>
+            )
+        })
+    }, [suggestedQueries])
+
     const rightOfSearchBar = useMemo(() => {
         return (
-            <div style={{'display': 'flex', 'alignItems': 'stretch', 'flex': '1', 'gap': '10px'}}>
+            <div style={{'display': 'flex', 'alignItems': 'stretch', 'flex': '1', 'gap': '10px', 'minWidth': '0px'}}>
                 <SelectEngine />
                 {bulkAddButton}
+                <SyntheticButton
+                    value={(
+                        <div style={{'display': 'flex', 'alignItems': 'center', 'height': '100%'}}>
+                            {suggestedQueriesLoadState == 1 ? (
+                                <Loading text="" color="var(--light-text)" />
+                            ) : (
+                                "Suggest"
+                            )}
+                        </div>
+                    )}
+                    onClick={() => getSuggestedQueries()}
+                />
+                <div style={{'flex': '1', 'minWidth': '0px', 'backgroundColor': 'var(--light-primary)', 'border': '1px solid var(--light-border)', 'borderRadius': 'var(--medium-border-radius)'}}>
+                    <SlidingBar
+                        values={queryButtons}
+                        buttonContainerStyle={{'padding': '5px 0px'}}
+                        arrowContainerStyleLeft={{'padding': '5px', 'borderRight': '1px solid var(--light-border)'}}
+                        arrowContainerStyleRight={{'padding': '5px', 'borderLeft': '1px solid var(--light-border)'}}
+                    />
+                </div>
             </div>
         )
-    }, [bulkAddButton])
+    }, [bulkAddButton, queryButtons, suggestedQueriesLoadState])
 
     return (
         <div style={{'display': 'flex', 'flexDirection': 'column', 'height': '100%', 'gap': '1rem'}}>

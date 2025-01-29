@@ -25,6 +25,7 @@ import Textarea from "../form/Textarea"
 import Saving from "../Saving/Saving"
 import useSaveDataEffect from "@/utils/useSaveDataEffect"
 import RemoveIcon from '../../../public/icons/RemoveIcon.png'
+import SlidingBar from "../SlidingBar/SlidingBar"
 
 const TABLE_COL_GAP='10px'
 const RESEARCH_TOPIC='topic'
@@ -156,7 +157,7 @@ export default function Crawler({ manifestRow, canEdit }) {
     }, [manifestRow, isSignedIn, websites])
 
     const rightOfSearchBar = (
-        <div style={{'display': 'flex', 'alignItems': 'stretch', 'flex': '1', 'gap': '10px'}}>
+        <div style={{'display': 'flex', 'alignItems': 'stretch', 'flex': '1', 'gap': '10px', 'minWidth': '0px'}}>
             <SyntheticButton
                 value={(
                     <div style={{'display': 'flex', 'alignItems': 'center'}}>
@@ -345,7 +346,7 @@ export default function Crawler({ manifestRow, canEdit }) {
             setWebsites([...results, ...websites])
         }
         rightElement = (
-            <SearchEngine assetId={manifestRow?.id} slideToLeft={slideToLeft} addCallback={addCallback} />
+            <SearchEngine topic={topic} assetId={manifestRow?.id} slideToLeft={slideToLeft} addCallback={addCallback} />
         )
     }
     else if (rightViewCode == 'queue'){
@@ -653,7 +654,7 @@ export default function Crawler({ manifestRow, canEdit }) {
 
     return (
         <SmartHeightWrapper>
-            <div style={{'height': '100%', 'width': '100%'}}>
+            <div style={{'height': '100%', 'width': '100%', 'overflow': 'hidden'}}>
                 <SlidingPage 
                     showRight={showRight}
                     main={(
