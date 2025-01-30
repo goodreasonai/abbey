@@ -244,6 +244,7 @@ Language models are configured under `lms` in `settings.yml`. You can specify la
 lms:
   defaults:  # all are optional, use the optional "code" you specify to refer to each model, or use "model-provider" like "gpt-4o-openai"
     chat: "llama3.2-ollama"  # User chat model (user can change) - defaults to first listed model
+    vision: "gpt-4o-openai"  # Used for tasks requiring good vision capabilities
     fast: "llama3.2-ollama"  # Fastest model, used for suggested questions and other places - defaults to chat model
     high_performance: "gpt-4o"  # Your best language model, used for generating curricula - defaults to default chat model
     long_context: "gpt-4o"  # Model used in long-context situations - defaults to longest context model specified

@@ -52,8 +52,8 @@ export const formatTimestampSmall = (timestamp, isLocalTime) => {
 
         return formattedTime;
     } else {
-        const dd = String(date.getDate()).padStart(2, '0');
-        const mm = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+        const dd = String(date.getDate())
+        const mm = String(date.getMonth() + 1)
         const yyyy = date.getFullYear();
 
         // Construct the formatted date string

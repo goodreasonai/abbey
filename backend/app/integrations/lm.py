@@ -33,6 +33,7 @@ class LM():
         self.accepts_images=accepts_images
         self.supports_json = supports_json
 
+    # Note that images is a list of base64 strings like data:image/png;base64,BLAHBLAHBLAH...
     def run(self, txt, system_prompt=None, context=[], make_json=False, temperature=None, images=[]):
         raise NotImplementedError(f"Run not impelemented for language model {self.code}")
 
@@ -500,9 +501,16 @@ def generate_defaults():
     first_available = make_code_from_setting(lms[0])
     longest_context = max(LM_PROVIDERS.values(), key=lambda x: x.context_length).code
     
+    vision_model = first_available
+    for lm in LM_PROVIDERS.values():
+        lm: LM
+        if lm.accepts_images:
+            vision_model = lm.code
+            break
+    
     to_return['DEFAULT_CHAT_MODEL'] = defaults['chat'] if 'chat' in defaults else first_available  # Use specified, else use first available
     to_return['HIGH_PERFORMANCE_CHAT_MODEL'] = defaults['high_performance'] if 'high_performance' in defaults else to_return['DEFAULT_CHAT_MODEL']  # Use specified else use default chat model
-    
+    to_return['VISION_MODEL'] = defaults['vision'] if 'vision' in defaults else vision_model
     to_return['BALANCED_CHAT_MODEL'] = defaults['balanced'] if 'balanced' in defaults else to_return['DEFAULT_CHAT_MODEL']  # Use specified else use default chat model
     to_return['FAST_CHAT_MODEL'] = defaults['fast'] if 'fast' in defaults else to_return['DEFAULT_CHAT_MODEL']  # Use specified else use default chat model
     to_return['LONG_CONTEXT_CHAT_MODEL'] = defaults['long_context'] if 'long_context' in defaults else longest_context  # Use specified else use default chat model
@@ -520,6 +528,7 @@ def generate_defaults():
 _defaults = generate_defaults()
 DEFAULT_CHAT_MODEL = _defaults['DEFAULT_CHAT_MODEL']
 HIGH_PERFORMANCE_CHAT_MODEL = _defaults['HIGH_PERFORMANCE_CHAT_MODEL']
+VISION_MODEL = _defaults['VISION_MODEL']
 BALANCED_CHAT_MODEL = _defaults['BALANCED_CHAT_MODEL']
 FAST_CHAT_MODEL = _defaults['FAST_CHAT_MODEL']
 LONG_CONTEXT_CHAT_MODEL = _defaults['LONG_CONTEXT_CHAT_MODEL']

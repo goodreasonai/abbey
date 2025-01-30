@@ -16,13 +16,13 @@ from ..auth import token_required, SynthUser, token_optional
 from flask import Blueprint, request
 from ..template_response import MyResponse, response_from_resource
 from ..web import ScrapeMetadata, ScrapeResponse, scrape_with_requests, scrape_with_service
-from ..utils import ext_from_mimetype, get_extension_from_path, mimetype_from_ext, get_mimetype_from_headers
+from ..utils import ext_from_mimetype, get_extension_from_path, mimetype_from_ext, get_mimetype_from_headers, get_token_estimate
 from ..db import with_lock, get_db
 from ..integrations.file_loaders import get_loader, TextSplitter, RawChunk
 from ..exceptions import ScraperUnavailable, QueueDuplicate, QueueFull
 from ..user import get_user_search_engine_code
 from ..integrations.web import SearchEngine, SEARCH_PROVIDERS, SearchResult
-from ..integrations.lm import LM, LM_PROVIDERS, HIGH_PERFORMANCE_CHAT_MODEL
+from ..integrations.lm import LM, LM_PROVIDERS, HIGH_PERFORMANCE_CHAT_MODEL, VISION_MODEL
 import sys
 import os
 import json
@@ -30,16 +30,18 @@ from ..jobs import search_for_jobs, start_job, job_error_wrapper, complete_job
 from ..worker import task_scrape_from_queue
 import traceback
 from .website import insert_meta_author, insert_meta_description, insert_meta_url
-from ..prompts.crawler_suggest import get_suggest_from_topic_system
+from ..prompts.crawler_prompts import get_suggest_from_topic_system, get_scrape_quality_system, get_scrape_quality_user_text
+import base64
 
 
 bp = Blueprint('crawler', __name__, url_prefix="/crawler")
 
-DB_VERSION: int = 4  # increment this in order to redo the schema on older DBs.
+DB_VERSION: int = 6  # increment this in order to redo the schema on older DBs.
 
 SCRAPE_QUEUE = 'scrape_queue'  # metadata key
 SCRAPE_FROM_QUEUE_JOB = 'scrape_queue'  # job kind
 RESEARCH_TOPIC = 'topic'  # metadata key (also appears in frontend)
+
 
 def create_database(path):
     # Connect to the SQLite database
@@ -59,6 +61,7 @@ def create_database(path):
                 text TEXT,
                 content_type TEXT,
                 asset_id INTEGER,
+                scrape_quality_code TEXT,
                 url TEXT
             )
         """
@@ -93,6 +96,28 @@ def create_database(path):
         cursor.execute(sql)
         sql = """
             CREATE INDEX website_id_index ON website_data(website_id);
+        """
+        cursor.execute(sql)
+
+        sql = """
+            CREATE TABLE evaluations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                website_id INTEGER,  /* Foreign key to websites */
+                source_type TEXT,
+                trustworthiness INTEGER,
+                max_trustworthiness INTEGER,  /* Would typically be same for all, but helps when changing out values */
+                relevance INTEGER,
+                max_relevance INTEGER,
+                topic TEXT,
+                title TEXT,
+                author TEXT,
+                desc TEXT
+            )
+        """
+        cursor.execute(sql)
+        sql = """
+            CREATE INDEX website_id_evaluations_index ON evaluations(website_id);
         """
         cursor.execute(sql)
 
@@ -216,7 +241,7 @@ class CrawlerDB():
             old_cursor = self.conn.cursor()
 
             # Should be updated as new tables are added (OK if don't exist in previous database)
-            tables_to_reconstruct = ['websites', 'website_data', 'errors']
+            tables_to_reconstruct = ['websites', 'website_data', 'errors', 'evaluations']
 
             for table in tables_to_reconstruct:
                 # Get common columns first
@@ -309,6 +334,24 @@ class ScrapeQueueItem():
         }
 
 
+class ScrapeQuality():
+    def __init__(self, code: str, proceed: bool, name: str, desc: str):
+        self.code = code.upper()
+        self.proceed = proceed
+        self.name = name
+        self.desc = desc
+
+SCRAPE_QUALITY = [
+    ScrapeQuality('COL', True, 'Collected', 'If a source is essentially legible, even if its text requires scrolling further'),
+    ScrapeQuality('POBS', True, 'Partially Obscured', 'If a source is almost entirely legible, but dimmed or behind a small popup, even if its text requies scrolling further'),
+    ScrapeQuality('RLOG', True, 'Requires Login', 'If a source is almost entirely obscured or cut off because the user is not signed in'),
+    ScrapeQuality('OBS', True, 'Obscured', 'If a source is essentially wholly obscured or not present in the screenshots for other reasons'),
+]
+# Not sent to the AI, but a valid response
+NO_JUDGEMENT = ScrapeQuality('NJ', False, 'No Judgement', 'If no confirmation as to whether the scrape proceeded correctly can be inferred from the data, due to errors or other limitations')
+ASSUME_COLLECTED = ScrapeQuality('ACOL', True, 'Assume Collected', 'A full judgement could not be made, but assume that the data were collected.')
+QUALITY_CODES = {x.code: x for x in [*SCRAPE_QUALITY, NO_JUDGEMENT, ASSUME_COLLECTED]}
+
 # Takes care of opening up the Crawler DB
 @needs_db
 def record_error(asset_id, website_id, traceback="", stage="", status: int=None, db=None):
@@ -348,57 +391,118 @@ def scrape_for_crawler(asset_id, website_id, website_data=None, db=None):
     text = ""
     db = get_db()
     with scrape.consume_data() as data_path:
-        loader = get_loader(ext, data_path)
-        splitter = TextSplitter(max_chunk_size=1024)
-        splits = loader.load_and_split(splitter)
-        for x in splits:
-            x: RawChunk
-            if len(text) + len(x.page_content) < MAX_TEXT_LENGTH:
-                text += x.page_content
-        # Lock and add to the database
-        with CrawlerDB(asset_id, db=db) as crawler:
-            sql = """
-                UPDATE websites
-                SET `title`=?,
-                    `author`=?,
-                    `desc`=?,
-                    `text`=?,
-                    `content_type`=?,
-                    `scraped_at`=CURRENT_TIMESTAMP
-                WHERE `id`=?
-            """
-            crawler.execute(sql, (meta.title, meta.author, meta.desc, text, content_type, item['id']))
+        with scrape.consume_screenshots() as (ss_paths, ss_types):
 
-            # Does old scrape data exist?
-            # If so, delete from storage, asset_resources, and from the crawler db
-            sql = """
-                SELECT * FROM website_data
-                WHERE `website_id`=?
-            """
-            res = crawler.execute(sql, (item['id'],))
-            existing_data = res.fetchall()
-            if len(existing_data):
-                resources = get_asset_resources_by_id(asset_id, [x['resource_id'] for x in existing_data], db=db)
-                delete_asset_resources(resources, db=db)
+            loader = get_loader(ext, data_path)
+            splitter = TextSplitter(max_chunk_size=1024)
+            splits = loader.load_and_split(splitter)
+            total_toks = 0
+            for x in splits:
+                x: RawChunk
+                if len(text) + len(x.page_content) < MAX_TEXT_LENGTH:
+                    text += x.page_content
+                total_toks += get_token_estimate(x.page_content)
+            
+            # TODO: evaulate the scrape
+            quality_code = ASSUME_COLLECTED.code
+            if len(ss_paths):
+                # Get an evaluation of scrape quality from first two screenshots
+                lm: LM = LM_PROVIDERS[VISION_MODEL]
+                if lm.accepts_images:
+                    txt = get_scrape_quality_user_text(scrape.url)
+                    system_prompt = get_scrape_quality_system(SCRAPE_QUALITY)
+                    images = []
+                    for ss_path, ss_type in zip(ss_paths, ss_types):
+                        with open(ss_path, "rb") as image_file:
+                            # Read the image file in binary mode
+                            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+                            encoded_string = f"data:{ss_type};base64,{encoded_string}"
+                            images.append(encoded_string)
+                    resp = lm.run(txt, system_prompt=system_prompt, images=images, make_json=True)
+                    my_json = json.loads(resp)
+                    quality_code = my_json['quality_code']
+                else:
+                    lm = LM_PROVIDERS[HIGH_PERFORMANCE_CHAT_MODEL]
+                    # Send text
+                    # TODO
+            elif len(text) > 20:
+                # No screenshots because it's probably a file - just check to see if there's some text
+                # Assume collected
+                quality_code = ASSUME_COLLECTED.code
+            else:
+                quality_code = NO_JUDGEMENT.code
+
+            # Ensure quality code is actually real
+            quality_code = quality_code.upper()
+            quality_obj = None
+            if quality_code not in QUALITY_CODES:
+                quality_obj = NO_JUDGEMENT
+            else:
+                quality_code = QUALITY_CODES[quality_code]
+            
+            # If only partially obscured or fully collected, try to extract (1) source, (2) author / source, (3) description, (4) source trustworthiness score, (5) relevance to topic
+            if quality_obj.proceed:
+                # Extract stuff TODO
+                # txt = get_scrape_eval_user_text(scrape.url, text)
+                # system_prompt = get_scrape_quality_system(SCRAPE_QUALITY)
+                pass
+            
+            # Lock and add to the database
+            with CrawlerDB(asset_id, db=db) as crawler:
                 sql = """
-                    DELETE FROM website_data
+                    UPDATE websites
+                    SET `title`=?,
+                        `author`=?,
+                        `desc`=?,
+                        `text`=?,
+                        `content_type`=?,
+                        `scrape_quality_code`=?,
+                        `scraped_at`=CURRENT_TIMESTAMP
+                    WHERE `id`=?
+                """
+                crawler.execute(sql, (meta.title, meta.author, meta.desc, text, content_type, quality_code, item['id']))
+
+                """# Put in the latest evaluation
+                sql = \"""
+                    DELETE FROM evaluations
+                    WHERE `website_id`=?
+                \"""
+                # Upload and insert the data
+                sql = \"""
+                    INSERT INTO evaluations (`website_id`, `data_type`, `resource_id`)
+                    VALUES (?, ?, ?)
+                \"""
+                crawler.execute(sql, (item['id'], 'data', assoc_file_id))"""
+
+                # Does old scrape data exist?
+                # If so, delete from storage, asset_resources, and from the crawler db
+                sql = """
+                    SELECT * FROM website_data
                     WHERE `website_id`=?
                 """
-                crawler.execute(sql, (item['id'],))
+                res = crawler.execute(sql, (item['id'],))
+                existing_data = res.fetchall()
+                if len(existing_data):
+                    resources = get_asset_resources_by_id(asset_id, [x['resource_id'] for x in existing_data], db=db)
+                    delete_asset_resources(resources, db=db)
+                    sql = """
+                        DELETE FROM website_data
+                        WHERE `website_id`=?
+                    """
+                    crawler.execute(sql, (item['id'],))
 
-            # Upload and insert the data
-            path, from_val = upload_asset_file(asset_id, data_path, ext)
-            assoc_file_id = add_asset_resource(asset_id, 'website', from_val, path, None, db=db)
+                # Upload and insert the data
+                path, from_val = upload_asset_file(asset_id, data_path, ext)
+                assoc_file_id = add_asset_resource(asset_id, 'website', from_val, path, None, db=db)
 
-            sql = """
-                INSERT INTO website_data (`website_id`, `data_type`, `resource_id`)
-                VALUES (?, ?, ?)
-            """
-            crawler.execute(sql, (item['id'], 'data', assoc_file_id))
+                sql = """
+                    INSERT INTO website_data (`website_id`, `data_type`, `resource_id`)
+                    VALUES (?, ?, ?)
+                """
+                crawler.execute(sql, (item['id'], 'data', assoc_file_id))
 
-            # Upload any screenshots available
-            while len(scrape.screenshot_paths):
-                with scrape.consume_screenshot() as ss_path:
+                # Upload any screenshots available
+                for ss_path in ss_paths:
                     # Upload and insert the data
                     path, from_val = upload_asset_file(asset_id, ss_path, 'jpg')
                     assoc_file_id = add_asset_resource(asset_id, 'website', from_val, path, None, db=db)
@@ -409,7 +513,7 @@ def scrape_for_crawler(asset_id, website_id, website_data=None, db=None):
                     """
                     crawler.execute(sql, (item['id'], 'screenshot', assoc_file_id))
 
-            crawler.commit()
+                crawler.commit()
 
     return scrape.success, scrape.status
 
@@ -468,6 +572,7 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_t
         'desc',
         'content_type',
         'asset_id',
+        'scrape_quality_code',
         'url'
     ]
     if order_by is None:

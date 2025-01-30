@@ -26,6 +26,7 @@ import Saving from "../Saving/Saving"
 import useSaveDataEffect from "@/utils/useSaveDataEffect"
 import RemoveIcon from '../../../public/icons/RemoveIcon.png'
 import SlidingBar from "../SlidingBar/SlidingBar"
+import Info from "../Info/Info"
 
 const TABLE_COL_GAP='10px'
 const RESEARCH_TOPIC='topic'
@@ -449,7 +450,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                     <span title={item['title']}>{item['title']}</span>
                 )
             }},
-            {'title': 'Content', 'key': 'content_type', 'flex': 2, 'hook': ({ item }) => {
+            {'title': 'Type', 'key': 'content_type', 'flex': 1, 'hook': ({ item }) => {
                 const { getToken } = Auth.useAuth()
 
                 const [downloadLoadState, setDownloadLoadState] = useState(0)
@@ -588,6 +589,30 @@ export default function Crawler({ manifestRow, canEdit }) {
                 }
                 return inner
             }},
+            {'title': '', 'key': 'code', 'flex': 2, 'hook': ({ item, setItem }) => {
+                const code = item.scrape_quality_code
+                const CODE_TO_EXPLAIN = {
+                    'COL': 'Fully Collected',
+                    'OBS': 'Obscured',
+                    'POBS': 'Partially Obscured',
+                    'RLOG': 'Requires Login',
+                    'NJ': 'No Judgement',
+                    'ACOL': 'Assume Collected'
+                }
+                return code ? (
+                    <div style={{'display': 'flex'}}>
+                        <Tooltip content={CODE_TO_EXPLAIN[code]}>
+                            <div className={`${styles.qualityCode} ${styles[`qualityCode_${code}`]}`}>
+                                {code}
+                            </div>
+                        </Tooltip>
+                    </div>
+                ) : ""
+            }, 'headerHook': () => {
+                return (
+                    <Info content="These codes help understand the quality of the scrape, such as whether login was required (RLOG) or if the content was fully collected (COL), etc." />
+                )
+            }},
             {'title': 'Visited', 'key': 'scraped_at', 'flex': 2, 'hook': ({ item }) => {
                 return item.scraped_at ? (
                     <div>
@@ -704,15 +729,15 @@ export default function Crawler({ manifestRow, canEdit }) {
 
 export function TableHeader({ cols }) {
     return (
-        <div className={styles.tableHeader}>
+        <div className={`${styles.tableHeader} _customScroll`}> {/* Custom scroll to match width of body stuff */}
             <div style={{'display': 'flex', 'gap': TABLE_COL_GAP}}>
                 {cols.map((item) => {
                     return item.headerHook ? (
-                        <div style={{'flex': item.flex}} key={item.key}>
+                        <div className="_clamped1" style={{'flex': item.flex}} key={item.key}>
                             <item.headerHook />
                         </div>
                     ) : (
-                        <div style={{'flex': item.flex, 'cursor': 'default'}} key={item.key}>
+                        <div className="_clamped1" style={{'flex': item.flex, 'cursor': 'default'}} key={item.key}>
                             {item.title}
                         </div>
                     )

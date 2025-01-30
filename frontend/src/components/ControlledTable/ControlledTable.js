@@ -187,7 +187,7 @@ export default function ControlledTable({ items, setItems, searchText, setSearch
             <div style={scroll ? {'flex': '1', 'display': 'flex', 'flexDirection': 'column', 'minHeight': '0px'} : {}}>
                 {tableHeader || ""}
                 <div style={{...(scroll ? {'height': '100%', 'minHeight': '0px'} : {}), ...customDisplayWrapperStyle}}>
-                    <div className={scroll ? styles.customScroll : ''} style={{'display': 'flex', 'flexDirection': flexDirection, 'gap': gap, 'flexWrap': flexWrap, ...(scroll ? {'height': '100%', 'overflowY': 'scroll'} : {})}}>
+                    <div className={scroll ? '_customScroll' : ''} style={{'display': 'flex', 'flexDirection': flexDirection, 'gap': gap, 'flexWrap': flexWrap, ...(scroll ? {'height': '100%', 'overflowY': 'scroll'} : {})}}>
                         {display}
                     </div>
                 </div>

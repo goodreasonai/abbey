@@ -63,6 +63,22 @@ class ScrapeDataConsumer:
             os.remove(self.data_path)
 
 
+class ScrapeScreenshotConsumer:
+    def __init__(self, data_paths, data_types):
+        self.data_paths = data_paths
+        self.data_types = data_types
+
+    def __enter__(self):
+        # Returning the path to the data file
+        return self.data_paths, self.data_types
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Remove the temporary file when done
+        for path in self.data_paths:
+            if os.path.exists(path):
+                os.remove(path)
+
+
 class ScrapeResponse():
     success: bool
     status: int
@@ -70,12 +86,14 @@ class ScrapeResponse():
     headers: dict
     data_path: str
     screenshot_paths: list
+    screenshot_mimetypes: list
     metadata: ScrapeMetadata
     def __init__(self, success, status, url, headers):
         self.success = success
         self.status = status
         self.url = url
         self.screenshot_paths = []
+        self.screenshot_mimetypes = []
         self.headers = {str(k).lower(): v for k, v in headers.items()} if headers else {}
         self._determine_content_type()
         self.data_path = None
@@ -147,11 +165,12 @@ class ScrapeResponse():
         finally:
             tmp.close()
 
-    def add_screenshot(self, content):
+    def add_screenshot(self, content, mimetype):
         try:
             tmp = tempfile.NamedTemporaryFile(delete=False)
             tmp.write(content)
             self.screenshot_paths.append(tmp.name)
+            self.screenshot_mimetypes.append(mimetype)
         finally:
             tmp.close()
 
@@ -166,12 +185,14 @@ class ScrapeResponse():
         self.data_path = None
         return ScrapeDataConsumer(curr_data_path)
     
-    def consume_screenshot(self):
+    def consume_screenshots(self):
         if not len(self.screenshot_paths):
-            raise Exception("There are no more screenshots")
-        this_path = self.screenshot_paths[0]
-        self.screenshot_paths = self.screenshot_paths[1:]
-        return ScrapeDataConsumer(this_path)
+            return []
+        these_paths = list(self.screenshot_paths)
+        these_types = list(self.screenshot_mimetypes)
+        self.screenshot_paths = []
+        self.screenshot_mimetypes = []
+        return ScrapeScreenshotConsumer(these_paths, these_types)
 
     def __del__(self):
         # Ensure the temporary file is deleted when the object is destroyed
@@ -249,7 +270,10 @@ def scrape_with_service(url):
                     resp.success = True
                     resp.set_data(part.content)
             else:  # Other parts are screenshots, if they exist
-                resp.add_screenshot(part.content)
+                # Annoyingly the headers are bytes not strings for some reason
+                mimetype: bytes = part.headers[b'Content-Type']
+                mimetype: str = mimetype.decode()
+                resp.add_screenshot(part.content, mimetype)
         
         return resp
 

@@ -241,6 +241,28 @@ a {
     opacity: 1;
 }
 
+/* Custom scroll bars */
+
+._customScroll {
+    overflow-y: scroll;
+}
+
+._customScroll::-webkit-scrollbar {
+    width: 12px;
+}
+
+/* This is like the background of the scroll bar */
+._customScroll::-webkit-scrollbar-track{
+    background: var(--light-highlight);
+}
+
+._customScroll::-webkit-scrollbar-thumb:vertical {
+    border: 1px solid var(--light-border);
+    cursor: pointer;
+    background-color: var(--dark-primary)
+}
+
+
 .tiptap > * + * {
     margin-top: 0.5rem;
 }

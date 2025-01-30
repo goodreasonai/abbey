@@ -133,6 +133,8 @@
 
 /* Custom scroll bars */
 
+/* NOTE: duplicated somewhat in globals.css */
+
 .customScroll {
     overflow-y: scroll;
 }

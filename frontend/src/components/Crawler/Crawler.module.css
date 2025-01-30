@@ -111,6 +111,32 @@
     position: absolute;
 }
 
+.qualityCode {
+    font-size: .8rem;
+    padding: 2px 5px;
+    background-color: var(--light-primary);
+    border: 1px solid var(--light-border);
+    border-radius: var(--small-border-radius);
+    align-items: center;
+    display: flex;
+    justify-content: center;
+}
+
+.qualityCode_COL {
+    background-color: var(--dark-primary);
+    color: var(--light-text);
+}
+
+.qualityCode_OBS, .qualityCode_RLOG {
+    background-color: var(--logo-red);
+    color: var(--light-text);
+}
+
+.qualityCode_POBS {
+    background-color: var(--dark-highlight);
+    color: var(--light-text);
+}
+
 .table {
     display: flex;
     flex-direction: column;
