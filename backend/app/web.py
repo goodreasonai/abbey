@@ -187,7 +187,7 @@ class ScrapeResponse():
     
     def consume_screenshots(self):
         if not len(self.screenshot_paths):
-            return []
+            return ScrapeScreenshotConsumer([], [])
         these_paths = list(self.screenshot_paths)
         these_types = list(self.screenshot_mimetypes)
         self.screenshot_paths = []

@@ -22,7 +22,7 @@ from ..integrations.file_loaders import get_loader, TextSplitter, RawChunk
 from ..exceptions import ScraperUnavailable, QueueDuplicate, QueueFull
 from ..user import get_user_search_engine_code
 from ..integrations.web import SearchEngine, SEARCH_PROVIDERS, SearchResult
-from ..integrations.lm import LM, LM_PROVIDERS, HIGH_PERFORMANCE_CHAT_MODEL, VISION_MODEL
+from ..integrations.lm import LM, LM_PROVIDERS, HIGH_PERFORMANCE_CHAT_MODEL, VISION_MODEL, get_safe_retrieval_context_length
 import sys
 import os
 import json
@@ -30,7 +30,7 @@ from ..jobs import search_for_jobs, start_job, job_error_wrapper, complete_job
 from ..worker import task_scrape_from_queue
 import traceback
 from .website import insert_meta_author, insert_meta_description, insert_meta_url
-from ..prompts.crawler_prompts import get_suggest_from_topic_system, get_scrape_quality_system, get_scrape_quality_user_text
+from ..prompts.crawler_prompts import get_suggest_from_topic_system, get_scrape_quality_system, get_scrape_quality_user_text, get_scrape_quality_user, get_eval_system, get_eval_user
 import base64
 
 
@@ -341,6 +341,7 @@ class ScrapeQuality():
         self.name = name
         self.desc = desc
 
+# On frontend as well
 SCRAPE_QUALITY = [
     ScrapeQuality('COL', True, 'Collected', 'If a source is essentially legible, even if its text requires scrolling further'),
     ScrapeQuality('POBS', True, 'Partially Obscured', 'If a source is almost entirely legible, but dimmed or behind a small popup, even if its text requies scrolling further'),
@@ -351,6 +352,50 @@ SCRAPE_QUALITY = [
 NO_JUDGEMENT = ScrapeQuality('NJ', False, 'No Judgement', 'If no confirmation as to whether the scrape proceeded correctly can be inferred from the data, due to errors or other limitations')
 ASSUME_COLLECTED = ScrapeQuality('ACOL', True, 'Assume Collected', 'A full judgement could not be made, but assume that the data were collected.')
 QUALITY_CODES = {x.code: x for x in [*SCRAPE_QUALITY, NO_JUDGEMENT, ASSUME_COLLECTED]}
+
+
+class SourceType():
+    def __init__(self, code: str, desc: str, name: str):
+        self.code = code
+        self.desc = desc
+        self.name = name
+
+# On frontend as well
+SOURCE_TYPES = [
+    SourceType('NEWS', 'If the source is a news media article', 'News Article'),
+    SourceType('GOV', 'If the source is an official government publication or release (not counting state-owned media)', 'Government Report'),
+    SourceType('SOC', 'If the source is a social media post', 'Social Media'),
+    SourceType('EDU', 'If the source is an academic article or other scholarly publication', 'Academic Article'),
+    SourceType('WIKI', 'If the source is from an online wiki, like Wikipedia or Encycolopedia Brittanica', 'Wiki'),
+    SourceType('BUS', 'If the source is a businesses landing page or other official promotional material', 'Business Page'),
+    SourceType('OTH', 'If the source is none of the above', 'Other'),
+]
+UNKNOWN_SOURCE_TYPE = SourceType('UNK', 'If the type of source cannot be determined because there isn\'t enough information', 'Unknown')
+CODE_TO_SOURCE_TYPES = {x.code: x for x in SOURCE_TYPES + [UNKNOWN_SOURCE_TYPE]}
+
+class ScrapeEval():
+    def __init__(
+        self, 
+        title: str,
+        author: str,
+        desc: str,
+        source_type_code: str,
+        trustworthiness: int,
+        max_trustworthiness: int,
+        relevance: int,
+        max_relevance: int,
+        topic: str,
+    ):
+        self.title = title
+        self.author = author
+        self.desc = desc
+        self.source_type_code = source_type_code
+        self.trustworthiness = trustworthiness
+        self.max_trustworthiness = max_trustworthiness
+        self.relevance = relevance
+        self.max_relevance = max_relevance
+        self.topic = topic
+
 
 # Takes care of opening up the Crawler DB
 @needs_db
@@ -365,7 +410,7 @@ def record_error(asset_id, website_id, traceback="", stage="", status: int=None,
 
 
 @needs_db
-def scrape_for_crawler(asset_id, website_id, website_data=None, db=None):    
+def scrape_for_crawler(user, asset_id, website_id, website_data=None, db=None):    
     
     item = website_data
     if not item:
@@ -388,43 +433,61 @@ def scrape_for_crawler(asset_id, website_id, website_data=None, db=None):
     meta: ScrapeMetadata = scrape.metadata
     ext = ext_from_mimetype(meta.content_type)
     MAX_TEXT_LENGTH = 100_000  # in characters
-    text = ""
     db = get_db()
     with scrape.consume_data() as data_path:
         with scrape.consume_screenshots() as (ss_paths, ss_types):
-
             loader = get_loader(ext, data_path)
             splitter = TextSplitter(max_chunk_size=1024)
             splits = loader.load_and_split(splitter)
+
             total_toks = 0
+            text = ""  # For putting in the DB
+            safe_remaining = ""  # Text for eval (might be of different length)
+            eval_lm: LM = LM_PROVIDERS[HIGH_PERFORMANCE_CHAT_MODEL]  # For evaluation
+            safe_remaining_n_tokens = get_safe_retrieval_context_length(eval_lm)
             for x in splits:
                 x: RawChunk
                 if len(text) + len(x.page_content) < MAX_TEXT_LENGTH:
                     text += x.page_content
-                total_toks += get_token_estimate(x.page_content)
+                page_toks = get_token_estimate(x.page_content)
+                if safe_remaining_n_tokens > page_toks:
+                    safe_remaining += x.page_content
+                else:
+                    safe_remaining_n_tokens = 0
+                total_toks += page_toks
             
             # TODO: evaulate the scrape
             quality_code = ASSUME_COLLECTED.code
             if len(ss_paths):
                 # Get an evaluation of scrape quality from first two screenshots
                 lm: LM = LM_PROVIDERS[VISION_MODEL]
-                if lm.accepts_images:
-                    txt = get_scrape_quality_user_text(scrape.url)
-                    system_prompt = get_scrape_quality_system(SCRAPE_QUALITY)
-                    images = []
-                    for ss_path, ss_type in zip(ss_paths, ss_types):
-                        with open(ss_path, "rb") as image_file:
-                            # Read the image file in binary mode
-                            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-                            encoded_string = f"data:{ss_type};base64,{encoded_string}"
-                            images.append(encoded_string)
-                    resp = lm.run(txt, system_prompt=system_prompt, images=images, make_json=True)
-                    my_json = json.loads(resp)
-                    quality_code = my_json['quality_code']
-                else:
-                    lm = LM_PROVIDERS[HIGH_PERFORMANCE_CHAT_MODEL]
-                    # Send text
-                    # TODO
+                
+                try:
+                    if lm.accepts_images:
+                        txt = get_scrape_quality_user(scrape.url)
+                        system_prompt = get_scrape_quality_system(SCRAPE_QUALITY)
+                        images = []
+                        for ss_path, ss_type in zip(ss_paths, ss_types):
+                            with open(ss_path, "rb") as image_file:
+                                # Read the image file in binary mode
+                                encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+                                encoded_string = f"data:{ss_type};base64,{encoded_string}"
+                                images.append(encoded_string)
+                        resp = lm.run(txt, system_prompt=system_prompt, images=images, make_json=True)
+                        my_json = json.loads(resp)
+                        quality_code = my_json['quality_code']
+                    else:
+                        lm = LM_PROVIDERS[HIGH_PERFORMANCE_CHAT_MODEL]
+                        system_prompt = get_scrape_quality_system(SCRAPE_QUALITY)
+                        # Shorten text so that it fits with model
+                        get_token_estimate(text)
+                        txt = get_scrape_quality_user_text(scrape.url, text)
+                        resp = lm.run(txt, system_prompt=system_prompt, make_json=True)
+                        my_json = json.loads(resp)
+                        quality_code = my_json['quality_code']
+                except Exception as _:
+                    print(f"Quality eval failed:\n {traceback.format_exc()}", file=sys.stderr)
+                    quality_code = NO_JUDGEMENT.code
             elif len(text) > 20:
                 # No screenshots because it's probably a file - just check to see if there's some text
                 # Assume collected
@@ -436,16 +499,47 @@ def scrape_for_crawler(asset_id, website_id, website_data=None, db=None):
             quality_code = quality_code.upper()
             quality_obj = None
             if quality_code not in QUALITY_CODES:
+                print(f"Quality code '{quality_code}' was not in QUALITY_CODES", file=sys.stderr)
                 quality_obj = NO_JUDGEMENT
             else:
-                quality_code = QUALITY_CODES[quality_code]
+                quality_obj = QUALITY_CODES[quality_code]
             
             # If only partially obscured or fully collected, try to extract (1) source, (2) author / source, (3) description, (4) source trustworthiness score, (5) relevance to topic
+            
+            eval = None
             if quality_obj.proceed:
                 # Extract stuff TODO
                 # txt = get_scrape_eval_user_text(scrape.url, text)
                 # system_prompt = get_scrape_quality_system(SCRAPE_QUALITY)
-                pass
+                try:
+                    topic = None
+                    topic_meta, _ = get_asset_metadata(user, asset_id, keys=[RESEARCH_TOPIC], for_all_users=True, get_total=False)
+                    if len(topic_meta):
+                        topic = topic_meta[0]['value']
+
+                    MAX_TRUSTWORTHINESS = 5
+                    MAX_RELEVANCE = 5
+                    system_prompt = get_eval_system(SOURCE_TYPES, topic, 5, 5)
+                    txt = get_eval_user(scrape.url, text)
+                    res = eval_lm.run(txt, system_prompt=system_prompt, make_json=True)
+                    my_json = json.loads(res)
+                    source_type_code = my_json['source_type_code']
+                    if source_type_code not in CODE_TO_SOURCE_TYPES:
+                        source_type_code = UNKNOWN_SOURCE_TYPE.code
+                    eval = ScrapeEval(
+                        my_json['title'],
+                        my_json['author'],
+                        my_json['desc'],
+                        source_type_code,
+                        my_json['trustworthiness'],
+                        MAX_TRUSTWORTHINESS,
+                        my_json['relevance'],
+                        MAX_RELEVANCE,
+                        topic
+                    )
+                except Exception as _:
+                    print(f"Comprehensive eval failed:\n {traceback.format_exc()}", file=sys.stderr)
+                    quality_code = NO_JUDGEMENT.code
             
             # Lock and add to the database
             with CrawlerDB(asset_id, db=db) as crawler:
@@ -462,17 +556,29 @@ def scrape_for_crawler(asset_id, website_id, website_data=None, db=None):
                 """
                 crawler.execute(sql, (meta.title, meta.author, meta.desc, text, content_type, quality_code, item['id']))
 
-                """# Put in the latest evaluation
-                sql = \"""
-                    DELETE FROM evaluations
-                    WHERE `website_id`=?
-                \"""
-                # Upload and insert the data
-                sql = \"""
-                    INSERT INTO evaluations (`website_id`, `data_type`, `resource_id`)
-                    VALUES (?, ?, ?)
-                \"""
-                crawler.execute(sql, (item['id'], 'data', assoc_file_id))"""
+                # Put in the latest evaluation
+                if eval is not None:
+                    sql = """
+                        DELETE FROM evaluations
+                        WHERE `website_id`=?
+                    """
+                    # Upload and insert the data
+                    sql = """
+                        INSERT INTO evaluations (
+                            `website_id`,
+                            `source_type`,
+                            `trustworthiness`,
+                            `max_trustworthiness`,
+                            `relevance`,
+                            `max_relevance`,
+                            `topic`,
+                            `title`,
+                            `author`,
+                            `desc`
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """
+                    crawler.execute(sql, (item['id'], eval.source_type_code, eval.trustworthiness, eval.max_trustworthiness, eval.relevance, eval.max_relevance, eval.topic, eval.title, eval.author, eval.desc))
 
                 # Does old scrape data exist?
                 # If so, delete from storage, asset_resources, and from the crawler db
@@ -535,7 +641,7 @@ def scrape_from_queue_job(user_obj, job_id, asset_id, db=None):
             queue_item = ScrapeQueueItem(**to_scrape_obj)
             try:
                 # This not only scrapes but also saves the data in the crawler db
-                success, status = scrape_for_crawler(asset_id, queue_item.website_id, db=db)
+                success, status = scrape_for_crawler(user, asset_id, queue_item.website_id, db=db)
             except Exception as e:
                 print(f"Error in scrape for crawler: {e}", file=sys.stderr)
                 record_error(asset_id, queue_item.website_id, stage='call_scrape_for_crawler', traceback=traceback.format_exc(), db=db)
@@ -608,7 +714,8 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_t
             SELECT 
             {website_cols_clause},
             COALESCE(wd.website_data, '[]') AS website_data,
-            COALESCE(e.errors, '[]') AS errors
+            COALESCE(e.errors, '[]') AS errors,
+            COALESCE(ev.evaluations, '[]') AS evaluations
             FROM websites_fts5
             LEFT JOIN websites ON websites.id = websites_fts5.website_id
             LEFT JOIN (
@@ -625,6 +732,13 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_t
             FROM errors
             GROUP BY website_id
             ) AS e ON websites.id = e.website_id
+            LEFT JOIN (
+            SELECT 
+                website_id,
+                json_group_array(json_object('title', title, 'author', author, 'desc', desc, 'source_type', source_type, 'trustworthiness', trustworthiness, 'max_trustworthiness', max_trustworthiness, 'relevance', relevance, 'max_relevance', max_relevance)) AS evaluations
+            FROM evaluations
+            GROUP BY website_id
+            ) AS ev ON websites.id = ev.website_id
             {'WHERE websites_fts5 MATCH ?' if query else "WHERE 1=1"}
             {website_ids_clause}
             GROUP BY websites.id  -- Ensures one row per website
@@ -654,7 +768,7 @@ def start_queue_job_if_none_exists(user: User, asset_id, db=None):
 def add_websites_to_queue(user, asset_id, websites, db=None):
     MAX_QUEUE = 100
     queue, _ = get_asset_metadata(user, asset_id, keys=[SCRAPE_QUEUE], limit=MAX_QUEUE, get_total=False, db=db)
-    
+
     # Is queue full?
     if len(queue) >= MAX_QUEUE:
         raise QueueFull()

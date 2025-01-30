@@ -15,6 +15,44 @@ def get_scrape_quality_system(qualities):
     return "\n\n".join([intro, quality_text, codes, formatting])
 
 
-def get_scrape_quality_user_text(url):
+def get_scrape_quality_user_text(url, text):
+    intro = f"I attempted to scrape the URL {url}. The collected text from the website/file is below:"
+    return "\n\n".join([intro, text])
+
+
+def get_scrape_quality_user(url):
     intro = f"I attempted to scrape the URL {url}. Attached is the collected data."
     return intro
+
+
+def get_eval_system(source_types, topic, max_trustworthiness, max_relevance):
+    intro = "Your task is to do a basic evaluation of the user provided source. The user scraped this source from online and now needs to determine its relevance to his needs."
+    instructions = "Here are the following items you must output:"
+    items = [
+        "Title: You should infer a title from the source",
+        "Author: You should make a guess as to the author, which can be a person, group, or organization",
+        "Description: You should give a brief 1 sentence description of the content of the source",
+        "Source type code: You should give a code representing the type of source that was collected (see below for details).",
+        f"Trustworthiness: Give a score, 1-{max_trustworthiness}, representing how trustworthy the source might be; for example, shady news outlets are worse than high quality ones. Primary sources are high ({max_trustworthiness}). Sketchy blog posts are low (1).",
+        f"Relevance: Give a score, 1-{max_relevance}, representing how relevant the source is to the research topic. Note that while the source may not address the topic directly, it may still provide important background on key people or subgoals. See the topic below."
+    ]
+    items_text = "\n".join(items)
+    source_type_instructions = "For the source type, here are the codes you may use:"
+    source_type_list = "\n".join([f"{x.code}: {x.name}, {x.desc}" for x in source_types])
+    instruct_topic = f"Here is the research topic for scoring relevance:\n {topic}"
+    format = "You must output well formatted JSON in the appropriate schema, an example of which is the following:"
+    schema = """{
+    "title": "My Source Title",
+    "author": "My Author",
+    "desc": "My brief 1 sentence description of the source.",
+    "source_type_code": "GOV",
+    "trustworthiness": 5,
+    "relevance": 1
+}
+"""
+    to_return = "\n\n".join([intro, instructions, items_text, source_type_instructions, source_type_list, instruct_topic, format, schema])
+    return to_return
+
+
+def get_eval_user(url, text):
+    return f"Here is the source, which was scraped from {url}:\n\n{text}"

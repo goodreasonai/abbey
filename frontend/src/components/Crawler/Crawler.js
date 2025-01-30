@@ -31,6 +31,27 @@ import Info from "../Info/Info"
 const TABLE_COL_GAP='10px'
 const RESEARCH_TOPIC='topic'
 
+export const QUALITY_CODE_TO_NAME = {
+    'COL': 'Fully Collected',
+    'OBS': 'Obscured',
+    'POBS': 'Partially Obscured',
+    'RLOG': 'Requires Login',
+    'NJ': 'No Judgement',
+    'ACOL': 'Assume Collected'
+}
+
+export const SOURCE_TYPE_CODE_TO_NAME = {
+    'NEWS': 'News Article',
+    'GOV': 'Government Report',
+    'SOC': 'Social Media',
+    'EDU': 'Academic Article',
+    'WIKI': 'Wiki Entry',
+    'BUS': 'Business',
+    'OTH': 'Other',
+    'UNK': 'Unknown'
+}
+
+
 export default function Crawler({ manifestRow, canEdit }) {
     
     const { getToken, isSignedIn } = Auth.useAuth()
@@ -591,17 +612,9 @@ export default function Crawler({ manifestRow, canEdit }) {
             }},
             {'title': '', 'key': 'code', 'flex': 2, 'hook': ({ item, setItem }) => {
                 const code = item.scrape_quality_code
-                const CODE_TO_EXPLAIN = {
-                    'COL': 'Fully Collected',
-                    'OBS': 'Obscured',
-                    'POBS': 'Partially Obscured',
-                    'RLOG': 'Requires Login',
-                    'NJ': 'No Judgement',
-                    'ACOL': 'Assume Collected'
-                }
                 return code ? (
                     <div style={{'display': 'flex'}}>
-                        <Tooltip content={CODE_TO_EXPLAIN[code]}>
+                        <Tooltip content={QUALITY_CODE_TO_NAME[code]}>
                             <div className={`${styles.qualityCode} ${styles[`qualityCode_${code}`]}`}>
                                 {code}
                             </div>
@@ -866,29 +879,34 @@ export function RefreshButton({ refresh }) {
 
 
 // rows are [{'title': '', 'value': ()}, ...]
-export function InfoTable({ rows, clamp=true }) {
+export function InfoTable({ rows, title="", clamp=true }) {
     return (
-        <div className={styles.table}>
-            {rows.map((row, i) => {
-                return (
-                    <div key={i} className={`${styles.tableRow} ${i == 0 ? styles.tableRowFirst : ''} ${i == rows.length - 1 ? styles.tableRowLast : ''} ${i % 2 ? styles.tableRowOdd : ''}`}>
-                        <div className={styles.tableLabel}>
-                            {row.title}
-                        </div>
-                        <div className={`${styles.tabelInfo}`}>
-                            <div className={clamp ? "_clamped2" : ""}>
-                                {row.isText ? (
-                                    row.value ? (
-                                        <span title={row.value}>{row.value}</span>
-                                    ) : (
-                                        <span style={{'color': 'var(--passive-text)'}}>None</span>
-                                    )
-                                ) : row.value}
+        <div className={styles.tableContainer}>
+            <div className={styles.tableTitle}>
+                {title}
+            </div>
+            <div className={styles.table}>
+                {rows.map((row, i) => {
+                    return (
+                        <div key={i} className={`${styles.tableRow} ${i == rows.length - 1 ? styles.tableRowLast : ''} ${i % 2 ? styles.tableRowOdd : ''}`}>
+                            <div className={styles.tableLabel}>
+                                {row.title}
+                            </div>
+                            <div className={`${styles.tabelInfo}`}>
+                                <div className={clamp ? "_clamped2" : ""}>
+                                    {row.isText ? (
+                                        row.value ? (
+                                            <span title={row.value}>{row.value}</span>
+                                        ) : (
+                                            <span style={{'color': 'var(--passive-text)'}}>None</span>
+                                        )
+                                    ) : row.value}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )
-            })}
+                    )
+                })}
+            </div>
         </div>
     )
 }
