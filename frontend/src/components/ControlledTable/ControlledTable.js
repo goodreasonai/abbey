@@ -9,7 +9,7 @@ import LoadMore from "../LoadMore/LoadMore"
 import LoadingSkeleton from "../Loading/LoadingSkeleton"
 
 // getUrl is a function taking one arg (page number) and returns url to make GET request to for row items
-export default function ControlledTable({ items, setItems, searchText, setSearchText, loadingState, setLoadingState, currPage, setCurrPage, numResults, setNumResults, makeRow, getUrl, searchBarStyle={}, searchBarContainerStyle={}, noResultsContainerStyle={}, paginationContainerStyle={}, loadingSkeleton=undefined, searchable=false, limit=10, resultsKey='results', flexDirection='column', flexWrap='wrap', totalKey='total', gap='20px', paginated=true, doublePaginated=false, loadMore=false, itemsCallback=()=>{}, forceRefresh=undefined, rightOfSearchBar="", tableHeader="", scroll=false, customDisplayWrapperStyle={}, customNoResults="", leftOfSearchBar="", searchAutoComplete=true, autoFocus=false, defaultTotal=1000, ...props }){
+export default function ControlledTable({ items, setItems, searchText, setSearchText, loadingState, setLoadingState, currPage, setCurrPage, numResults, setNumResults, makeRow, getUrl, searchBarStyle={}, searchBarContainerStyle={}, noResultsContainerStyle={}, paginationContainerStyle={}, loadingSkeleton=undefined, searchable=false, limit=10, resultsKey='results', flexDirection='column', flexWrap='wrap', totalKey='total', gap='20px', paginated=true, doublePaginated=false, loadMore=false, itemsCallback=()=>{}, forceRefresh=undefined, rightOfSearchBar="", tableHeader="", scroll=false, customDisplayWrapperStyle={}, customNoResults="", leftOfSearchBar="", searchAutoComplete=true, autoFocus=false, defaultTotal=1000, searchBarSize="large", ...props }){
 
     const [loadMoreLoadState, setLoadMoreLoadState] = useState(0)
 
@@ -159,6 +159,7 @@ export default function ControlledTable({ items, setItems, searchText, setSearch
                     <div style={searchBarContainerStyle}>
                         {leftOfSearchBar}
                         <SearchBar
+                            size={searchBarSize}
                             textInputStyle={{...searchBarStyle}}
                             value={searchText}
                             setValue={setSearchText}

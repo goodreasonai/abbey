@@ -118,6 +118,7 @@ export default function Queue({ slideToLeft, manifestRow }) {
                             Queue is empty.
                         </div>
                     )}
+                    searchBarSize="small"
                     customDisplayWrapperStyle={{'borderRadius': 'var(--medium-border-radius)', 'overflow': 'hidden', 'border': '1px solid var(--light-border)', 'backgroundColor': 'var(--light-primary)'}}
                 />
             </div>

@@ -178,6 +178,7 @@ export default function Crawler({ manifestRow, canEdit }) {
         }
     }, [manifestRow, isSignedIn, websites])
 
+    const buttonFontSize = ".8rem"
     const rightOfSearchBar = (
         <div style={{'display': 'flex', 'alignItems': 'stretch', 'flex': '1', 'gap': '10px', 'minWidth': '0px'}}>
             <SyntheticButton
@@ -186,7 +187,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                         Add URL
                     </div>
                 )}
-                style={{'display': 'flex'}}
+                style={{'display': 'flex', 'fontSize': buttonFontSize}}
                 onClick={() => setAddWebsiteModalOpen(true)}
             />
             <SyntheticButton
@@ -195,7 +196,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                         Search
                     </div>
                 )}
-                style={{'display': 'flex'}}
+                style={{'display': 'flex', 'fontSize': buttonFontSize}}
                 onClick={() => slideToRight('search')}
             />
             <SyntheticButton
@@ -204,7 +205,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                         Queue
                     </div>
                 )}
-                style={{'display': 'flex'}}
+                style={{'display': 'flex', 'fontSize': buttonFontSize}}
                 onClick={() => slideToRight('queue')}
             />
             <SyntheticButton
@@ -213,7 +214,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                         Topic
                     </div>
                 )}
-                style={{'display': 'flex'}}
+                style={{'display': 'flex', 'fontSize': buttonFontSize}}
                 onClick={() => setShowTopic(true)}
             />
             <div style={{'fontSize': '1.25rem', 'display': 'flex', 'flex': '1', 'justifyContent': 'right', 'alignItems': 'center', 'color': 'var(--passive-text)'}}>
@@ -253,6 +254,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                 </div>
             </Modal>
             <Modal
+                minWidth="50vw"
                 isOpen={showTopic}
                 close={() => setShowTopic(false)}
                 title={"Research Topic"}
@@ -263,10 +265,13 @@ export default function Crawler({ manifestRow, canEdit }) {
                     </div>
                 )}
             >
-                <Textarea
-                    value={topic}
-                    setValue={setTopic}
-                />
+                <div style={{'height': '50vh'}}>
+                    <Textarea
+                        value={topic}
+                        setValue={setTopic}
+                        style={{'height': '100%'}}
+                    />
+                </div>
             </Modal>
         </div>
     )
@@ -730,6 +735,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                                 </div>
                             )}
                             customDisplayWrapperStyle={{'borderRadius': 'var(--medium-border-radius)', 'overflow': 'hidden', 'border': '1px solid var(--light-border)', 'backgroundColor': 'var(--light-primary)'}}
+                            searchBarSize="small"
                         />
                     )}
                     keepRightRendered={rightViewCode == 'search'}

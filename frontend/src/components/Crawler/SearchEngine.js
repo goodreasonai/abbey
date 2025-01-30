@@ -288,6 +288,7 @@ export default function SearchEngine({ assetId, slideToLeft, addCallback, topic 
                     rightOfSearchBar={rightOfSearchBar}
                     searchAutoComplete={false}
                     customDisplayWrapperStyle={{'borderRadius': 'var(--medium-border-radius)', 'overflow': 'hidden', 'border': '1px solid var(--light-border)', 'backgroundColor': 'var(--light-primary)'}}
+                    searchBarSize="small"
                 />
             </div>
         </div>

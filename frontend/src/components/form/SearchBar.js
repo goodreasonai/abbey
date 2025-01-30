@@ -6,7 +6,7 @@ import MyImage from "../MyImage/MyImage";
 import { useState, useEffect, useRef } from 'react'
 import styles from './Form.module.css'
 
-
+// size can be "large" or "small"
 export default function SearchBar({ value, setValue, getSearchResults, handleSearch, placeholder="Search...", textFieldStyle={}, searchOnErase=true, textFieldStretch=false, autoFocus=false, textInputStyle={}, size="large", containerStretch=true, autoComplete=true, ...props }) {
 
     const [autoFillOptions, setAutoFillOptions] = useState([]);
@@ -118,9 +118,9 @@ export default function SearchBar({ value, setValue, getSearchResults, handleSea
     let iconPadding = {}
     if (size == 'small'){
         textInputStyle['fontSize'] = '.8rem'
-        textInputStyle['padding'] = '5px'
+        textInputStyle['padding'] = '2px 10px'
         iconSize = 15
-        iconPadding = {'padding': '5px 10px'}
+        iconPadding = {'padding': '2px 10px'}
     }
 
     let extraBorderRadiusStyle = value ? {'borderTopRightRadius': '0px', 'borderBottomRightRadius': '0px'} : {}  // for the magnifying glass while there's an erase icon

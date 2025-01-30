@@ -216,7 +216,7 @@ function ScrapeInfoTable({ assetId, item, mainData }) {
     const rows = [
         {'title': 'Title', 'value': item.title, 'isText': true},
         {'title': 'URL', 'value': (
-            <a href={item.url} className={`${styles.urlLink} _clamped1`}>
+            <a href={item.url} className={`${styles.urlLink} _clamped1`} target="_blank">
                 {item.url}
             </a>
         )},
