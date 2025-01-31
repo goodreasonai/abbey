@@ -345,8 +345,8 @@ class ScrapeQuality():
 SCRAPE_QUALITY = [
     ScrapeQuality('COL', True, 'Collected', 'If a source is essentially legible, even if its text requires scrolling further'),
     ScrapeQuality('POBS', True, 'Partially Obscured', 'If a source is almost entirely legible, but dimmed or behind a small popup, even if its text requies scrolling further'),
-    ScrapeQuality('RLOG', True, 'Requires Login', 'If a source is almost entirely obscured or cut off because the user is not signed in'),
-    ScrapeQuality('OBS', True, 'Obscured', 'If a source is essentially wholly obscured or not present in the screenshots for other reasons'),
+    ScrapeQuality('RLOG', False, 'Requires Login', 'If a source is almost entirely obscured or cut off because the user is not signed in'),
+    ScrapeQuality('OBS', False, 'Obscured', 'If a source is essentially wholly obscured or not present in the screenshots for other reasons'),
 ]
 # Not sent to the AI, but a valid response
 NO_JUDGEMENT = ScrapeQuality('NJ', False, 'No Judgement', 'If no confirmation as to whether the scrape proceeded correctly can be inferred from the data, due to errors or other limitations')
@@ -368,6 +368,7 @@ SOURCE_TYPES = [
     SourceType('EDU', 'If the source is an academic article or other scholarly publication', 'Academic Article'),
     SourceType('WIKI', 'If the source is from an online wiki, like Wikipedia or Encycolopedia Brittanica', 'Wiki'),
     SourceType('BUS', 'If the source is a businesses landing page or other official promotional material', 'Business Page'),
+    SourceType('BLG', 'If the source is a personal or unofficial blog, like on Medium', 'Blog'),
     SourceType('OTH', 'If the source is none of the above', 'Other'),
 ]
 UNKNOWN_SOURCE_TYPE = SourceType('UNK', 'If the type of source cannot be determined because there isn\'t enough information', 'Unknown')
@@ -662,7 +663,7 @@ def scrape_from_queue_job(user_obj, job_id, asset_id, db=None):
 
 
 @needs_db
-def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_total=True, order_by=None, asc=False, db=None):
+def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, filter_by_scrape: list=None, filter_by_source_type: list=None, get_total=True, order_by=None, asc=False, db=None):
     # See specification of an "fts5 string" here: https://www.sqlite.org/fts5.html#full_text_query_syntax
     # Note that quotes are doubled up
     escaped_query = query.replace('"', '""')
@@ -688,26 +689,66 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_t
     else:
         raise Exception(f"Order by '{order_by}' is not an accessible column")    
 
+    eval_cols = [
+        'source_type',
+        'relevance',
+        'max_relevance',
+        'trustworthiness',
+        'max_trustworthiness',
+        'topic',
+        'title',
+        'author',
+        'desc'
+    ]
+
     results = []
     total = None
     with CrawlerDB(asset_id, read_only=True, db=db) as conn:
+        
+        query_args = [query] if query else []
+
+        website_ids_clause = ""
+        if website_ids is not None:
+            str_ids = ['?' for _ in website_ids]
+            website_ids_clause = f'AND websites.id IN ({",".join(str_ids)})'
+            query_args.extend(website_ids)
+        
+        website_cols_clause = ",".join([f"websites.{x}" for x in website_cols])
+
+        eval_cols_clause = ",".join([f"ev.{x} AS eval_{x}" for x in eval_cols])
+
+        filter_by_scrape_clause = ""
+        if filter_by_scrape and len(filter_by_scrape):
+            filter_by_scrape_clause = f"AND websites.scrape_quality_code IN ({','.join(['?' for _ in filter_by_scrape])})"
+            query_args.extend(filter_by_scrape)
+
+        filter_by_source_type_clause = ""
+        if filter_by_source_type and len(filter_by_source_type):
+            filter_by_source_type_clause = f"AND ev.source_type IN ({','.join(['?' for _ in filter_by_source_type])})"
+            query_args.extend(filter_by_source_type)
+
+        query_args.extend([limit, offset])
 
         # Query to get the total number of results
         if get_total:
             # Annoyingly run the query twice to get a "total"
             # TODO make it work with website_ids
+            total_args = [quoted_query] if query else []
+            if filter_by_scrape_clause:
+                total_args.extend(filter_by_scrape)
+            if filter_by_source_type_clause:
+                total_args.extend(filter_by_source_type)
             sql = f"""
-                SELECT COUNT(*) as _total FROM websites_fts5 {'WHERE websites_fts5 MATCH ?' if query else ""}
+                SELECT COUNT(*) as _total
+                FROM websites_fts5
+                LEFT JOIN websites ON websites.id = websites_fts5.website_id
+                LEFT JOIN evaluations AS ev ON websites.id = ev.website_id
+                {'WHERE websites_fts5 MATCH ?' if query else "WHERE 1=1"}
+                {filter_by_scrape_clause}
+                {filter_by_source_type_clause}
             """
-            res = conn.execute(sql, (quoted_query,)) if query else conn.execute(sql)
+            res = conn.execute(sql, total_args)
             total = res.fetchone()['_total']
-        
-        website_ids_clause = ""
-        if website_ids is not None:
-            str_ids = [str(x) for x in website_ids]
-            website_ids_clause = f'AND websites.id IN ({",".join(str_ids)})'
-        
-        website_cols_clause = ",".join([f"websites.{x}" for x in website_cols])
 
         # Actual query
         sql = f"""
@@ -715,37 +756,34 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, get_t
             {website_cols_clause},
             COALESCE(wd.website_data, '[]') AS website_data,
             COALESCE(e.errors, '[]') AS errors,
-            COALESCE(ev.evaluations, '[]') AS evaluations
+            {eval_cols_clause}
             FROM websites_fts5
             LEFT JOIN websites ON websites.id = websites_fts5.website_id
             LEFT JOIN (
-            SELECT 
-                website_id,
-                json_group_array(json_object('data_type', data_type, 'resource_id', resource_id)) AS website_data
-            FROM website_data
-            GROUP BY website_id
+                SELECT 
+                    website_id,
+                    json_group_array(json_object('data_type', data_type, 'resource_id', resource_id)) AS website_data
+                FROM website_data
+                GROUP BY website_id
             ) AS wd ON websites.id = wd.website_id
             LEFT JOIN (
-            SELECT 
-                website_id,
-                json_group_array(json_object('traceback', traceback, 'status', status, 'stage', stage, 'created_at', created_at)) AS errors
-            FROM errors
-            GROUP BY website_id
+                SELECT 
+                    website_id,
+                    json_group_array(json_object('traceback', traceback, 'status', status, 'stage', stage, 'created_at', created_at)) AS errors
+                FROM errors
+                GROUP BY website_id
             ) AS e ON websites.id = e.website_id
-            LEFT JOIN (
-            SELECT 
-                website_id,
-                json_group_array(json_object('title', title, 'author', author, 'desc', desc, 'source_type', source_type, 'trustworthiness', trustworthiness, 'max_trustworthiness', max_trustworthiness, 'relevance', relevance, 'max_relevance', max_relevance)) AS evaluations
-            FROM evaluations
-            GROUP BY website_id
-            ) AS ev ON websites.id = ev.website_id
+            LEFT JOIN evaluations AS ev
+                ON websites.id = ev.website_id
             {'WHERE websites_fts5 MATCH ?' if query else "WHERE 1=1"}
             {website_ids_clause}
+            {filter_by_scrape_clause}
+            {filter_by_source_type_clause}
             GROUP BY websites.id  -- Ensures one row per website
-            ORDER BY websites.{order_by} {'DESC' if not asc else 'ASC'}
+            ORDER BY websites.{order_by} {'DESC' if not asc else 'ASC'}, websites.url ASC
             LIMIT ? OFFSET ?
         """
-        res = conn.execute(sql, (query, limit, offset)) if query else conn.execute(sql, (limit, offset))
+        res = conn.execute(sql, query_args)
         results = res.fetchall()
 
     return results, total
@@ -819,8 +857,10 @@ def get_manifest(user: User):
     raw_query = request.args.get('query', "")
     order_by = request.args.get('order_by', None)
     asc = request.args.get('asc', '0') == '1'
+    filter_by_scrape = request.args.getlist('quality')
+    filter_by_source_type = request.args.getlist('source_type')
 
-    results, total = search_sites(asset_id, raw_query, limit=limit, offset=offset, order_by=order_by, asc=asc)
+    results, total = search_sites(asset_id, raw_query, filter_by_scrape=filter_by_scrape, filter_by_source_type=filter_by_source_type, limit=limit, offset=offset, order_by=order_by, asc=asc)
 
     # Add info on which are queued
     if len(results):
@@ -1034,6 +1074,7 @@ def add_bulk(user: User):
     if not asset_row:
         return MyResponse(False, reason="Couldn't find asset", status=404).to_json()
     
+    queue = request.json.get('queue', False)
     items = request.json.get('items')
     added = []
     with CrawlerDB(asset_id) as crawler:
@@ -1051,6 +1092,17 @@ def add_bulk(user: User):
             last = res.fetchone()
             added.append(last)
         crawler.commit()
+
+    if queue and len(added):
+        try:
+            add_websites_to_queue(user, asset_id, added)
+        except QueueDuplicate:
+            return MyResponse(False, reason="Duplicate", status=409).to_json()  # 409 = Conflict
+        except QueueFull:
+            return MyResponse(False, reason="Queue full", status=429).to_json()  # 429 = "Too many requests"
+
+        start_queue_job_if_none_exists(user, asset_id)
+        added = [{**x, 'queued': True} for x in added]
     
     return MyResponse(True, {'results': added}).to_json()
 

@@ -42,17 +42,6 @@ export default function ScrapePreview({ assetId, item, slideToLeft, setItem }){
         return websiteData.slice(1)  // might be length 0
     }, [websiteData])
 
-    const evaluation = useMemo(() => {
-        if (!item?.evaluations){
-            return undefined
-        }
-        const evals = JSON.parse(item.evaluations)
-        if (evals && evals.length){
-            return evals[0]
-        }
-        return undefined
-    }, [item])
-
     const downloadData = useCallback(async () => {
         try {
             const url = process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/files?id=${assetId}&name=${mainData.resource_id}`
@@ -173,8 +162,8 @@ export default function ScrapePreview({ assetId, item, slideToLeft, setItem }){
                 rightPanel={(
                     <div style={{'display': 'flex', 'flexDirection': "column", 'gap': '1rem'}}>
                         <ScrapeInfoTable assetId={assetId} item={item} mainData={mainData} />
-                        {evaluation ? (
-                            <ScrapeEvalTable evaluation={evaluation} />
+                        {item.eval_source_type ? (
+                            <ScrapeEvalTable website={item} />
                         ) : (
                             <div style={{'color': 'var(--passive-text)'}}>
                                 No LM evaluation available
@@ -326,8 +315,8 @@ function CreateAssetButton({ assetId, website, setWebsite }) {
     )
 }
 
-function ScrapeEvalTable({ evaluation }){
-    const relevanceRatio = evaluation.relevance / evaluation.max_relevance
+function ScrapeEvalTable({ website }){
+    const relevanceRatio = website.eval_relevance / website.eval_max_relevance
     let relevanceClass = ""
     if (relevanceRatio > .75){
         relevanceClass = styles.highScore
@@ -336,7 +325,7 @@ function ScrapeEvalTable({ evaluation }){
         relevanceClass = styles.highScore
     }
 
-    const trustRatio = evaluation.trustworthiness / evaluation.max_trustworthiness
+    const trustRatio = website.eval_trustworthiness / website.eval_max_trustworthiness
     let trustClass = ""
     if (trustRatio > .75){
         trustClass = styles.highScore
@@ -349,36 +338,36 @@ function ScrapeEvalTable({ evaluation }){
             {'title': 'Type', 'value': (
                 <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
                     <div>
-                        {SOURCE_TYPE_CODE_TO_NAME[evaluation.source_type]}
+                        {SOURCE_TYPE_CODE_TO_NAME[website.eval_source_type]}
                     </div>
                     <div className={`${styles.sourceCode}`}>
-                        {evaluation.source_type}
+                        {website.eval_source_type}
                     </div>
                 </div>
             )},
             {'title': 'Relevance', 'value': (
                 <div style={{'display': 'flex'}}>
-                    <Tooltip content={`${evaluation.relevance}/${evaluation.max_relevance}`}>
+                    <Tooltip content={`${website.eval_relevance}/${website.eval_max_relevance}`}>
                         <div className={`${styles.score} ${relevanceClass}`}>
-                            {`${evaluation.relevance}`}
+                            {`${website.eval_relevance}`}
                         </div>
                     </Tooltip>
                 </div>
             ), 'isText': true},
             {'title': 'Trust', 'value': (
                 <div style={{'display': 'flex'}}>
-                    <Tooltip content={`${evaluation.trustworthiness}/${evaluation.max_trustworthiness}`}>
+                    <Tooltip content={`${website.eval_trustworthiness}/${website.eval_max_trustworthiness}`}>
                         <div className={`${styles.score} ${trustClass}`}>
-                            {`${evaluation.trustworthiness}`}
+                            {`${website.eval_trustworthiness}`}
                         </div>
                     </Tooltip>
                 </div>
             ), 'isText': true},
-            {'title': 'Title', 'value': evaluation.title, 'isText': true},
-            {'title': 'Author', 'value': evaluation.author, 'isText': true},
-            {'title': 'Description', 'value': evaluation.desc, 'isText': true},
+            {'title': 'Title', 'value': website.eval_title, 'isText': true},
+            {'title': 'Author', 'value': website.eval_author, 'isText': true},
+            {'title': 'Description', 'value': website.eval_desc, 'isText': true},
         ]
-    }, [evaluation])
+    }, [website])
     return (
         <InfoTable title={"Language Model Eval"} rows={rows} />
     )

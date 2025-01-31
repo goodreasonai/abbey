@@ -60,7 +60,8 @@ export default function SearchEngine({ assetId, slideToLeft, addCallback, topic 
             const urlsToAdd = Object.keys(selected).filter((x) => selected[x])
             const data = {
                 'id': assetId,
-                'items': urlsToAdd.map((x) => selected[x])
+                'items': urlsToAdd.map((x) => selected[x]),
+                'queue': true
             }
             const response = await fetch(url, {
                 'headers': {
@@ -158,7 +159,7 @@ export default function SearchEngine({ assetId, slideToLeft, addCallback, topic 
                 value={(
                     <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
                         <div>
-                            Add to Collection
+                            Add & Queue
                         </div>
                         <Loading text="" color={"var(--light-text)"} />
                     </div>
@@ -170,7 +171,7 @@ export default function SearchEngine({ assetId, slideToLeft, addCallback, topic 
             <SyntheticButton
                 value={(
                     <div style={{'display': 'flex', 'alignItems': 'center'}}>
-                        Add to Collection ({`${nSelected}`})
+                        Add & Queue ({`${nSelected}`})
                     </div>
                 )}
                 style={{'display': 'flex'}}

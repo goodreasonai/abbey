@@ -73,6 +73,23 @@ export function extractSiteWithPath(fullUrl) {
     }
 }
 
+// https://www.mysite.com/path --> mysite.com
+export function extractSiteHostname(fullUrl) {
+    try {
+        const url = new URL(fullUrl);
+        let host = url.hostname;
+        // Remove "www." if it exists
+        if (host.startsWith('www.')) {
+            host = host.slice(4);
+        }
+        return host;
+    
+    } catch (error) {
+        console.error("Invalid URL:", fullUrl);
+        return fullUrl; // Return the original URL if parsing fails
+    }
+}
+
 export function toWords(sentence) {
     // Remove punctuation from the sentence
     const cleanedSentence = sentence.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');

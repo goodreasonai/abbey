@@ -12,7 +12,7 @@ import { formatTimestampSmall } from "@/utils/time"
 import DeleteIcon from '../../../public/icons/DeleteIcon.png'
 import Tooltip from "../Tooltip/Tooltip"
 import RestartIcon from '../../../public/icons/RestartIcon.png'
-import { extractSiteWithPath } from "@/utils/text"
+import { extractSiteHostname, extractSiteWithPath } from "@/utils/text"
 import SlidingPage from "../SlidingPage/SlidingPage"
 import ScrapePreview from "./ScrapePreview"
 import SmartHeightWrapper from "../SmartHeightWrapper/SmartHeightWrapper"
@@ -27,6 +27,8 @@ import useSaveDataEffect from "@/utils/useSaveDataEffect"
 import RemoveIcon from '../../../public/icons/RemoveIcon.png'
 import SlidingBar from "../SlidingBar/SlidingBar"
 import Info from "../Info/Info"
+import LightDropdown from "../LightDropdown/LightDropdown"
+import Dropdown from "../Dropdown/Dropdown"
 
 const TABLE_COL_GAP='10px'
 const RESEARCH_TOPIC='topic'
@@ -39,6 +41,7 @@ export const QUALITY_CODE_TO_NAME = {
     'NJ': 'No Judgement',
     'ACOL': 'Assume Collected'
 }
+const GOOD_QUALITY_CODES = ['COL', 'POBS', 'ACOL']  // will show up when filtered
 
 export const SOURCE_TYPE_CODE_TO_NAME = {
     'NEWS': 'News Article',
@@ -47,6 +50,7 @@ export const SOURCE_TYPE_CODE_TO_NAME = {
     'EDU': 'Academic Article',
     'WIKI': 'Wiki Entry',
     'BUS': 'Business',
+    'BLG': 'Blog',
     'OTH': 'Other',
     'UNK': 'Unknown'
 }
@@ -76,6 +80,8 @@ export default function Crawler({ manifestRow, canEdit }) {
 
     const [orderBy, setOrderBy] = useState(undefined)
     const [asc, setAsc] = useState(undefined)
+    const [qualityFilter, setQualityFilter] = useState([])
+    const [typeFilter, setTypeFilter] = useState({})
 
     const [showTopic, setShowTopic] = useState(false)
     const [topicLoading, setTopicLoading] = useState(0)
@@ -84,26 +90,43 @@ export default function Crawler({ manifestRow, canEdit }) {
 
     const resultLimit = 20
 
-    function getUrl(page, text, order_by, local_asc){
+    function getUrl(page, text, localOrderBy, localAsc, localQuality, localType){
         if (!text){
             text = ""
         }
         let url = new URL(process.env.NEXT_PUBLIC_BACKEND_URL + "/crawler/manifest")
         let params = new URLSearchParams(url.search);
         const offset = resultLimit * (page - 1)
+        const realAsc = localAsc !== undefined ? localAsc : asc
+        const realOrderBy = localOrderBy !== undefined ? localOrderBy : orderBy
         let paramObj = {
             'query': text,
             'limit': resultLimit,
             'offset': offset,
             'id': manifestRow?.id,
-            'asc': local_asc ? '1' : '0'
+            'asc': realAsc ? '1' : '0'
         }
-        if (order_by){
-            paramObj['order_by'] = order_by
+        if (realOrderBy){
+            paramObj['order_by'] = realOrderBy
         }
         for (let key in paramObj) {
             params.append(key, paramObj[key]);
         }
+
+        if (Array.isArray(localQuality)) {
+            localQuality.forEach(item => params.append('quality', item));
+        }
+        else if (qualityFilter?.length){
+            qualityFilter.forEach(item => params.append('quality', item));
+        }
+
+        if (Array.isArray(localType)) {
+            localType.forEach(item => params.append('source_type', item));
+        }
+        else if (typeFilter?.length){
+            typeFilter.forEach(item => params.append('source_type', item));
+        }
+
         url.search = params.toString()
         return url
     }
@@ -386,18 +409,10 @@ export default function Crawler({ manifestRow, canEdit }) {
         return <TableRow key={i} slideToRight={slideToRight} setItem={(x) => setWebsites((prev) => prev.map((old) => old.id == x.id ? x : old))} item={item} i={i} isFirst={ i == 0} isLast={i == websites?.length - 1} tableCols={tableCols} />
     }
 
-    async function refresh(localOrderBy, localAsc){
-        let realOrderBy = localOrderBy
-        if (!realOrderBy){
-            realOrderBy = orderBy
-        }
-        let realAsc = localAsc
-        if (localAsc === undefined){
-            realAsc = asc
-        }
+    async function refresh(){
         try {
             setWebsitesLoadState(1)
-            const url = getUrl(currPage, searchText, realOrderBy, realAsc)
+            const url = getUrl(currPage, searchText, orderBy, asc, qualityFilter, Object.entries(typeFilter).map((x) => x[1] ? x[0] : undefined).filter((x) => x))
             const response = await fetch(url, {
                 'headers': {
                     'x-access-token': await getToken(),
@@ -410,12 +425,6 @@ export default function Crawler({ manifestRow, canEdit }) {
             const myJson = await response.json()
             const websites = myJson['results']
             const total = myJson['total']
-            if (orderBy != realOrderBy){
-                setOrderBy(realOrderBy)
-            }
-            if (asc != realAsc){
-                setAsc(realAsc)
-            }
             setWebsitesLoadState(2)
             setWebsites(websites)
             setNumResults(total)
@@ -425,6 +434,10 @@ export default function Crawler({ manifestRow, canEdit }) {
             console.log("Error refreshing")
         }
     }
+
+    useEffect(() => {
+        refresh()
+    }, [asc, qualityFilter, typeFilter, orderBy])
 
     const tableCols = useMemo(() => {
         return [
@@ -453,7 +466,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                 return formatTimestampSmall(item['created_at'])
             }, 'headerHook': () => {
                 return (
-                    <div className="_clickable" style={{'display': 'flex', 'gap': '5px'}} onClick={() => refresh('created_at', !asc)}>
+                    <div className="_clickable" style={{'display': 'flex', 'gap': '5px'}} onClick={() => {setOrderBy('created_at'); setAsc(asc === false)}}>
                         <div>
                             Added
                         </div>
@@ -465,62 +478,16 @@ export default function Crawler({ manifestRow, canEdit }) {
                     </div>
                 )
             }},
-            {'title': 'URL', 'key': 'url', 'flex': 6, 'hook': ({ item }) => {
-                const shortenedUrl = extractSiteWithPath(item['url'])
+            {'title': 'Host', 'key': 'url', 'flex': 3, 'hook': ({ item }) => {
+                const shortenedUrl = extractSiteHostname(item['url'])
                 return (
                     <a className={styles.urlLink} target="_blank" href={item['url']}>{shortenedUrl}</a>
                 )
             }},
-            {'title': 'Title', 'key': 'title', 'flex': 7, 'hook': ({ item }) => {
+            {'title': 'Title', 'key': 'title', 'flex': 8, 'hook': ({ item }) => {
                 return (
                     <span title={item['title']}>{item['title']}</span>
                 )
-            }},
-            {'title': 'Type', 'key': 'content_type', 'flex': 1, 'hook': ({ item }) => {
-                const { getToken } = Auth.useAuth()
-
-                const [downloadLoadState, setDownloadLoadState] = useState(0)
-
-                async function downloadData(resourceId){
-                    try {
-                        setDownloadLoadState(1)
-                        const url = process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/files?id=${manifestRow?.id}&name=${resourceId}`
-                        const response = await fetch(url, {
-                            'headers': {
-                                'x-access-token': await getToken(),
-                            },
-                            'method': 'GET'
-                        })
-                        await fileResponse(response)
-                        setDownloadLoadState(2)
-                    }
-                    catch(e) {
-                        setDownloadLoadState(3)
-                        console.log(e)
-                    }
-                }
-                
-                let inner = ""
-                if (item.website_data){
-                    const websiteData = JSON.parse(item.website_data)
-                    const mainData = websiteData.filter((x) => x.data_type == 'data')
-                    if (mainData.length){
-                        const ext = getExtFromMimetype(item['content_type'])
-                        inner = downloadLoadState == 1 ? (
-                            <Loading size={15} text="" />
-                        ) : (
-                            <div style={{'display': 'flex'}}>
-                                <div className={styles.downloadLink} onClick={() => downloadData(mainData[0].resource_id)}>
-                                    {ext}
-                                </div>
-                            </div>
-                        )
-                    }
-                }
-                else {
-                    inner = ""
-                }
-                return inner
             }},
             {'title': 'Scrape', 'key': '_scrape', 'flex': 2, 'hook': ({ item, setItem }) => {
                 const { getToken } = Auth.useAuth()
@@ -615,7 +582,59 @@ export default function Crawler({ manifestRow, canEdit }) {
                 }
                 return inner
             }},
-            {'title': '', 'key': 'code', 'flex': 2, 'hook': ({ item, setItem }) => {
+            {'title': 'Ext', 'key': 'content_type', 'flex': 1, 'hook': ({ item }) => {
+                const { getToken } = Auth.useAuth()
+
+                const [downloadLoadState, setDownloadLoadState] = useState(0)
+
+                async function downloadData(resourceId){
+                    try {
+                        setDownloadLoadState(1)
+                        const url = process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/files?id=${manifestRow?.id}&name=${resourceId}`
+                        const response = await fetch(url, {
+                            'headers': {
+                                'x-access-token': await getToken(),
+                            },
+                            'method': 'GET'
+                        })
+                        await fileResponse(response)
+                        setDownloadLoadState(2)
+                    }
+                    catch(e) {
+                        setDownloadLoadState(3)
+                        console.log(e)
+                    }
+                }
+                
+                let inner = ""
+                if (item.website_data){
+                    const websiteData = JSON.parse(item.website_data)
+                    const mainData = websiteData.filter((x) => x.data_type == 'data')
+                    if (mainData.length){
+                        const ext = getExtFromMimetype(item['content_type'])
+                        inner = downloadLoadState == 1 ? (
+                            <Loading size={15} text="" />
+                        ) : (
+                            <div style={{'display': 'flex'}}>
+                                <div className={styles.downloadLink} onClick={() => downloadData(mainData[0].resource_id)}>
+                                    {ext}
+                                </div>
+                            </div>
+                        )
+                    }
+                }
+                else {
+                    inner = ""
+                }
+                return inner
+            }, 'headerHook': () => {
+                return (
+                    <Tooltip content={"File extension of the collected data"}>
+                        Ext
+                    </Tooltip>
+                )
+            }},
+            {'title': '', 'key': 'quality_code', 'flex': 2, 'hook': ({ item, setItem }) => {
                 const code = item.scrape_quality_code
                 return code ? (
                     <div style={{'display': 'flex'}}>
@@ -628,7 +647,27 @@ export default function Crawler({ manifestRow, canEdit }) {
                 ) : ""
             }, 'headerHook': () => {
                 return (
-                    <Info content="These codes help understand the quality of the scrape, such as whether login was required (RLOG) or if the content was fully collected (COL), etc." />
+                    <Tooltip content="These codes help understand the quality of the scrape itself, such as whether login was required (RLOG) or if the content was fully collected (COL), etc.">
+                        Success
+                    </Tooltip>
+                )
+            }},
+            {'title': 'Source', 'key': 'eval', 'flex': 2, 'hook': ({ item, setItem }) => {
+                const evalSourceType = item.eval_source_type
+                return evalSourceType ? (
+                    <div style={{'display': 'flex'}}>
+                        <Tooltip content={SOURCE_TYPE_CODE_TO_NAME[evalSourceType]}>
+                            <div className={`${styles.sourceCode}`}>
+                                {evalSourceType}
+                            </div>
+                        </Tooltip>
+                    </div>
+                ) : ""
+            }, 'headerHook': () => {
+                return (
+                    <Tooltip content="These codes help understand the type of source that was scraped - like an academic article (EDU), blog post (BLG), etc.">
+                        Type
+                    </Tooltip>
                 )
             }},
             {'title': 'Visited', 'key': 'scraped_at', 'flex': 2, 'hook': ({ item }) => {
@@ -639,7 +678,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                 ) : ""
             }, 'headerHook': () => {
                 return (
-                    <div className="_clickable" style={{'display': 'flex', 'gap': '5px'}} onClick={() => refresh('scraped_at', !asc)}>
+                    <div className="_clickable" style={{'display': 'flex', 'gap': '5px'}} onClick={() => {setOrderBy('scraped_at'); setAsc(asc === false)}}>
                         <div>
                             Visited
                         </div>
@@ -719,7 +758,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                             searchable={true}
                             tableHeader={(
                                 <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '10px'}}>
-                                    <TableControls manifestRow={manifestRow} refresh={refresh} stats={stats} selected={selected} setSelected={setSelected} websites={websites} setWebsites={setWebsites} />
+                                    <TableControls manifestRow={manifestRow} refresh={refresh} stats={stats} selected={selected} setSelected={setSelected} websites={websites} setWebsites={setWebsites} qualityFilter={qualityFilter} setQualityFilter={setQualityFilter} typeFilter={typeFilter} setTypeFilter={setTypeFilter} />
                                     <TableHeader cols={tableCols} />
                                 </div>
                             )}
@@ -789,7 +828,7 @@ export function TableRow({ item, setItem, i, tableCols, isFirst, isLast, slideTo
     )
 }
 
-function TableControls({ manifestRow, refresh, stats, websites, setWebsites, selected, setSelected }) {
+function TableControls({ manifestRow, refresh, stats, websites, setWebsites, selected, setSelected, qualityFilter, setQualityFilter, typeFilter, setTypeFilter }) {
    
     const { getToken, isSignedIn } = Auth.useAuth()
     const [bulkQueueLoadingState, setBulkQueueLoadingState] = useState(0)
@@ -869,6 +908,46 @@ function TableControls({ manifestRow, refresh, stats, websites, setWebsites, sel
                     </div>
                 </div>
             ) : ""}
+            <ControlLabel label={"Scraped Successfully"} value={(
+                <FakeCheckbox iconSize={15} value={qualityFilter?.length} setValue={() => {
+                    const newFilter = qualityFilter?.length ? [] : [...GOOD_QUALITY_CODES]
+                    setQualityFilter(newFilter)
+                }} />
+            )} color="var(--light-background)" fontColor="var(--dark-text)" />
+            <Dropdown
+                initialButtonStyle={{'padding': '2px 5px', 'fontSize': '.8rem', 'height': '100%'}}
+                optionsStyle={{'fontSize': '.8rem', 'padding': '2px 5px'}}
+                value={(
+                    <div style={{'display': 'flex', 'gap': '5px', 'alignItems': 'center'}}>
+                        <div>
+                            Filter by Type
+                        </div>
+                        <FakeCheckbox style={{'opacity': '1'}} iconSize={15} value={Object.values(typeFilter || {}).filter((x) => x).length} setValue={()=>{}} />
+                    </div>
+                )}
+                closeOnSelect={false}
+                options={Object.entries(SOURCE_TYPE_CODE_TO_NAME).map((k, v) => {
+                    return {
+                        'value': (
+                            <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
+                                <div style={{'flex': '1'}} className="_clamped1">
+                                    {k[0]}
+                                </div>
+                                <FakeCheckbox
+                                    style={{'opacity': '1'}}
+                                    iconSize={15}
+                                    value={typeFilter && typeFilter[k[0]]}
+                                    setValue={() => {}}
+                                />
+                            </div>
+                        ),
+                        'onClick': ()=>{
+                            const newTypeFilter = {...typeFilter, [k[0]]: !(typeFilter && typeFilter[k[0]])}
+                            setTypeFilter(newTypeFilter)
+                        }
+                    }
+                })}
+            />
         </div>
     )
 }
