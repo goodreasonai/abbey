@@ -146,7 +146,7 @@ export default function ScrapePreview({ assetId, item, slideToLeft, setItem }){
                     <BackToCollection slideToLeft={slideToLeft} />
                 </div>
                 <div style={{'flex': '5', 'display': 'flex', 'justifyContent': 'center'}}>
-                    <div style={{'backgroundColor': 'var(--light-primary)', 'border': '1px solid var(--light-border)', 'padding': '5px 10px', 'borderRadius': 'var(--medium-border-radius)', 'display': 'flex', 'margin': '0px 10px'}}>
+                    <div style={{'backgroundColor': 'var(--light-primary)', 'border': '1px solid var(--light-border)', 'padding': '5px 10px', 'borderRadius': 'var(--medium-border-radius)', 'display': 'flex', 'margin': '0px 10px', 'alignItems': 'center'}}>
                         <div style={{'width': '100%'}} className="_clamped1">
                             {item.title}
                         </div>
@@ -322,7 +322,7 @@ function ScrapeEvalTable({ website }){
         relevanceClass = styles.highScore
     }
     else if (relevanceRatio < .25){
-        relevanceClass = styles.highScore
+        relevanceClass = styles.lowScore
     }
 
     const trustRatio = website.eval_trustworthiness / website.eval_max_trustworthiness

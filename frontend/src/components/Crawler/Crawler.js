@@ -484,7 +484,7 @@ export default function Crawler({ manifestRow, canEdit }) {
                     <a className={styles.urlLink} target="_blank" href={item['url']}>{shortenedUrl}</a>
                 )
             }},
-            {'title': 'Title', 'key': 'title', 'flex': 8, 'hook': ({ item }) => {
+            {'title': 'Title', 'key': 'title', 'flex': 10, 'hook': ({ item }) => {
                 return (
                     <span title={item['title']}>{item['title']}</span>
                 )
@@ -650,6 +650,72 @@ export default function Crawler({ manifestRow, canEdit }) {
                     <Tooltip content="These codes help understand the quality of the scrape itself, such as whether login was required (RLOG) or if the content was fully collected (COL), etc.">
                         Success
                     </Tooltip>
+                )
+            }},
+            {'title': 'Rel', 'key': 'relevance', 'flex': 2, 'hook': ({ item, setItem }) => {
+                const rel = item.eval_relevance
+                const relRatio = item.eval_relevance / item.eval_max_relevance
+                let relevanceClass = ""
+                if (relRatio > .75){
+                    relevanceClass = styles.highScore
+                }
+                else if (relRatio < .25){
+                    relevanceClass = styles.lowScore
+                }
+                return rel ? (
+                    <div style={{'display': 'flex'}}>
+                        <div className={`${styles.qualityCode} ${relevanceClass}`}>
+                            {rel}
+                        </div>
+                    </div>
+                ) : ""
+            }, 'headerHook': () => {
+                return (
+                    <Tooltip content="AI generated relevance score">
+                        <div className="_clickable" style={{'display': 'flex', 'gap': '5px'}} onClick={() => {setOrderBy('relevance'); setAsc(asc === false)}}>
+                            <div>
+                                Rel
+                            </div>
+                            {orderBy == 'relevance' ? (
+                                asc ? (
+                                    "▲"
+                                ) : "▼"
+                            ) : ""}
+                        </div>
+                    </Tooltip>
+                )
+            }},
+            {'title': 'Rel', 'key': 'relevance', 'flex': 2, 'hook': ({ item, setItem }) => {
+                const trust = item.eval_trustworthiness
+                const trustRatio = item.eval_trustworthiness / item.eval_max_trustworthiness
+                let trustClass = ""
+                if (trustRatio > .75){
+                    trustClass = styles.highScore
+                }
+                else if (trustRatio < .25){
+                    trustClass = styles.lowScore
+                }
+                return trust ? (
+                    <div style={{'display': 'flex'}}>
+                        <div className={`${styles.qualityCode} ${trustClass}`}>
+                            {trust}
+                        </div>
+                    </div>
+                ) : ""
+            }, 'headerHook': () => {
+                return (
+                    <Tooltip content="AI generated trustworthiness score">
+                    <div className="_clickable" style={{'display': 'flex', 'gap': '5px'}} onClick={() => {setOrderBy('trustworthiness'); setAsc(asc === false)}}>
+                        <div>
+                            Trust
+                        </div>
+                        {orderBy == 'trustworthiness' ? (
+                            asc ? (
+                                "▲"
+                            ) : "▼"
+                        ) : ""}
+                    </div>
+                </Tooltip>
                 )
             }},
             {'title': 'Source', 'key': 'eval', 'flex': 2, 'hook': ({ item, setItem }) => {

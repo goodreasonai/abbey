@@ -682,12 +682,6 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, filte
         'scrape_quality_code',
         'url'
     ]
-    if order_by is None:
-        order_by = 'created_at'
-    elif order_by in website_cols:
-        pass
-    else:
-        raise Exception(f"Order by '{order_by}' is not an accessible column")    
 
     eval_cols = [
         'source_type',
@@ -700,6 +694,16 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, filte
         'author',
         'desc'
     ]
+
+    order_by_table = 'websites'
+    if order_by is None:
+        order_by = 'created_at'
+    elif order_by in website_cols:
+        pass
+    elif order_by in eval_cols:
+        order_by_table = 'ev'
+    else:
+        raise Exception(f"Order by '{order_by}' is not an accessible column")    
 
     results = []
     total = None
@@ -780,7 +784,7 @@ def search_sites(asset_id, query="", limit=20, offset=0, website_ids=None, filte
             {filter_by_scrape_clause}
             {filter_by_source_type_clause}
             GROUP BY websites.id  -- Ensures one row per website
-            ORDER BY websites.{order_by} {'DESC' if not asc else 'ASC'}, websites.url ASC
+            ORDER BY {order_by_table}.{order_by} {'DESC' if not asc else 'ASC'}, websites.url ASC
             LIMIT ? OFFSET ?
         """
         res = conn.execute(sql, query_args)
