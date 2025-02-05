@@ -157,13 +157,15 @@ class ScrapeResponse():
 
     def set_data(self, content):
         try:
+            tmp = None
             if self.metadata.content_type == 'text/html':
                 self._set_metadata_from_html(content)
             tmp = tempfile.NamedTemporaryFile(delete=False)
             tmp.write(content)
             self.data_path = tmp.name
         finally:
-            tmp.close()
+            if tmp:
+                tmp.close()
 
     def add_screenshot(self, content, mimetype):
         try:
@@ -240,7 +242,7 @@ def scrape_with_requests(url, use_html=None):
             return ScrapeResponse(False, status=None, url=url, headers={})
 
 
-def scrape_with_service(url):
+def scrape_with_service(url: str):
     if 'scraper'  not in SETTINGS:
         raise ScraperUnavailable()
 

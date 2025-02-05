@@ -69,14 +69,18 @@ def scrape_task(url, wait):
                 # Check if it's the main resource
                 if _response.url == url:
                     response = _response
+                # ...or we just got a 302 and are going to a new URL to scrape
+                elif response and response.status == 302:
+                    response = _response
 
             page.on("response", handle_response)
-
             # Navigate to the page
             # If there's no download, screenshotting and request stuff proceeds as normal
             # If a download is initiated, Playwright throws an error which you can then handle
             try:
                 response = page.goto(url)
+                if response and response.status == 302:
+                    response = page.goto(response.headers.get('location'))
             except PlaywrightError as e:
                 # Unfortunately, a specific error isn't thrown - have to use the substring
                 substr = "Download is starting"
@@ -85,7 +89,11 @@ def scrape_task(url, wait):
                     # But there's still the same exception to handle even with the expect download... playwright can be hell sometimes
                     with page.expect_download() as download_info:  
                         try:
-                            page.goto(url)
+                            if response and response.status == 302:
+                                loc = response.headers.get('location')
+                                page.goto(loc)
+                            else:
+                                page.goto(url)
                         except PlaywrightError as e:
                             if substr in str(e):
                                 processing_download = True
