@@ -7,7 +7,6 @@ import AddGroups from './AddGroups'
 import Finalized from './Finalized'
 import Loading from '../Loading/Loading'
 import { Auth } from "@/auth/auth";
-import { getCanEdit } from '@/utils/requests'
 import useSaveDataEffect from '@/utils/useSaveDataEffect'
 import Saving from '../Saving/Saving'
 import { USER_DATA } from '@/config/strConstants'

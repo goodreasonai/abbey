@@ -687,7 +687,6 @@ def chat(user: User):
         inline_citations = use_web  # Everything except web search uses inline citations
 
         system_prompt = None
-        search_query = None
         prompt = None
         sources = []
 
@@ -717,7 +716,7 @@ def chat(user: User):
         assert(prompt is not None)
         assert(system_prompt is not None)
 
-        yield get_event({'type': META_EVENT, 'metadata': {'sources': sources, 'inline_citations': inline_citations}})
+        yield get_event({'type': META_EVENT, 'meta': {'sources': sources, 'inline_citations': inline_citations}})
 
         for stream_response in model.stream(prompt, system_prompt=system_prompt, context=context, temperature=temperature, show_reasoning=True, images=images):
             stream_response: LMStreamResponse
@@ -1380,9 +1379,10 @@ def quick_summary(user: User):
     
     def gen_text():
         total_summary = ""
-        for x in lm.stream(user_prompt, system_prompt=system_prompt):
-            total_summary += x
-            yield x
+        for x in lm.stream(user_prompt, system_prompt=system_prompt, show_reasoning=False):
+            x: LMStreamResponse
+            total_summary += x.text
+            yield x.text
         # Once done, store the summary.
         add_resource_from_text(asset_id, SUMMARY_FILE, total_summary, replace=redo)
     

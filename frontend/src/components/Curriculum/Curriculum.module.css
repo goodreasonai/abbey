@@ -173,7 +173,7 @@
     max-height: 100vh;
     overflow: scroll;
     max-width: 35%;
-    z-index: 10001;
+    z-index: 11;
     padding: 1rem;
     background-color: var(--light-background);
 }

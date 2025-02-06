@@ -3,14 +3,14 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    position: relative;
 }
 
 .webCard {
     width: 175px;
     display: flex;
-    gap: 10px;
+    gap: 5px;
     background-color: var(--light-primary);
-    flex-direction: column;
     font-size: .9rem;
     color: var(--passive-text);
     background-color: var(--light-background);

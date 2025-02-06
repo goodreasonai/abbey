@@ -1,7 +1,7 @@
 import { DIVIDER_TEXT, CHAT_ERROR_TEXT } from "@/config/strConstants"
 
 
-export const handleStreamingChat = async ({ reader, decoder, onSearchQuery=()=>{}, onInitial=()=>{}, onInitialEnd=(myJson, i)=>{}, onReasoning=()=>{}, onSnippetStart=()=>{}, onSnippet=(result, i)=>{} }) => {
+export const handleStreamingChat = async ({ reader, decoder, onSearchQuery=()=>{}, onInitial=()=>{}, onInitialEnd=(myJson)=>{}, onReasoning=()=>{}, onSnippetStart=()=>{}, onSnippet=(result)=>{} }) => {
     
     let first_read = false;
     let first_snippet_read = false;

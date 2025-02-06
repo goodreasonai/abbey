@@ -310,7 +310,7 @@ def get_web_chunks(user: User, search_query, available_context, max_n=5):
                 print('Exception in get_web_chunks: %r generated an exception: %s' % (res.url, exc))
     
     scrape_responses = scrape_responses[:max_n]
-    
+
     if not len(scrape_responses):
         return []
     

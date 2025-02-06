@@ -271,7 +271,7 @@ export default function LinkStep({ manifestRow, fullState, setFullState, nextCal
                         {'text':  "Auto-Fill Resources", 'loading': linkLoadingState == 1, 'icon': GearIcon, 'alt': 'Gears', 'onClick': () => {linkLoadingState == 1 ? stopLinking() : doLinking(0, true, true)}},
                         {'text': 'Done Editing', 'icon': CircleCheckIcon, 'alt': 'Good & Ready', 'onClick': () => {nextCallback()}}
                     ]}
-                    style={{'position': 'sticky', 'top': '0px', 'zIndex': '10000'}}
+                    style={{'position': 'sticky', 'top': '0px', 'zIndex': '10'}}
                     savingVar={savingVar}
                 />
                 <div className={styles.linkStepStructuredContainer}>

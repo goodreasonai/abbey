@@ -12,7 +12,7 @@ import Tooltip from "../Tooltip/Tooltip"
 import LinkedSelectorItem from "../LinkedSelectorItem/LinkedSelectorItem"
 import { Auth } from "@/auth/auth"
 import Link from "next/link"
-import ChatSources from "./ChatSources"
+import WebChatSources from "./WebChatSources"
 import { removeCitations } from "@/utils/text"
 import EditIcon from '../../../public/icons/EditIcon.png'
 import { HIDE_COLLECTIONS, HIDE_TTS } from "@/config/config"
@@ -202,8 +202,8 @@ export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
         goToPrevState(state)
     }
 
-    const noWebSourcesFound = item.useWeb && item.meta && !JSON.parse(item.meta).sources?.length
-    const usesInlineCitations = item.meta && JSON.parse(item.meta).inline_citations
+    const noWebSourcesFound = item.useWeb && !item.meta?.sources?.length
+    const usesInlineCitations = item.meta?.inline_citations
 
     const isEditing = !item?.asked && canEdit && !item?.autoAsk
 
@@ -343,17 +343,11 @@ export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
                                 {findMoreElement}
                             </div>
                         ) : ""}
-                        {(!item.useWeb && (item.detached || detached)) || noWebSourcesFound || usesInlineCitations ? "" : (
+                        {!item.useWeb || noWebSourcesFound ? "" : (
                             <div>
-                                <ChatSources
-                                    roundStates={roundStates}
-                                    setRoundStates={setRoundStates}
-                                    obj={item.meta}
+                                <WebChatSources
+                                    sources={item.meta?.sources}
                                     key={item.id}
-                                    i={index}
-                                    allowOCR={allowOCR}
-                                    usedWeb={item.useWeb}
-                                    onSourceButtonClick={onSourceButtonClick}
                                 />
                             </div>
                         )}
