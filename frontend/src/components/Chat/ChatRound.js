@@ -70,6 +70,14 @@ export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
         )
     }, [item.ai, onCitationClick])
 
+    const reasoningMarkdown = useMemo(() => {
+        return (
+            <MarkdownViewer style={{'color': 'var(--passive-text)', 'borderLeft': '2px solid var(--light-border)', 'padding': '0px 0px 0px 20px', 'margin': '20px 0px 0px 0px'}} onCitationClick={onCitationClick}>
+                {item.reasoning}
+            </MarkdownViewer>
+        )
+    }, [item.reasoning, onCitationClick])
+
     async function recommend(ai, user) {
         try {
             setFindMoreLoadState(1)
@@ -307,9 +315,10 @@ export default function ChatRound({ item, askQuestion, isLast, isFirst, canEdit,
                             <Loading />
                         )}
                     </div>
-                ) : (item.ai ? (
+                ) : (item.ai || item?.reasoning ? (
                     <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '.5rem'}}>
-                        {aiMarkdown}
+                        {item?.reasoning ? reasoningMarkdown : ''}
+                        {item?.ai ? aiMarkdown : ''}
                         {(!isAnswering && item.ai) ? (
                             <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center', ...extraBottomStyle}}>
                                 <div style={{'display': 'flex', 'alignItems': 'center', 'flex': '1', 'gap': '10px'}}>

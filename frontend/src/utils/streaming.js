@@ -1,15 +1,14 @@
 import { DIVIDER_TEXT, CHAT_ERROR_TEXT } from "@/config/strConstants"
 
 
-export const handleStreamingChat = async ({ reader, decoder, onSearchQuery=()=>{}, onInitial=()=>{}, onInitialEnd=(myJson, i)=>{}, onSnippetStart=()=>{}, onSnippet=(result, i)=>{} }) => {
+export const handleStreamingChat = async ({ reader, decoder, onSearchQuery=()=>{}, onInitial=()=>{}, onInitialEnd=(myJson, i)=>{}, onReasoning=()=>{}, onSnippetStart=()=>{}, onSnippet=(result, i)=>{} }) => {
     
-    let chat_streams = {}  // Object of objects of form {'pre': {...}, 'text': ''}
-
     let first_read = false;
-
     let first_snippet_read = false;
 
     let buffer = ''  // For storing chars before their context is known
+    let txt = ''
+    let reasoning =  ''
 
     while (true) {
         const { value, done } = await reader.read();
@@ -23,6 +22,7 @@ export const handleStreamingChat = async ({ reader, decoder, onSearchQuery=()=>{
 
         buffer += decoder.decode(value);
 
+        // DIVIDER TEXT comes at the end of each streaming object
         while (buffer.includes(DIVIDER_TEXT)){
             let ind = buffer.indexOf(DIVIDER_TEXT)
             
@@ -31,31 +31,27 @@ export const handleStreamingChat = async ({ reader, decoder, onSearchQuery=()=>{
             
             let myJson = JSON.parse(res)
 
-            let index = myJson['index']
-
-            if (myJson['search_query']){
-                onSearchQuery(myJson['search_query'], index)
+            if (myJson['type'] == 'search_query'){
+                onSearchQuery(myJson['text'])
             }
-            else if (chat_streams[index]) {
-                chat_streams[index].text += myJson['result']
+            else if (myJson['type'] == 'meta'){
+                onInitialEnd(myJson['meta'])
+            }
+            else if (myJson['type'] == 'text'){
                 if (!first_snippet_read){
                     first_snippet_read = true
-                    onSnippetStart(chat_streams[index].text, index)
+                    onSnippetStart()
                 }
-                if (chat_streams[index].text.includes(CHAT_ERROR_TEXT)){
-                    throw Error("Chat error")
+                if (myJson['reasoning']){
+                    reasoning += myJson['reasoning']
+                    onReasoning(reasoning)
                 }
-                onSnippet(chat_streams[index].text, index)
-            }
-            else {
-                chat_streams[index] = {
-                    'pre': myJson['result'],
-                    'text': ''
+                if (myJson['text']){
+                    txt += myJson['text']
+                    onSnippet(txt)
                 }
-                onInitialEnd(chat_streams[index].pre, index)
             }
         }
-
     }
 }
 

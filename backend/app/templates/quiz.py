@@ -616,7 +616,11 @@ def explain(user: User):
 
     prompt = get_explain_prompt(question['text'], user_answer, correct_answer)
 
-    return lm.stream(prompt, system_prompt=system_prompt)
+    def gen():
+        for stream_resp in lm.stream(prompt, system_prompt=system_prompt, show_reasoning=False):
+            yield stream_resp.text
+
+    return gen()
 
 
 @bp.route('/matching-assets', methods=('POST',))

@@ -130,8 +130,8 @@ def ai_continue(user: User):
             system_prompt = get_editor_continue_system_prompt(**user_system_prompt_kwargs)
     
     def stream_ai():
-        for x in lm.stream(context, system_prompt=system_prompt):
-            yield x + DIVIDER_TEXT
+        for x in lm.stream(context, system_prompt=system_prompt, show_reasoning=False):
+            yield x.text + DIVIDER_TEXT
 
     return stream_ai()
 

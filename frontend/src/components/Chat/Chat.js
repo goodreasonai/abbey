@@ -196,22 +196,18 @@ export default function Chat({id,
 
         let data = {
             'id': syntheticId,
-            'question': {
-                'txt': roundStates[qIndex].user,
-                'images': roundStates[qIndex].images,
-                'context': context,  // Questions before this one
-            },
+            'txt': roundStates[qIndex].user,
+            'images': roundStates[qIndex].images,
+            'context': context,  // Questions before this one
             'user_time': userTime,
-            'batched': false,
-            'streaming': true,
-            // 'temperature': roundStates[qIndex].temperature === undefined ? .5 : roundStates[qIndex].temperature,  // no way currently to set temperature with the removal of randomness slider
+             // 'temperature': roundStates[qIndex].temperature === undefined ? .5 : roundStates[qIndex].temperature,  // no way currently to set temperature with the removal of randomness slider
             'detached': (roundStates[qIndex].detached || detached) ? true : false,
             'use_web': roundStates[qIndex].useWeb ? true : false,
             'exclude': exclude,
         }
 
         if (onAsk){
-            onAsk(data['question'].txt, qIndex)
+            onAsk(data['txt'], qIndex)
         }
         if (fromExisting){
             setBadPracticeAutoFocus(badPracticeAutoFocus + 1)
@@ -255,6 +251,9 @@ export default function Chat({id,
                 },
                 onSnippet: (result)=>{
                     setRoundStates((prev) => {let cpy=[...prev]; cpy[qIndex].ai = result; return cpy})
+                },
+                onReasoning: (result)=>{
+                    setRoundStates((prev) => {let cpy=[...prev]; cpy[qIndex].reasoning = result; return cpy})
                 }
             })
             setQAnswering(undefined)

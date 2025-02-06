@@ -149,6 +149,8 @@ SCHEDULED_ENDPOINT = "_scheduled"
 MULTIPLE_CHOICE = "Multiple Choice"
 SHORT_ANSWER = "Short Answer"
 
-# For streaming chats to frontend
-DIVIDER_TEXT = "<~|END|~>"  # needs to match in frontend
-CHAT_ERROR_TEXT = "<~|ERROR|~>"  # needs to match in frontend
+# For streaming chats to frontend (need to match frontend)
+DIVIDER_TEXT = "<~|END|~>"
+CHAT_ERROR_TEXT = "<~|ERROR|~>"
+REASONING_START = "<~|REASON|~>"
+REASONING_END = "<~|END_REASON|~>"

@@ -14,6 +14,12 @@ import anthropic
 client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
 
 
+class LMStreamResponse():
+    def __init__(self, reasoning="", text=""):
+        self.reasoning = reasoning
+        self.text = text
+
+
 class LM():
     model: str = ""  # A code unique to the provider (OpenAI, Anthropic, Ollama, etc)
     code: str = ""  # A universally unique code across all providers (OpenAI, Anthropic, Ollama, etc)
@@ -37,7 +43,7 @@ class LM():
     def run(self, txt, system_prompt=None, context=[], make_json=False, temperature=None, images=[]):
         raise NotImplementedError(f"Run not impelemented for language model {self.code}")
 
-    def stream(self, txt, system_prompt=None, context=[], temperature=None, images=[]):
+    def stream(self, txt, system_prompt=None, context=[], temperature=None, show_reasoning=False, images=[]):
         raise NotImplementedError(f"Stream not impelemented for language model {self.code}")
 
     def to_json_obj(self):
@@ -94,7 +100,7 @@ class OpenAILM(LM):
         return completion.choices[0].message.content
 
 
-    def stream(self, txt, system_prompt=None, context=[], temperature=None, images=[]):
+    def stream(self, txt, system_prompt=None, context=[], temperature=None, show_reasoning=False, images=[]):
        
         messages = self._make_messages(
             txt=txt,
@@ -110,7 +116,7 @@ class OpenAILM(LM):
         completion = openai_client.chat.completions.create(model=self.model, messages=messages, stream=True, **extra_kwargs)
         for chunk in completion:
             if chunk.choices[0].delta.content is not None:
-                yield chunk.choices[0].delta.content
+                yield LMStreamResponse(text=chunk.choices[0].delta.content)
 
 
 class Anthropic(LM):
@@ -190,7 +196,7 @@ class Anthropic(LM):
 
         return resp
 
-    def stream(self, txt, system_prompt=None, context=[], temperature=None, images=[]):
+    def stream(self, txt, system_prompt=None, context=[], temperature=None, show_reasoning=False, images=[]):
         messages = self._make_messages(
             txt=txt,
             system_prompt=system_prompt,
@@ -213,7 +219,7 @@ class Anthropic(LM):
             system=system_prompt
         ) as stream:
             for text in stream.text_stream:
-                yield text
+                yield LMStreamResponse(text=text)
 
 
 class Ollama(LM):
@@ -274,7 +280,7 @@ class Ollama(LM):
 
         return x
 
-    def stream(self, txt, system_prompt=None, context=[], temperature=None, images=[]):
+    def stream(self, txt, system_prompt=None, context=[], temperature=None, show_reasoning=False, images=[]):
         params = {
             'model': self.model,
             'messages': self._make_messages(txt, system_prompt=system_prompt, context=context, images=images),
@@ -297,7 +303,7 @@ class Ollama(LM):
                     data = line.decode('utf-8')
                     my_json = json.loads(data)
                     # Process the data as needed
-                    yield my_json['message']['content']
+                    yield LMStreamResponse(text=my_json['message']['content'])
 
         except requests.exceptions.RequestException as e:
             print(f"An error occurred: {e}")
@@ -369,7 +375,7 @@ class OpenAICompatibleLM(LM):
         return my_json['choices'][0]['message']['content']
         
 
-    def stream(self, txt, system_prompt=None, context=[], temperature=None, images=[]):
+    def stream(self, txt, system_prompt=None, context=[], temperature=None, show_reasoning=True, images=[]):
        
         messages = self._make_messages(
             txt=txt,
@@ -405,8 +411,13 @@ class OpenAICompatibleLM(LM):
                     break
                 my_json = json.loads(real_data)
                 delta = my_json['choices'][0]['delta']
-                if 'content' in delta and delta['content']:
-                    yield delta['content']
+                for key in delta:
+                    if key == 'content' and delta['content']:
+                        yield LMStreamResponse(text=delta[key])
+                    if show_reasoning:
+                        if key.find('reasoning') > -1:  # Sometimes it goes by "reasoning_content" or "reasoning" or something
+                            if delta[key]:
+                                yield LMStreamResponse(reasoning=delta[key])
 
 
 # In the future, may want to change so that it adds open router specific headers and such
@@ -419,7 +430,7 @@ class OpenRouterLM(OpenAICompatibleLM):
         extra_params = {}
         if len(args):
             extra_params = args
-        
+        extra_params['include_reasoning'] = True
         super().__init__(*args_lst, url=url, key=key, default_headers=default_headers, extra_params=extra_params, **kwargs)
 
 

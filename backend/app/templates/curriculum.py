@@ -8,7 +8,7 @@ from ..asset_actions import get_asset, search_assets, get_asset_metadata, set_so
 from flask_cors import cross_origin
 from ..template_response import MyResponse
 from ..db import get_db
-from ..integrations.lm import LM, LM_PROVIDERS, FAST_CHAT_MODEL, BALANCED_CHAT_MODEL, HIGH_PERFORMANCE_CHAT_MODEL
+from ..integrations.lm import LM, LM_PROVIDERS, FAST_CHAT_MODEL, BALANCED_CHAT_MODEL, HIGH_PERFORMANCE_CHAT_MODEL, LMStreamResponse
 from ..prompts.curriculum_prompts import (
     get_brainstorm_system_prompt,
     get_to_structured_system_prompt,
@@ -180,7 +180,11 @@ def brainstorm(user: User):
     system_prompt = get_brainstorm_system_prompt(length, background, level)
 
     lm: LM = LM_PROVIDERS[HIGH_PERFORMANCE_CHAT_MODEL]
-    return lm.stream(user_text, context=context, system_prompt=system_prompt)
+    def gen():
+        for stream_resp in lm.stream(user_text, context=context, system_prompt=system_prompt, show_reasoning=False):
+            stream_resp: LMStreamResponse
+            yield stream_resp.text
+    return gen()
 
 
 @bp.route('/desc', methods=('POST',))
@@ -198,7 +202,12 @@ def desc(user: User):
     system_prompt = get_desc_system_prompt(outline)
 
     lm: LM = LM_PROVIDERS[BALANCED_CHAT_MODEL]
-    return lm.stream(title, system_prompt=system_prompt)
+    
+    def gen():
+        for stream_resp in lm.stream(title, system_prompt=system_prompt, show_reasoning=False):
+            stream_resp: LMStreamResponse
+            yield stream_resp.text
+    return gen()
 
 
 def to_structured(text):

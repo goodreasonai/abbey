@@ -15,8 +15,7 @@ from .integrations.lm import DEFAULT_CHAT_MODEL, FAST_LONG_CONTEXT_MODEL, FAST_C
 from .db import get_db
 from .template_response import MyResponse
 from .retriever import Chunk, Retriever
-from .batch_and_stream_lm import stream_multiplexed_batched_lm
-from .integrations.lm import LM_PROVIDERS, LM, get_safe_retrieval_context_length
+from .integrations.lm import LM_PROVIDERS, LM, get_safe_retrieval_context_length, LMStreamResponse
 from .auth import User, token_optional, token_required, get_permissioning_string
 import json
 from .templates.templates import get_template_by_code, TEMPLATES
@@ -627,23 +626,6 @@ def save_chat_(user: User):
 @token_required
 def chat(user: User):
 
-    """
-
-    Parameters:
-    - id (asset id to chat with)
-    - question (list of questions to answer, or a single question if not batched)
-    - batched (are the questions batched - in this case, streaming must be true)
-    - streaming (optional bool - should the response be streaming)
-
-    questions are objects with: 
-    - txt (required)
-    - context (optional)
-    - sources (optional)
-    - source_names (optional)
-    - extra_instructions (optional)
-
-    """
-
     id = request.json.get('id')
     try:
         id = int(id)
@@ -654,18 +636,14 @@ def chat(user: User):
     if not asset_row:
         return MyResponse(False, reason="No asset found to chat with.", status=404).to_json()
 
-    question = request.json.get('question')
-    batched = request.json.get('batched')
-    streaming = request.json.get('streaming')
-    assert(streaming)  # can only hanlde streaming now
-    detached = request.json.get('detached')
-    use_web = request.json.get('use_web')
-    temperature = request.json.get('temperature')
+    detached = request.json.get('detached', False)
+    use_web = request.json.get('use_web', False)
+    temperature = request.json.get('temperature', None)
     exclude = request.json.get('exclude', [])
     user_time = request.json.get('user_time')
-
-    if streaming is not None and not streaming and batched:
-        return MyResponse(False, reason="Can't do non-streaming with batch.", status=400).to_json()
+    txt = request.json.get('txt', "")
+    context = request.json.get('context', [])
+    images = request.json.get('images', [])
 
     template_object: Template = get_template_by_code(asset_row['template'])
 
@@ -680,129 +658,86 @@ def chat(user: User):
         if not retriever:
             return MyResponse(False, reason="Could not get retriever").to_json()
 
-    # Technically, everything is batched!
-    if not batched:
-        question = [question]
-
     if user:
         code = get_user_chat_model_code(user)
         model: LM = LM_PROVIDERS[code]
     else:
         model = LM_PROVIDERS[DEFAULT_CHAT_MODEL]
 
-    def chat_response():
-        prompts = []
-        prompt_kwargs = []
-
-        # This exists so that we can send the web search query before the other stuff
-        def web_search(q):
-            for_web_retrieval_response = []
-            context = q['context'] if 'context' in q else []
-            context = [x for x in context if x['ai'] and x['user']]  # remove questions with blank areas
-            context_str = [f"User: {x['user']}\nAI: {x['ai']}" for x in context]
-            if not detached:
-                try:
-                    for_web_retrieval_response = retriever.query(q['txt'], context=context_str, max_results=5)
-                except RetrieverEmbeddingsError:
-                    for_web_retrieval_response = []
-            system_prompt = get_web_query_system_prompt(context, for_web_retrieval_response, user_time)
-            lm: LM = LM_PROVIDERS[FAST_CHAT_MODEL]
-            search_query: str = lm.run(q['txt'], system_prompt=system_prompt)
-            search_query = search_query.replace("\"", "")  # Bing API can't do keyword searches, and sometimes ChatGPT wraps its responses in quotes.
-            return search_query
-
-        def process_question(q):
-            context = q['context'] if 'context' in q else []
-            context = [x for x in context if x['ai'] and x['user']]  # remove questions with blank areas
-            context_n_tokens = quick_tok_estimate("\n".join([x['ai'] for x in context] + [x['user'] for x in context] + [q['txt']]))
-            inline_citations = False
-
-            if use_web:
-                assert(q['search_query'])
-                n_web_chunks = 5
-                web_chunks = get_web_chunks(user, q['search_query'], available_context=(get_safe_retrieval_context_length(model) - context_n_tokens), max_n=n_web_chunks)
-                system_prompt = template_object.build_web_chat_system_prompt(q['txt'], web_chunks)
-                retrieval_sources_json = [x.to_json() for x in web_chunks]
-                retrieval_sources = [x.txt for x in web_chunks]
-                retrieval_sources_metadata = [{'type': 'web'} for _ in retrieval_sources]
-                retrieval_source_names = [x.source_name for x in web_chunks]
-                prompt = q['txt']
-            elif detached:
-                system_prompt = template_object.build_detached_chat_system_prompt()
-                retrieval_sources_json = []
-                retrieval_sources = []
-                retrieval_sources_metadata = []
-                retrieval_source_names = []
-                inline_citations = True  # keeps sources from popping up underneath a chat in case detached gets changed.
-                prompt = q['txt']
-            else:
-                assert('txt' in q)  # Every question must have a txt
-
-                try:
-                    max_retrieval_response = retriever.max_chunks(model, q['txt'], safe_context_length=(get_safe_retrieval_context_length(model) - context_n_tokens))
-                except RetrieverEmbeddingsError:
-                    max_retrieval_response = []
-
-                # Now we use blank retrieval sources due to inline citations
-                retrieval_sources = []
-                retrieval_source_names = []
-                retrieval_sources_metadata = []
-                retrieval_sources_json = []
-                inline_citations = True
-
-                max_sources = [x.txt for x in max_retrieval_response]
-                max_source_names = [x.source_name for x in max_retrieval_response]
-
-                # use a different prompt for different templates
-                prompt = template_object.build_chat_prompt(q['txt'], max_sources, src_title=asset_row['title'])
-                system_prompt = template_object.build_chat_system_prompt(q['txt'], max_sources, src_title=asset_row['title'], source_names=max_source_names)
-            
-            new_kwargs = {
-                'context': context,
-                'sources': retrieval_sources,
-                'source_names': retrieval_source_names,
-                'source_metadata': retrieval_sources_metadata,
-                'source_json': retrieval_sources_json,
-                'system_prompt': system_prompt,
-                'inline_citations': inline_citations
-            }
-
-            if temperature is not None:
-                new_kwargs['temperature'] = temperature
-
-            if 'images' in q and q['images'] and len(q['images']):
-                new_kwargs['images'] = q['images']
-
-            return prompt, new_kwargs
-
-        prompts = []
-        prompt_kwargs = []
-        MAX_THREADS = 10
-
-        if use_web:
-            with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
-                results = list(executor.map(web_search, question))
-
-            for i, search_query in enumerate(results):
-                if search_query:
-                    yield json.dumps({'index': i, 'search_query': search_query}) + DIVIDER_TEXT
-                    question[i]['search_query'] = search_query
-
-        with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
-            results = list(executor.map(process_question, question))
-
-        for prompt, kwargs in results:
-            prompts.append(prompt)
-            prompt_kwargs.append(kwargs)
-
-        for res in stream_multiplexed_batched_lm(prompts, kwargs_list=prompt_kwargs, model=model):
-            yield res
-
     # May want to put this inside chat_response in the future so that we can collect the response. TODO
-    metadata = {'questions': question}
+    metadata = {'question': txt}
     make_log(user, id, request.remote_addr, CHAT_ACTIVITY, json.dumps(metadata))
 
-    return chat_response()
+    context = [x for x in context if x['ai'] and x['user']]  # remove questions with blank areas
+
+    def chat_response(search_query=None):
+
+        # Need to match frontend handleStreamingChat
+        SEARCH_QUERY_EVENT = "search_query"
+        TEXT_EVENT = "text"
+        META_EVENT = "meta"
+        def get_event(obj):
+            return f"{json.dumps(obj)}{DIVIDER_TEXT}"
+
+        if search_query is not None:
+            yield get_event({'type': SEARCH_QUERY_EVENT, 'text': search_query})
+
+        context_n_tokens = quick_tok_estimate("\n".join([x['ai'] for x in context] + [x['user'] for x in context] + [txt]))
+
+        inline_citations = use_web  # Everything except web search uses inline citations
+
+        system_prompt = None
+        search_query = None
+        prompt = None
+        sources = []
+
+        if use_web:
+            assert(search_query)
+            n_web_chunks = 5
+            web_chunks = get_web_chunks(user, search_query, available_context=(get_safe_retrieval_context_length(model) - context_n_tokens), max_n=n_web_chunks)
+            system_prompt = template_object.build_web_chat_system_prompt(txt, web_chunks)
+            sources = [{'type': 'web', **x.to_json()} for x in web_chunks]
+            prompt = txt
+        elif detached:
+            system_prompt = template_object.build_detached_chat_system_prompt()
+            prompt = txt
+        else:
+            # use a different prompt for different templates
+            try:
+                max_retrieval_response = retriever.max_chunks(model, txt, safe_context_length=(get_safe_retrieval_context_length(model) - context_n_tokens))
+            except RetrieverEmbeddingsError:
+                max_retrieval_response = []
+
+            max_sources = [x.txt for x in max_retrieval_response]
+            max_source_names = [x.source_name for x in max_retrieval_response] 
+
+            prompt = template_object.build_chat_prompt(txt, max_sources, src_title=asset_row['title'])
+            system_prompt = template_object.build_chat_system_prompt(txt, max_sources, src_title=asset_row['title'], source_names=max_source_names)
+
+        assert(prompt is not None)
+        assert(system_prompt is not None)
+
+        yield get_event({'type': META_EVENT, 'metadata': {'sources': sources, 'inline_citations': inline_citations}})
+
+        for stream_response in model.stream(prompt, system_prompt=system_prompt, context=context, temperature=temperature, show_reasoning=True, images=images):
+            stream_response: LMStreamResponse
+            yield get_event({'type': TEXT_EVENT, 'text': stream_response.text, 'reasoning': stream_response.reasoning})
+
+    if use_web:
+        for_web_retrieval_response = []
+        context_str = [f"User: {x['user']}\nAI: {x['ai']}" for x in context]
+        if not detached:
+            try:
+                for_web_retrieval_response = retriever.query(txt, context=context_str, max_results=5)
+            except RetrieverEmbeddingsError:
+                for_web_retrieval_response = []
+        system_prompt = get_web_query_system_prompt(context, for_web_retrieval_response, user_time)
+        lm: LM = LM_PROVIDERS[FAST_CHAT_MODEL]
+        search_query: str = lm.run(txt, system_prompt=system_prompt)
+        search_query = search_query.replace("\"", "")  # Bing API can't do keyword searches, and sometimes ChatGPT wraps its responses in quotes.
+        return chat_response(search_query=search_query)
+    else:
+        return chat_response()
 
 
 # Search over an asset's retriever chunks

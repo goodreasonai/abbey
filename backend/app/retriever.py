@@ -37,12 +37,12 @@ class Chunk():
         self.txt = txt
         self.embedding = embedding
     
+    # No embedding
     def to_json(self):
         return {
             'index': self.index,
             'source_name': self.source_name,
             'txt': self.txt,
-            'embedding': str(self.embedding)  # w/e
         }
 
 

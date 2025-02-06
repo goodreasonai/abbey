@@ -132,8 +132,8 @@ def _threaded_stream_lm(q, prompt, _index=0, stream_lm: LM=LM_PROVIDERS[DEFAULT_
     q.put((_index, json.dumps(prompt_kwargs)))
 
     try:
-        for txt in stream_lm.stream(prompt, system_prompt=system_prompt, context=context, **extra_kwargs):
-            q.put((_index, txt))
+        for stream_resp in stream_lm.stream(prompt, system_prompt=system_prompt, context=context, **extra_kwargs):
+            q.put((_index, stream_resp.text))
     except Exception as e:
         print(f"Chat LM exception: {e}", file=sys.stderr)
         q.put((_index, CHAT_ERROR_TEXT))
