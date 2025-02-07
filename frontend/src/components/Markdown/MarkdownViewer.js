@@ -139,11 +139,11 @@ const withCustomText = (WrappedComponent, onCitationClick, viewerElement) => {
 // Custom text parses for citations
 const CustomText = ({ children, viewerElement, onCitationClick }) => {
     if (typeof children === 'string') {
-        const regex = /(\\cit\{[^}]+\}\{[^}]+\})/;
+        const regex = /(\\cit\{[^}]+\} ?\{[^}]+\})/;
         const parts = children.split(regex);
         // Using two separate parts so that we can remove the spaces before the citation.
         const withMatch = parts.map((part) => {
-            const match = part.match(/\\cit\{([^}]+)\}\{([^}]+)\}/);
+            const match = part.match(/\\cit\{([^}]+)\} ?\{([^}]+)\}/);
             return [part, match]
         })
         return withMatch.map(([part, match], index) => {
