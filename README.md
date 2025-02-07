@@ -103,7 +103,7 @@ docker compose down
 docker compose -f docker-compose.prod.yml up --build
 ```
 
-**Step 4:** Now Abbey should be running at `http://localhost:3000`! Just visit that URL in your browser to start using Abbey. In dev mode, it might take a second to load.
+Now Abbey should be running at `http://localhost:3000`! Just visit that URL in your browser to start using Abbey. In dev mode, it might take a second to load.
 
 Note that the backend runs at `http://localhost:5000` – if you go there, you should see a lyric from Gilbert and Sullivan's HMS Pinafore. If not, then the backend isn't running.
 
@@ -186,6 +186,8 @@ and be sure to add the same variable to the root `.env`.
 - Ollama
 - Open Router
 - Other OpenAI Compatible APIs (like LocalAI, LMStudio, etc.)
+
+*Note: Most reasoning models should "just work" now, but API compatibility has been degraded by them. I would recommend using Open Router for remote reasoning models rather than any API directly.*
 
 [Embedding Models (Embeds)](#embeding-models-embeds)
 - OpenAI
