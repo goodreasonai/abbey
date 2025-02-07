@@ -102,7 +102,8 @@ export default function MoveToFolder({ topText="", assetId, resultLimit=5, flexD
             'isolated': text ? 0 : 1,
             'offset': offset,
             'edit': 1,
-            'get_total': 1
+            'get_total': 1,
+            'exclude_ids': JSON.stringify([assetId])
         }
         for (let key in paramObj) {
             params.append(key, paramObj[key]);
