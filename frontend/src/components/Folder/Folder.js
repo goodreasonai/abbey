@@ -27,6 +27,7 @@ import styles from './Folder.module.css'
 import { DISABLE_OCR } from "@/config/config";
 import SmartHeightWrapper from "../SmartHeightWrapper/SmartHeightWrapper";
 import TwoPanel from "../TwoPanel/TwoPanel";
+import Modal from "../Modal/Modal";
 
 
 export default function Folder({ manifestRow, canEdit, ...props }){
@@ -343,11 +344,9 @@ export default function Folder({ manifestRow, canEdit, ...props }){
                                 ) : ""}
                             </div>
                         </div>
-                        <div style={{'marginTop': '1rem'}}>
-                            {addToFolderOpen ? (
-                                <AddToFolder assetManifestRow={manifestRow} forceRefresh={forceRefresh} setForceRefresh={setForceRefresh} />
-                            ) : ""}
-                        </div>
+                        <Modal minWidth="60vw" title={"Add to Folder"} isOpen={addToFolderOpen} close={() => {setAddToFolderOpen(false)}}>
+                            <AddToFolder assetManifestRow={manifestRow} forceRefresh={forceRefresh} setForceRefresh={setForceRefresh} />
+                        </Modal>
                     </CollapsibleMenu>
                     <AssetsTable
                         key={forceRefresh}

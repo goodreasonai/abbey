@@ -65,7 +65,8 @@ export default function AddToFolder({ assetManifestRow, forceRefresh, setForceRe
             'recent_activity': 0,
             'isolated': 1,
             'offset': offset,
-            'get_total': 1
+            'get_total': 1,
+            'exclude_ids': JSON.stringify([assetManifestRow?.id])
         }
         for (let key in paramObj) {
             params.append(key, paramObj[key]);
