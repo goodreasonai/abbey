@@ -266,88 +266,86 @@ export default function Folder({ manifestRow, canEdit, ...props }){
             hideRightPanel={!sources?.length || manifestRow?.group_id}
             leftPanel={(
                 <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '1rem', 'width': '100%'}}>
-                    <CollapsibleMenu openByDefault={true} noHeader={true} bodyContainerStyle={isSignedIn ? {} : {'overflow': 'visible'} /* NOTE: when signed out, no need for Add To Folder transition + need for tooltips */}>
-                        <div style={{'display': 'flex', 'gap': '10px'}}>
-                            <div style={{'flex': '1', 'display': 'flex', 'gap': '10px', 'flexWrap': 'wrap'}} >
-                                {
-                                    canEdit ? (
-                                        <>
-                                            <div>
-                                                <SyntheticButton value={(
-                                                    <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
-                                                        Add to Folder
-                                                        <MyImage src={AddIcon} alt={"Add"} width={20} height={20} />
-                                                    </div>
-                                                )} onClick={() => setAddToFolderOpen(!addToFolderOpen)} />
-                                            </div>
-                                            <div>
-                                                <CreateWrapper
-                                                    noRedirect={true}
-                                                    templateCode={'document'}
-                                                    loadCallback={() => setUploadFileMoveLoading(1)}
-                                                    callback={(x) => {setUploadFileMoveLoading(2); x && addToFolder(x)}}
-                                                >
-                                                    <SyntheticButton
-                                                        value={(
-                                                            <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
-                                                                Upload Doc
-                                                                {uploadFileMoveLoading == 1 ? (
-                                                                    <Loading text="" color="var(--light-text)" />
-                                                                ) : (
-                                                                    <MyImage src={UpIcon} alt={"Up"} width={20} height={20} />
-                                                                )}
-                                                            </div> 
-                                                        )}
-                                                    />
-                                                </CreateWrapper>
-                                            </div>
-                                        </>
-                                    ) : ""
-                                }
-                                {
-                                    manifestRow['group_id'] ? (
+                    <div style={{'display': 'flex', 'gap': '10px'}}>
+                        <div style={{'flex': '1', 'display': 'flex', 'gap': '10px', 'flexWrap': 'wrap'}} >
+                            {
+                                canEdit ? (
+                                    <>
                                         <div>
-                                            {buildCourseButton}
+                                            <SyntheticButton value={(
+                                                <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
+                                                    Add to Folder
+                                                    <MyImage src={AddIcon} alt={"Add"} width={20} height={20} />
+                                                </div>
+                                            )} onClick={() => setAddToFolderOpen(!addToFolderOpen)} />
                                         </div>
-                                    ) : ""
-                                }                        
-                                <div className={canEdit ? styles.flex1OnBigScreen : ''}>
-                                    <SyntheticButton onClick={initiateDownload} id='FolderDownload' value={(
-                                        <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
-                                            Download
-                                            {downloadIconDisplay}
+                                        <div>
+                                            <CreateWrapper
+                                                noRedirect={true}
+                                                templateCode={'document'}
+                                                loadCallback={() => setUploadFileMoveLoading(1)}
+                                                callback={(x) => {setUploadFileMoveLoading(2); x && addToFolder(x)}}
+                                            >
+                                                <SyntheticButton
+                                                    value={(
+                                                        <div style={{'display': 'flex', 'alignItems': 'center', 'gap': '10px'}}>
+                                                            Upload Doc
+                                                            {uploadFileMoveLoading == 1 ? (
+                                                                <Loading text="" color="var(--light-text)" />
+                                                            ) : (
+                                                                <MyImage src={UpIcon} alt={"Up"} width={20} height={20} />
+                                                            )}
+                                                        </div> 
+                                                    )}
+                                                />
+                                            </CreateWrapper>
                                         </div>
-                                    )} />
-                                </div>
-                                {canEdit ? (
+                                    </>
+                                ) : ""
+                            }
+                            {
+                                manifestRow['group_id'] ? (
                                     <div>
-                                        <CreateWrapper
-                                            templateCode={"folder"}
-                                            noRedirect={true}
-                                            loadCallback={() => {setNewFolderLoading(true)}}
-                                            callback={(x) => {setNewFolderLoading(false); x && addToFolder(x);}}
-                                        >
-                                            <SyntheticButton
-                                                value={(
-                                                    <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
-                                                        New Folder
-                                                        {!newFolderLoading ? (
-                                                            <MyImage src={FolderIcon} width={20} height={20} alt="Folder" />
-                                                        ) : (
-                                                            <Loading text="" color="var(--light-text)" />
-                                                        )}
-                                                    </div>
-                                                )}
-                                            />
-                                        </CreateWrapper>
+                                        {buildCourseButton}
                                     </div>
-                                ) : ""}
+                                ) : ""
+                            }                        
+                            <div className={canEdit ? styles.flex1OnBigScreen : ''}>
+                                <SyntheticButton onClick={initiateDownload} id='FolderDownload' value={(
+                                    <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
+                                        Download
+                                        {downloadIconDisplay}
+                                    </div>
+                                )} />
                             </div>
+                            {canEdit ? (
+                                <div>
+                                    <CreateWrapper
+                                        templateCode={"folder"}
+                                        noRedirect={true}
+                                        loadCallback={() => {setNewFolderLoading(true)}}
+                                        callback={(x) => {setNewFolderLoading(false); x && addToFolder(x);}}
+                                    >
+                                        <SyntheticButton
+                                            value={(
+                                                <div style={{'display': 'flex', 'gap': '10px', 'alignItems': 'center'}}>
+                                                    New Folder
+                                                    {!newFolderLoading ? (
+                                                        <MyImage src={FolderIcon} width={20} height={20} alt="Folder" />
+                                                    ) : (
+                                                        <Loading text="" color="var(--light-text)" />
+                                                    )}
+                                                </div>
+                                            )}
+                                        />
+                                    </CreateWrapper>
+                                </div>
+                            ) : ""}
                         </div>
-                        <Modal minWidth="60vw" title={"Add to Folder"} isOpen={addToFolderOpen} close={() => {setAddToFolderOpen(false)}}>
-                            <AddToFolder assetManifestRow={manifestRow} forceRefresh={forceRefresh} setForceRefresh={setForceRefresh} />
-                        </Modal>
-                    </CollapsibleMenu>
+                    </div>
+                    <Modal minWidth="60vw" title={"Add to Folder"} isOpen={addToFolderOpen} close={() => {setAddToFolderOpen(false)}}>
+                        <AddToFolder assetManifestRow={manifestRow} forceRefresh={forceRefresh} setForceRefresh={setForceRefresh} />
+                    </Modal>
                     <AssetsTable
                         key={forceRefresh}
                         contentUrl={process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/manifest`}
