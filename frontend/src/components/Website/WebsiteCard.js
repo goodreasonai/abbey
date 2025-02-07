@@ -158,7 +158,7 @@ export default function WebsiteCard({ manifestRow, mimetype, canEditMimetypes, c
                     <Link href={siteUrl} target="_blank" className="_clamped1">{siteName}</Link>
                 </div>
                 <div style={{'display': 'flex', 'gap': '10px', 'flexDirection': 'column'}}>
-                    <div>
+                    <div style={{'display': 'flex'}}>
                         <Link href={url} style={{'textDecoration': 'underline'}} target="_blank" className="_clamped1 _touchableOpacity">
                             <div>
                                 {url}

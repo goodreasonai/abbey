@@ -70,7 +70,7 @@ function WebCard({ item, index, ...props }){
                     <div>
                         {index + 1}
                     </div>
-                    <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '10px', 'flex': '1', 'width': '100%'}}>
+                    <div style={{'display': 'flex', 'flexDirection': 'column', 'gap': '10px', 'flex': '1', 'width': '100%', 'minWidth': '0px'}}>
                         <div className={`_clamped2`}>
                             {item.source_name}
                         </div>
