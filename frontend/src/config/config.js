@@ -29,7 +29,7 @@ export const HOME_PAGE_HEADER = (first, last) => first ? `Thank you for using ${
 
 export const DESCRIPTION = `Book-up on anything with ${NAME}, by US AI. Learn faster and better using LLM generated summaries, AI workspaces, and more.`
 export const SITE_TITLE = `${NAME} - Book-up on anything`  // Shows up in a browser tab
-export const COMPANY = "U.S. Artificial Intelligence Inc."
+export const COMPANY = "GoodReason AI"
 
 // To change these, place an image in public/random, import it above, and replace the current image here.
 export const LOGIN_BACKGROUND = Babel  // image that shows up in the background of the login page
@@ -65,8 +65,8 @@ export const DEFAULT_PERMISSIONS = {'emailDomains': [], 'public': 0, 'editDomain
 export const ALLOW_PUBLIC_UPLOAD = true  // Whether a user is allowed to make an asset publicly available - Should match backend
 
 // These are linked in login/sign up when Clerk is used for auth.
-export const PRIVACY_POLICY = "https://us.ai/AbbeyPrivacyPolicy.pdf"
-export const TERMS_OF_USE = "https://us.ai/TermsOfUse.pdf"
+export const PRIVACY_POLICY = "https://goodreason.ai/AbbeyPrivacyPolicy.pdf"
+export const TERMS_OF_USE = "https://goodreason.ai/TermsOfUse.pdf"
 
 /*
 

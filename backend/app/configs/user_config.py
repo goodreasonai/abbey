@@ -56,7 +56,7 @@ MAX_CHAT_RETRIEVER_RESULTS = 7  # When a retriever query is made (without max ch
 
 RETRIEVER_JOB_TIMEOUT = 30  # in minutes, the max time we'll wait for a retriever to be created (e.g., a document to be processed)
 
-# Domains a user cannot give permissions to on an asset (a user can share with someone@gmail.com, but not all users with a gmail.com email domain – but can give permissions to everyone with a us.ai domain name, or a superspecial.com domain name email.)
+# Domains a user cannot give permissions to on an asset (a user can share with someone@gmail.com, but not all users with a gmail.com email domain – but can give permissions to everyone with a goodreason.ai domain name, or a superspecial.com domain name email.)
 ILLEGAL_SHARE_DOMAINS = [
     'gmail.com',
     'hotmail.com',

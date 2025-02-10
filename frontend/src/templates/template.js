@@ -697,7 +697,7 @@ class DeprecatedTemplate extends Template {
     Element({ assetManifestRow, canEdit }) {
         return (
             <div>
-                Sorry, but this template type has been deprecated. You can email us to complain: team@us.ai.
+                Sorry, but this template type has been deprecated. You can email us to complain: team@goodreason.ai.
             </div>
         )
     }

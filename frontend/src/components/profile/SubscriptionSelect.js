@@ -237,7 +237,7 @@ export default function SubscriptionSelect({selected=undefined,  ...props}){
             ),
             'bottomContent': (
                 <div>
-                    Please reach out to team@us.ai for more info.
+                    Please reach out to team@goodreason.ai for more info.
                 </div>
             )
         },

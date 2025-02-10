@@ -2,7 +2,7 @@
 
 Abbey is an AI interface with notebooks, basic chat, documents, YouTube videos, and more. It orchestrates a variety of AI models in a private self-hosted package. You can run Abbey as a server for multiple users using your own authentication provider, or you can run it for yourself on your own machine. Abbey is highly configurable, using your chosen LLMs, TTS models, OCR models, and search engines. You can find a hosted version of Abbey [here](https://abbey.us.ai), which is used by many students and professionals.
 
-**Having any issues? Please, please post an issue or reach out to the creator directly! Twitter DM @gkamer8, email gordon@us.ai, or otherwise ping him – he likes it.**
+**Having any issues? Please, please post an issue or reach out to the creator directly! Twitter DM @gkamer8, email gordon@goodreason.ai, or otherwise ping him – he likes it.**
 
 If Abbey is not by default configurable to your liking, and you're comfortable writing code, please consider opening a PR with your improvements! Adding new integrations and even full interfaces is straightforward; see more details in the "Contributing" section below.
 
@@ -107,7 +107,7 @@ Now Abbey should be running at `http://localhost:3000`! Just visit that URL in y
 
 Note that the backend runs at `http://localhost:5000` – if you go there, you should see a lyric from Gilbert and Sullivan's HMS Pinafore. If not, then the backend isn't running.
 
-If something's not working right, please (please) file an issue or reach out to the creator directly – `@gkamer8` on Twitter or `gordon@us.ai` by email.
+If something's not working right, please (please) file an issue or reach out to the creator directly – `@gkamer8` on Twitter or `gordon@goodreason.ai` by email.
 
 ### Running Abbey at Different URLs / Ports
 
@@ -595,7 +595,7 @@ By default, Abbey will ping a hardcoded URL when the backend starts up and each 
 ping: false
 ```
 
-Since I can't tell the difference between a user who's set `ping: false` and a user who's stopped using Abbey, consider reaching out to gordon@us.ai so I can get a rough number of users who disable the ping.
+Since I can't tell the difference between a user who's set `ping: false` and a user who's stopped using Abbey, consider reaching out to gordon@goodreason.ai so I can get a rough number of users who disable the ping.
 
 ## Contributing
 

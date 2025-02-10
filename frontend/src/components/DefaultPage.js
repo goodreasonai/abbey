@@ -43,22 +43,22 @@ export default function DefaultPage({ noMargin=false, title=NAME, mustSignIn=tru
                         By using our site, you confirm that you are over the age of 13 and agree to our <Link style={{'textDecoration': 'underline'}} href={TERMS_OF_USE}>Terms of Use</Link> and <Link href={PRIVACY_POLICY} style={{'textDecoration': 'underline'}}>Privacy Policy</Link>
                 </div>
                 <div>
-                    Contact <u>team@us.ai</u> with any questions, comments, or concerns.
+                    Contact <u>team@goodreason.ai</u> with any questions, comments, or concerns.
                 </div>
             </div>
             <div className={styles.footerSection} style={{'textDecoration': 'underline'}}>
                 <div>
-                    <Link href={'https://twitter.com/usaiinc'}>
+                    <Link href={'https://twitter.com/goodreasonai'}>
                         Twitter
                     </Link>
                 </div>
                 <div>
-                    <Link href={'https://www.linkedin.com/company/us-artificial-intelligence-inc/'}>
+                    <Link href={'https://www.linkedin.com/company/goodreasonai'}>
                         LinkedIn
                     </Link>
                 </div>
                 <div>
-                    <Link href={'https://blog.us.ai/'}>
+                    <Link href={'https://blog.goodreason.ai/'}>
                         Blog
                     </Link>
                 </div>

@@ -139,7 +139,7 @@ export default function SignedOutHomePage({}) {
                                 </div>
                             </div>
                             <div className={`${styles.enterpriseContact} ${styles.shadowedText}`}>
-                                Looking for enterprise sales? Contact <u>team@us.ai</u>.
+                                Looking for enterprise sales? Contact <u>team@goodreason.ai</u>.
                             </div>
                         </div>
                     </div>
@@ -224,7 +224,7 @@ export default function SignedOutHomePage({}) {
                                 </div>
                             </div>
                             <div style={{'textAlign': 'center', 'fontSize': '1.15rem'}} className={styles.shadowedText}>
-                                Reach out to team@us.ai to get started.
+                                Reach out to team@goodreason.ai to get started.
                             </div>
                         </div>
                         <MyImage canSwitch={false} src={RhodesExpanded} fill={true} className={styles.topPartImg} alt={"Colossus of Rhodes"} />

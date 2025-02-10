@@ -62,7 +62,7 @@ export default function PermissionsEntry({ className, optionsVar, setOptionsVar,
                     }}}
                     optionalValueText='Make Editor'
                     noSelectionText={""}
-                    placeholder={"e.g., 'team@us.ai' or just 'us.ai'"} />
+                    placeholder={"e.g., 'team@goodeason.ai' or just 'goodreason.ai'"} />
             </div>
         </div>
     )

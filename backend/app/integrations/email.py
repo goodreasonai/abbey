@@ -112,7 +112,7 @@ Settings look like:
 email:
   services:
     - provider: sendgrid  # required
-      email: abbey@us.ai  # required
+      email: abbey@goodreason.ai  # required
       name: Abbey  # optional, defaults to APP_NAME
       unsub_group: 1234  # optional (only works for Sendgrid)
 
