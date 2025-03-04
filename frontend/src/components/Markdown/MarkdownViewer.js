@@ -24,7 +24,7 @@ export default function MarkdownViewer({ children, className, onCitationClick, n
             acc[component] = withCustomText(component, onCitationClick);
             return acc;
         }, {});
-    }, [onCitationClick]) 
+    }, [onCitationClick])
 
     const components = useMemo(() => ({
         code({node, className, children, ...props}) {

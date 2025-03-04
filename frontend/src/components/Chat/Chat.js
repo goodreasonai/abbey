@@ -112,6 +112,8 @@ export default function Chat({id,
     const [editorHeight, setEditorHeight] = useState(0);
     const [isExpanded, setIsExpanded] = useState(undefined);
 
+    const [abortController, setAbortController] = useState(null);
+
     const editorContainerRef = useRef()
 
     function handleScroll(){
@@ -213,6 +215,9 @@ export default function Chat({id,
             setBadPracticeAutoFocus(badPracticeAutoFocus + 1)
         }
         let token = await getToken()
+        const controller = new AbortController();
+        setAbortController(controller)
+
         try {
             const response = await fetch(url, {
                 method: 'POST',
@@ -220,7 +225,8 @@ export default function Chat({id,
                     'Content-Type': 'application/json',
                     'x-access-token': token
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(data),
+                signal: controller.signal // Add the abort signal
             });
 
             if (!response.ok){
@@ -233,15 +239,38 @@ export default function Chat({id,
             await handleStreamingChat({
                 reader: reader,
                 decoder: decoder,
+                signal: controller.signal,
                 onInitial: ()=>{
-                    setRoundStates((prev) => { let cpy=[...prev]; cpy[qIndex].autoAsk=false; cpy[qIndex].ai=""; return cpy })
+                    setRoundStates((prev) => {
+                        let cpy=[...prev];
+                        const expired = cpy.length <= qIndex
+                        if (!expired){
+                            cpy[qIndex].autoAsk=false;
+                            cpy[qIndex].ai="";
+                        }
+                        return cpy
+                    })
                     setQAnswering(qIndex)
                 },
                 onSearchQuery: (searchQuery) => {
-                    setRoundStates((prev) => { let cpy=[...prev]; cpy[qIndex].searchQuery=searchQuery; return cpy })
+                    setRoundStates((prev) => {
+                        let cpy=[...prev]
+                        const expired = cpy.length <= qIndex
+                        if (!expired){
+                            cpy[qIndex].searchQuery=searchQuery;
+                        }
+                        return cpy
+                    })
                 },
                 onInitialEnd: (meta)=>{
-                    setRoundStates((prev) => { let cpy=[...prev]; cpy[qIndex].meta=meta; return cpy })
+                    setRoundStates((prev) => {
+                        let cpy=[...prev];
+                        const expired = cpy.length <= qIndex
+                        if (!expired){
+                            cpy[qIndex].meta=meta;
+                        }
+                        return cpy
+                    })
                 },
                 onSnippetStart: () => {
                     setQLoading(undefined)
@@ -250,10 +279,24 @@ export default function Chat({id,
                     }
                 },
                 onSnippet: (result)=>{
-                    setRoundStates((prev) => {let cpy=[...prev]; cpy[qIndex].ai = result; return cpy})
+                    setRoundStates((prev) => {
+                        let cpy=[...prev];
+                        const expired = cpy.length <= qIndex
+                        if (!expired){
+                            cpy[qIndex].ai = result;
+                        }
+                        return cpy
+                    })
                 },
                 onReasoning: (result)=>{
-                    setRoundStates((prev) => {let cpy=[...prev]; cpy[qIndex].reasoning = result; return cpy})
+                    setRoundStates((prev) => {
+                        let cpy=[...prev];
+                        const expired = cpy.length <= qIndex
+                        if (!expired){
+                            cpy[qIndex].reasoning = result;
+                        }
+                        return cpy
+                    })
                 }
             })
             setQAnswering(undefined)
@@ -262,7 +305,14 @@ export default function Chat({id,
         catch (error) {
             console.error(error);
             // IMPORTANT: This error text is used in the testing framework (in a diff repo); so if you change it make sure it gets changed elsewhere.
-            setRoundStates((prev) => {let cpy=[...prev]; cpy[qIndex].ai = 'Error; try again using a different model backbone?'; return cpy})
+            setRoundStates((prev) => {
+                let cpy=[...prev];
+                const expired = cpy.length <= qIndex
+                if (!expired){
+                    cpy[qIndex].ai = 'Error; try again using a different model backbone?';
+                }
+                return cpy
+            })
             setQLoading(undefined)
             setQAnswering(undefined)
         }
@@ -629,6 +679,9 @@ export default function Chat({id,
     useEffect(() => {
         if (id){
             setRoundStates([])
+            if (abortController) {
+                abortController.abort();
+            }
         }
         if (id && isSignedIn !== undefined){
             loadPreviousChats()
