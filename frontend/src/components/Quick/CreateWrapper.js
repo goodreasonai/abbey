@@ -180,10 +180,10 @@ export default function CreateWrapper({ templateCode, children, loadCallback=()=
                             callback(myJson['asset_row'])
                             if (!noRedirect){
                                 if (newTab){
-                                    window.open(`/assets/${assetId}?new=1`)
+                                    window.open(`/assets/${assetId}`)
                                 }
                                 else {
-                                    await router.push(`/assets/${assetId}?new=1`)
+                                    await router.push(`/assets/${assetId}`)
                                     setShowModal(false)
                                 }
                             }

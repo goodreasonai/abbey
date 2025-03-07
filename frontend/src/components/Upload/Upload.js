@@ -243,7 +243,7 @@ export default function Upload({ assetId=null }){
                         const assetId = myJson['asset_id'];
                         setUploadedAssetId(assetId);
                         setUploadState(2);
-                        router.push(`/assets/${assetId}?new=1`)
+                        router.push(`/assets/${assetId}`)
                     }
                 }
                 catch(error) {

@@ -213,10 +213,10 @@ export default function Quick({ ...props }) {
                             createCallback(myJson['asset_row'])
                             if (!item.noRedirect){
                                 if (item.newTab){
-                                    window.open(`/assets/${assetId}?new=1`)
+                                    window.open(`/assets/${assetId}`)
                                 }
                                 else {
-                                    await router.push(`/assets/${assetId}?new=1`)
+                                    await router.push(`/assets/${assetId}`)
                                     setShowModal(false)
                                 }
                             }

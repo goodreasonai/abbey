@@ -644,38 +644,31 @@ export default function Chat({id,
 
     async function loadPreviousChats() {
         try {
-            if (!router.query?.new){
-                setPreviousChatsLoadingState(1)
-                const url = process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/metadata?id=${id}&key=${CHAT_CONTEXT_METADATA_KEY}`
-                const response = await fetch(url, {
-                    'headers': {
-                        'x-access-token': await getToken(),
-                        'Content-Type': 'application/json'
-                    },
-                    'method': 'GET'
-                })
-                let myJson = await response.json()
-                if (myJson['response'] != 'success'){
-                    console.log(myJson)
-                    throw Error("Response was not success")
-                }
-                const results = myJson['results']
-                if (results.length){
-                    let context = JSON.parse(results[0].value)
-                    let newRoundStates = []
-                    for (let i = 0; i < context.length; i++){
-                        newRoundStates.push(context[i])
-                    }        
-                    newRoundStates = newRoundStates.filter((item) => item.user)  // get rid of any blanks      
-                    setRoundStates(newRoundStates)
-                }
-                setTimeout(() => {
-                    setPreviousChatsLoadingState(2)
-                }, 1000)
+            setPreviousChatsLoadingState(1)
+            const url = process.env.NEXT_PUBLIC_BACKEND_URL + `/assets/metadata?id=${id}&key=${CHAT_CONTEXT_METADATA_KEY}`
+            const response = await fetch(url, {
+                'headers': {
+                    'x-access-token': await getToken(),
+                    'Content-Type': 'application/json'
+                },
+                'method': 'GET'
+            })
+            let myJson = await response.json()
+            if (myJson['response'] != 'success'){
+                console.log(myJson)
+                throw Error("Response was not success")
             }
-            else {
-                setPreviousChatsLoadingState(2)
+            const results = myJson['results']
+            if (results.length){
+                let context = JSON.parse(results[0].value)
+                let newRoundStates = []
+                for (let i = 0; i < context.length; i++){
+                    newRoundStates.push(context[i])
+                }        
+                newRoundStates = newRoundStates.filter((item) => item.user)  // get rid of any blanks      
+                setRoundStates(newRoundStates)
             }
+            setPreviousChatsLoadingState(2)
         }
         catch (e) {
             console.log(e)
@@ -701,7 +694,7 @@ export default function Chat({id,
                 getUserSearchEngineOptions()
             }
         }
-    }, [id, isSignedIn, router.query])
+    }, [id, isSignedIn])
 
     async function setUserChatModel(model){
         try {
