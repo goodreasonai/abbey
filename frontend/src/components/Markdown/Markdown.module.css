@@ -17,8 +17,7 @@
 }
 
 .article h1 {
-    font-family: var(--font-header);
-    font-weight: 400;
+    font-family: var(--font-body);
 }
 
 /* The styling here is mostly taken care of by the syntax highlighter now */
