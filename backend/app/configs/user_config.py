@@ -5,7 +5,7 @@ from ..integrations.tts import TTS_PROVIDERS
 from ..integrations.web import SEARCH_PROVIDERS
 import os
 
-BACKEND_VERSION = '0.13.2'  # Viewable when a user goes to the root "/" endpoint of the backend
+BACKEND_VERSION = '0.13.3'  # Viewable when a user goes to the root "/" endpoint of the backend
 
 AVAILABLE_TEMPLATES = ['document', 'folder', 'detached_chat', 'website', 'classroom', 'curriculum', 'quiz', 'text_editor', 'video', 'notebook', 'inf_quiz', 'section', 'crawler']  # could use the list in templates.py, but want to avoid imports here.
 
