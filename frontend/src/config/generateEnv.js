@@ -168,6 +168,11 @@ try {
         addEnv('NEXT_PUBLIC_EXPERIMENTAL_TEMPLATES', 1)
     }
 
+    // Alerts
+    if (settings.alert){
+        addEnv('NEXT_PUBLIC_ALERT', settings.alert)
+    }
+
     fs.writeFileSync(path.join(__dirname, '../../.env.local'), envContent);
     console.log('Environment variables generated successfully');
 } catch (e) {

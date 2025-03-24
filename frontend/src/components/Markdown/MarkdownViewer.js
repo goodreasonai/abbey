@@ -14,7 +14,7 @@ import React from 'react';
 import Tooltip from '../Tooltip/Tooltip';
 import shortenText from '@/utils/text';
 
-export default function MarkdownViewer({ children, className, onCitationClick, noPadding=false, style={}, ...props }){
+export default function MarkdownViewer({ children, className, onCitationClick, style={}, ...props }){
     const preProcessedContent = preprocessMathNotation(children);
 
     // We wrap components with <CustomText /> in order to add citation functionality

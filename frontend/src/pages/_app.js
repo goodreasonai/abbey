@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react'
 import Loading from '@/components/Loading/Loading'
 import { Auth } from '@/auth/auth'
 import NavBar, { NavBarProvider } from '@/components/NavBar'
+import AlertBanner from '@/components/AlertBanner/AlertBanner'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -85,6 +86,7 @@ export default function App({ Component, pageProps }) {
                             <meta property="og:image" content={PREVIEW_IMAGE_URL} />
                         </Head>
                         { pageLoading ? <PageLoading /> : "" }
+                        <AlertBanner />
                         <NavBar />
                         <Component {...pageProps} />
                     </NavBarProvider>
